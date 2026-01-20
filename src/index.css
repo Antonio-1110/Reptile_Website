@@ -5,36 +5,49 @@ body{
 }
 
 .reptilepost {
-    /* 1. Sizing: Proportional to screen (25% of viewport width) */
-    width: 25vw; 
-    
-    /* 2. Limits: Won't get smaller than 280px or larger than 450px */
-    min-width: 280px;
-    max-width: 450px;
-
-    /* 3. Fixed Proportion: Height will always be 1.2x the width */
-    aspect-ratio: 1 / 1.2;
-
-    /* 4. Visuals */
+    aspect-ratio: 1 / 1.25;
     display: flex;
     flex-direction: column;
-    background-color: #3d656e; /* Background color below the image */
-    border-radius: 24px;       /* Filleted corners */
-    overflow: hidden;          /* Crops the image to the filleted corners */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    border: 3px solid #000000;
+    background-color: #3d656e;
+    border-radius: 24px;
+    overflow: hidden;
 }
 
 .reptilepost > img {
     width: 100%;
-    height: 55%;             /* Image takes up 55% of the card height */
+    height: 60%;             /* Image takes up 60% of the card height */
     object-fit: cover;       /* Ensures reptile isn't squished */
 }
 
 .postinfo {
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     flex-grow: 1;            /* Fills the remaining space below the image */
+}
+
+.layout {
+    display: flex;
+    align-items: flex-start;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.post-grid {
+    flex: 1;
+    display: grid;
+    justify-items: center;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 32px 28px;
+    padding: 16px;
+}
+
+.filter-box{
+    width: 180px;
+    height: 100vh;
+    color: white;
+    position: sticky;
+    top: 16px;
+    border-right: 4px solid rgba(255, 255, 255, 0.15);
 }

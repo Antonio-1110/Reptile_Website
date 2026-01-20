@@ -1,18 +1,20 @@
-import Navbar from "./Components/Navbar"
-import SearchBar from "./Components/Searchbar"  
 import FilterBox from "./Components/FilterBox"
-import ReptilePost from "./Components/ReptilePost"
-import musk from "./assets/musk.jpg"
+import PostViewing from "./Components/PostViewing"
+import { useState } from "react"
 function App() {
-    const samplePet = {
-        species: "屋頂龜",
-        price: 100,
-        imageUrl : musk,
-        size : 10
-    }
+    const [filters, setFilters] = useState({
+    location: "",
+    minPrice: 0,
+    maxPrice: 1000,
+    minSize: 0,
+    maxSize: 200,
+    })
     return (
     <>
-    <ReptilePost props={samplePet}/>
+    <div className="layout">
+    <FilterBox filters={filters} setFilters={setFilters}/>
+    <PostViewing />
+    </div>
     </>
 )
 }
