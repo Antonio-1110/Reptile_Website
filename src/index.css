@@ -1,0 +1,40 @@
+body{
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #282D35;
+}
+
+.reptilepost {
+    /* 1. Sizing: Proportional to screen (25% of viewport width) */
+    width: 25vw; 
+    
+    /* 2. Limits: Won't get smaller than 280px or larger than 450px */
+    min-width: 280px;
+    max-width: 450px;
+
+    /* 3. Fixed Proportion: Height will always be 1.2x the width */
+    aspect-ratio: 1 / 1.2;
+
+    /* 4. Visuals */
+    display: flex;
+    flex-direction: column;
+    background-color: #3d656e; /* Background color below the image */
+    border-radius: 24px;       /* Filleted corners */
+    overflow: hidden;          /* Crops the image to the filleted corners */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border: 3px solid #000000;
+}
+
+.reptilepost > img {
+    width: 100%;
+    height: 55%;             /* Image takes up 55% of the card height */
+    object-fit: cover;       /* Ensures reptile isn't squished */
+}
+
+.postinfo {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;            /* Fills the remaining space below the image */
+}
