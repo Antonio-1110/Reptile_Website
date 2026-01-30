@@ -1,5 +1,6 @@
-import FilterBox from "./Components/FilterBox"
-import PostViewing from "./Components/PostViewing"
+import Filter from "./Components/Filter/FilterBox"
+import Post from "./Components/Post/PostWindow"
+import Header from "./Components/Header/Header"
 import { useState } from "react"
 function App() {
     const [filters, setFilters] = useState({
@@ -11,12 +12,12 @@ function App() {
     })
     return (
     <>
-    <div className="layout">
-    <FilterBox filters={filters} setFilters={setFilters}/>
-    <PostViewing />
-    </div>
+        <Header/>
+        <div className="layout">
+            <Filter filters={filters} setFilters={setFilters}/>
+            <Post/>
+        </div>
     </>
 )
 }
-
 export default App

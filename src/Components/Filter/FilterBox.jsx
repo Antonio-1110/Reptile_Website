@@ -3,6 +3,7 @@ import FilterSection from "./FilterSection";
 export default function FilterBox({ filters, setFilters }) {
   return (
     <div className="filter-box">
+      <div className = "filter-box-content">
       <h2>Filters</h2>
 
       <FilterSection title="Location">
@@ -56,6 +57,7 @@ export default function FilterBox({ filters, setFilters }) {
           }
         />
       </FilterSection>
+      </div>
     </div>
   );
 }

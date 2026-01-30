@@ -1,0 +1,98 @@
+.header {
+  display: flex;
+  justify-content: space-between; /* Distributes items to the left, center, right */
+  align-items: center;           /* Vertically aligns items in the middle */
+  padding: 1rem 2rem;            /* Top/bottom padding, left/right padding */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Soft shadow for depth */
+  gap: 20px;                     /* Space between the sections */
+  position: sticky;
+  top:0;
+  background-color: #282d35f3;
+  
+}
+
+/* --- Left Section (Logo) --- */
+.leftSection {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0; /* Prevents logo from shrinking on smaller screens */
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none; /* Remove underline from link */
+  color: #333;           /* Default text color for logo */
+}
+
+.logo img {
+  height: 40px;          /* Adjust logo size */
+  margin-right: 10px;
+}
+
+.logo h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: rgb(159, 173, 183);
+  white-space: nowrap; /* Prevents the text from wrapping */
+}
+
+/* --- Middle Section (Search Bar) --- */
+.middleSection {
+  flex-grow: 1; /* Allows the search bar to take up available space */
+  display: flex;
+  justify-content: center; /* Centers the search bar within its flexible space */
+}
+
+.searchBar {
+  width: 100%; /* Take full width of its container (middleSection) */
+  max-width: 500px; /* Optional: Limit max width for very wide screens */
+  padding: 0.75rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 25px; /* Pill shape */
+  font-size: 1rem;
+  outline: none; /* Remove default focus outline */
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.searchBar:hover {
+  border-color: rgb(159, 173, 183); /* Highlight on hover */
+  box-shadow: 0 0 0 3px #1a723f; /* Soft focus ring */
+}
+
+/* --- Right Section (Buttons) --- */
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Space between buttons */
+  flex-shrink: 0; /* Prevents buttons from shrinking */
+}
+
+.headerButton {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 25px;
+  background-color: rgb(159, 173, 183);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.headerButton:hover {
+  background-color: #27ae60; /* Darker green on hover */
+  transform: translateY(-1px); /* Slight lift effect */
+}
+
+/* You might want a secondary button style */
+/*
+.headerButton.secondary {
+  background-color: #e0e0e0;
+  color: #333;
+}
+.headerButton.secondary:hover {
+  background-color: #d5d5d5;
+}
+*/
