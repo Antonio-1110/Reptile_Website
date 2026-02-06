@@ -1,5 +1,5 @@
 .reptilepost {
-    aspect-ratio: 1 / 1.4;
+    aspect-ratio: 1 / 1.1;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -16,10 +16,9 @@
 }
 
 .post-info {
-    padding: 0.9rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    gap: 15px;
 }
 
 .post-info-box {
@@ -30,7 +29,7 @@
 
 .post-info-box h2 {
     margin: 0;
-    font-size: 1.7rem;
+    font-size: clamp(0.8rem, 30cqw, 2rem);
     font-weight: 600;
     color: #1a1a1a;
 }
@@ -40,4 +39,8 @@
     font-size: 1.4rem;
     font-weight: 800;
     color: #1a1a1a;
+}
+
+.post-info-box span{
+    margin-top: auto;
 }

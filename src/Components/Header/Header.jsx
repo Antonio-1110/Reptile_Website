@@ -23,6 +23,7 @@ function Header() {
       <div className="rightSection">
         <button className="headerButton">Upload</button>
         <button className="headerButton">Profile</button>
+        <button className="headerButton">Login</button>
       </div>
     </header>
   );
