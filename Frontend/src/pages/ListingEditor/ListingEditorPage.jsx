@@ -3,13 +3,15 @@ import { useTranslation } from "react-i18next";
 import "./ListingEditorPage.css";
 import BasicDetailsSection from "./components/BasicDetailsSection";
 import BiologicalDataSection from "./components/BiologicalDataSection";
-import CategorySwitch from "./components/CategorySwitch";
+import CategorySwitch from "../../components/ui/CategorySwitch";
 import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
 import { createListing, getCurrentProfile, getRawListing, getSexKey, updateListing, uploadListingPhotos } from "../../api/listingsApi";
 import { getLocationKey } from "../../constants/locations";
 import { DEFAULT_EQUIPMENT_CATEGORY, DEFAULT_EQUIPMENT_CONDITION } from "../../constants/equipment";
 import { errorText, toErrorState } from "../../utils/errorState";
+
+const EDITOR_CATEGORIES = ["live_animal", "enclosure"];
 
 const initialFormData = {
   title: "",
@@ -192,7 +194,18 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
           <p className="listing-editor-loading">{t("createListing.loading")}</p>
         ) : (
         <form onSubmit={handleSubmit} className="listing-editor-form">
-          <CategorySwitch value={formData.category} onChange={handleCategoryChange} disabled={isEditing} />
+          {/* "enclosure" is the equipment category; the editor maps it to the equipment endpoint. A
+              listing can't move between the two endpoints, so the switch is locked when editing. */}
+          <CategorySwitch
+            className="category-switch-section"
+            labelClassName="listing-form-label"
+            label={t("createListing.basic.category")}
+            options={EDITOR_CATEGORIES.map((value) => ({ value, label: t(`createListing.categories.${value}`) }))}
+            value={formData.category}
+            onChange={handleCategoryChange}
+            disabled={isEditing}
+            hint={isEditing && <p className="listing-form-hint">{t("createListing.basic.categoryLocked")}</p>}
+          />
           <MediaUploader
             files={formData.media}
             coverIndex={coverIndex}

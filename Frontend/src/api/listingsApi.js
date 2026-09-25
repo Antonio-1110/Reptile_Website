@@ -32,6 +32,18 @@ function normalizeListing(item) {
   };
 }
 
+// Equipment has no species, sex or genes; `kind` tells the card which layout to use (the API's own
+// `category` field on equipment is its type, e.g. "heating").
+function normalizeEquipment(item) {
+  return {
+    ...normalizeListing(item),
+    kind: "equipment",
+    equipmentCategory: item.category,
+    condition: item.condition,
+    genes: [],
+  };
+}
+
 export { isLoggedIn } from "./authApi";
 
 async function request(path) {
@@ -175,8 +187,9 @@ export async function getMyListings() {
   return [...liveResults, ...equipmentResults].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
-// Marketplace sidebar state → query params understood by backend/post/filters.py.
-function buildListingParams({ search = "", tags = [], filters = {} }) {
+// Marketplace sidebar state → query params understood by backend/post/filters.py. Only the filters
+// that exist for the chosen category are sent; the others keep their values for switching back.
+function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {} }) {
   const params = new URLSearchParams();
   const set = (key, value) => {
     if (value !== "" && value != null) params.set(key, value);
@@ -186,35 +199,46 @@ function buildListingParams({ search = "", tags = [], filters = {} }) {
   };
   const setIncludeExclude = (key, values, include) => setList(include === false ? `${key}_exclude` : key, values);
 
-  set("search", search.trim());
-  set("species_name", tags.find((tag) => tag.type === "species")?.value);
-  setList("genes", tags.filter((tag) => tag.type === "morph").map((tag) => tag.value));
-
-  setList("sex", filters.sex);
-  setIncludeExclude("life_stage", filters.lifeStages, filters.includeLifeStages);
-  setIncludeExclude("location", filters.locations?.map(getLocationCode), filters.includeLocations);
-  setIncludeExclude("diets", filters.diets, filters.includeDiets);
-  setIncludeExclude("shipping", filters.shippingMethods, filters.includeShipping);
-  [
+  const ranges = [
     ["price", filters.minPrice, filters.maxPrice],
-    ["size", filters.minSize, filters.maxSize],
-    ["weight", filters.minWeight, filters.maxWeight],
-    ["age", filters.minAgeYears, filters.maxAgeYears],
     ["posted_days", filters.minPostedDays, filters.maxPostedDays],
-  ].forEach(([key, min, max]) => {
+  ];
+  set("search", search.trim());
+  setIncludeExclude("location", filters.locations?.map(getLocationCode), filters.includeLocations);
+  setIncludeExclude("shipping", filters.shippingMethods, filters.includeShipping);
+
+  if (category === "equipment") {
+    setList("category", filters.equipmentTypes);
+    setList("condition", filters.conditions);
+  } else {
+    // Species and morph tags from the header only mean something for animals.
+    set("species_name", tags.find((tag) => tag.type === "species")?.value);
+    setList("genes", tags.filter((tag) => tag.type === "morph").map((tag) => tag.value));
+    setList("sex", filters.sex);
+    setIncludeExclude("life_stage", filters.lifeStages, filters.includeLifeStages);
+    setIncludeExclude("diets", filters.diets, filters.includeDiets);
+    ranges.push(
+      ["size", filters.minSize, filters.maxSize],
+      ["weight", filters.minWeight, filters.maxWeight],
+      ["age", filters.minAgeYears, filters.maxAgeYears],
+    );
+  }
+  ranges.forEach(([key, min, max]) => {
     set(`${key}_min`, min);
     set(`${key}_max`, max);
   });
   return params;
 }
 
-// One page of live-animal listings matching the query, plus the total match count.
+// One page of listings (live animals or equipment, per query.category) matching the query, plus the
+// total match count.
 export async function getListingsPage({ page = 1, ...query } = {}) {
+  const isEquipment = query.category === "equipment";
   const params = buildListingParams(query);
   params.set("page", page);
-  const payload = await request(`/posts/live-animals/?${params}`);
+  const payload = await request(`${listingEndpoint(isEquipment ? "equipment" : "live_animal")}?${params}`);
   return {
-    results: payload.results.map(normalizeListing),
+    results: payload.results.map(isEquipment ? normalizeEquipment : normalizeListing),
     count: payload.count,
     hasMore: Boolean(payload.next),
   };
