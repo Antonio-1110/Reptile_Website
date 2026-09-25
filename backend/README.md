@@ -207,7 +207,9 @@ that never completes becomes `failed` (the bidder may retry) or `cancelled`.
 
 Order statuses: `offered` (runner-up) / `awaiting_payment` → `paid` → `handed_over` → `completed`,
 or `disputed` → `completed` / `refunded`; `buyer_defaulted`, `declined`, `seller_defaulted` when it
-falls through.
+falls through. Once the sale can't go ahead any more (and the seller has no runner-up offer left to
+make), the auction reports `sale_fell_through: true` (`orders.sale_fell_through`) and the listing page
+shows the listing as for sale again instead of the old winning bid.
 
 Buy-now purchase statuses: `pending` → `paid` (won; we hold the money) or `refunded` (paid after
 someone else, or after the auction closed); `failed` if the payment never goes through, `cancelled`

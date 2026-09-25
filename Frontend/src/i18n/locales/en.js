@@ -159,6 +159,7 @@ const en = {
       sentToast: "Sent — the seller will contact you.",
     },
     auctionEndedNoBids: "An auction on this animal ended without any bids.",
+    saleFellThrough: "This animal sold at auction, but the sale fell through, so it's for sale again.",
     toasts: {
       contactError: "Unable to reach the seller right now.",
       loginToReport: "Log in to report this listing.",
@@ -384,7 +385,7 @@ const en = {
     card: { buyNow: "Buy now {{amount}}" },
     bidCount_one: "{{count}} bid",
     bidCount_other: "{{count}} bids",
-    price: { currentBid: "Current bid", startingBid: "Starting bid", winningBid: "Winning bid", boughtNow: "Bought at the buy-now price" },
+    price: { currentBid: "Current bid", startingBid: "Starting bid", winningBid: "Winning bid", boughtNow: "Bought at the buy-now price", saleFellThrough: "Sale fell through" },
     duration: { days: "{{d}}d {{h}}h", hours: "{{h}}h {{m}}m", minutes: "{{m}}m {{s}}s" },
     countdown: { left: "{{time}} left", startsIn: "Starts in {{time}}" },
     phase: { ended: "Ended", cancelled: "Cancelled" },

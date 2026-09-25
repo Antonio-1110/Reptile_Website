@@ -43,6 +43,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
             top_bid=Max('bids__amount'),
             pending_buy_now=Count('purchases', filter=Q(purchases__status=BuyNowPurchase.Status.PENDING), distinct=True),
         )
+        queryset = queryset.prefetch_related('orders')  # for sale_fell_through
         user = self.request.user
         if user.is_authenticated:
             queryset = queryset.prefetch_related(
