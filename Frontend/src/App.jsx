@@ -11,7 +11,7 @@ import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
 import UpgradePage from "./pages/UpgradePage";
 import { isLoggedIn } from "./api/authApi";
-import { buildMarketplaceUrl, readMarketplaceSearch } from "./utils/marketplaceSearch";
+import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
 
 // Sends a signed-out visitor to sign in, then back to the page (query included) they asked for.
 // The backend enforces auth regardless; this just avoids showing a form they can't submit.
@@ -58,7 +58,9 @@ export default function App() {
   // On the marketplace a header search just updates the results (and the URL); anywhere else it
   // navigates to the marketplace with the search applied.
   const handleHeaderSearch = (term, tags) => {
-    const url = buildMarketplaceUrl(term, tags);
+    // Searching from the marketplace keeps what's being browsed (animals or equipment).
+    const category = pathname === "/marketplace" ? readMarketplaceCategory() : "live_animal";
+    const url = buildMarketplaceUrl(term, tags, category);
     if (pathname !== "/marketplace") {
       window.location.href = url;
       return;
