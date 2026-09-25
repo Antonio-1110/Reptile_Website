@@ -301,7 +301,13 @@ and each `*_exclude` variant inverts its counterpart:
 - `GET /<id>/` — public profile: display name, username, account type, verified badge, rating, review
   count, bio, member since and listing counts. No contact details. Only accounts that have listed
   something have one (404 otherwise), so account ids don't reveal buyers' names. Their listings come
-  from `GET /api/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`).
+  from `GET /api/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`). For a signed-in viewer
+  it also says `can_review` and includes `my_review`.
+- `GET /<id>/reviews/` — public, newest first; reviewers appear by username only. `POST` (signed in,
+  `{rating: 1-5, comment}`) writes or updates your review; only someone who contacted the seller about
+  a listing, or completed an auction purchase from them, may (403 otherwise). `DELETE` removes yours.
+  `seller_rating` / `total_reviews` are recomputed from the reviews on every change (`account/reviews.py`)
+  and are never set directly.
 
 ### Auctions (`/api/auctions/`)
 

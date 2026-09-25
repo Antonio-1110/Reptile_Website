@@ -71,7 +71,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
 - [ ] Listing status: available / reserved / sold, so sold items aren't deleted
-- [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
+- [x] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation
 - [ ] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
 - [ ] Structured genetics: a `Gene` model per species (recessive / co-dominant / dominant, het %)

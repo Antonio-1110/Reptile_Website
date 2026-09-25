@@ -18,10 +18,13 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
-from account.models import Account
+from account.models import Account, Review
+from account.reviews import refresh_rating
 from auction import orders
 from auction.models import Auction, Bid, Deposit, Order
 from auction.services import deposit_amount_for
+from account.models import Review
+from account.reviews import refresh_rating
 from post.models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, Species
 
 DEMO_EMAIL_DOMAIN = 'demo.morphmarket.test'
@@ -210,39 +213,45 @@ EQUIPMENT = [
     ('Reptile Carrier Box (Ventilated)', 'Clear ventilated carrier, perfect for expos and vet visits.', (250, 500)),
 ]
 
+# Demo review comments: [for 1-3 stars, for 4-5 stars].
+REVIEW_COMMENTS = {
+    False: ['Animal was fine but replies were slow.', '交貨延遲了幾天，不過個體沒問題。', 'Smaller than the photos suggested.'],
+    True: ['Healthy animal, careful packing, would buy again.', '個體健康，賣家很有耐心回答問題！', 'Exactly as described. Great communication.', 'Smooth pickup, very knowledgeable breeder.'],
+}
+
 # username, display name (first, last), account setup, home location, what they list.
 SELLERS = [
     dict(username='apex_exotics', first_name='Apex', last_name='Exotics', account_type='commercial', paid=True,
-         verified=True, rating=4.9, reviews=312, location='TPE', line_id='apexexotics',
+         verified=True, rating=4.9, location='TPE', line_id='apexexotics',
          bio='Taipei ball python and corn snake breeder since 2014. Shipping island-wide with live arrival guarantee.',
          animals={'Ball Pythons': 8, 'Corn Snakes': 3}, equipment=4),
     dict(username='highridge_geckos', first_name='High Ridge', last_name='Geckos', account_type='commercial', paid=True,
-         verified=True, rating=4.8, reviews=187, location='NWT', line_id='highridgegecko',
+         verified=True, rating=4.8, location='NWT', line_id='highridgegecko',
          bio='Small-batch crested and leopard gecko projects focused on Lilly White and Harlequin lines.',
          animals={'Crested Geckos': 7, 'Leopard Geckos': 3}, equipment=2),
     dict(username='morph_kingdom', first_name='Morph', last_name='Kingdom', account_type='commercial', paid=False,
-         verified=True, rating=4.6, reviews=64, location='TXG', line_id='morphkingdom',
+         verified=True, rating=4.6, location='TXG', line_id='morphkingdom',
          bio='Mixed collection in Taichung — pythons, geckos, corns and beardies.',
          animals={'Ball Pythons': 4, 'Leopard Geckos': 4, 'Corn Snakes': 3, 'Bearded Dragons': 3}, equipment=2),
     dict(username='dragon_den_tw', first_name='Dragon', last_name='Den', account_type='commercial', paid=False,
-         verified=False, rating=4.2, reviews=23, location='KHH', line_id='dragonden',
+         verified=False, rating=4.2, location='KHH', line_id='dragonden',
          bio='Bearded dragon specialists in Kaohsiung. Hypo and Leatherback projects.',
          animals={'Bearded Dragons': 5, 'Leopard Geckos': 2}, equipment=3),
     dict(username='shell_and_scale', first_name='Shell', last_name='& Scale', account_type='commercial', paid=False,
-         verified=False, rating=3.7, reviews=8, location='TNN', line_id='shellscale',
+         verified=False, rating=3.7, location='TNN', line_id='shellscale',
          bio='Tainan turtle keepers. Captive-bred mud turtles and terrapins only.',
          animals={'紅面蛋': 4, '鑽紋龜': 3}, equipment=0),
     dict(username='mei_lin', first_name='美', last_name='林', account_type='hobbyist', paid=False,
-         verified=False, rating=0.0, reviews=0, location='TYN', line_id='meilin_gecko',
+         verified=False, rating=0.0, location='TYN', line_id='meilin_gecko',
          bio='', animals={'Crested Geckos': 3, 'Leopard Geckos': 2}, equipment=0),  # exactly at the 5-post hobbyist cap
     dict(username='kevin_chen', first_name='Kevin', last_name='Chen', account_type='hobbyist', paid=False,
-         verified=False, rating=0.0, reviews=0, location='HSZ', line_id='',
+         verified=False, rating=0.0, location='HSZ', line_id='',
          bio='', animals={'Ball Pythons': 2, 'Corn Snakes': 1}, equipment=0),
     dict(username='tina_turtles', first_name='Tina', last_name='Wang', account_type='hobbyist', paid=False,
-         verified=False, rating=0.0, reviews=0, location='ILA', line_id='tinaturtle',
+         verified=False, rating=0.0, location='ILA', line_id='tinaturtle',
          bio='', animals={'紅面蛋': 1, '鑽紋龜': 1}, equipment=0),
     dict(username='jay_wu', first_name='Jay', last_name='Wu', account_type='hobbyist', paid=False,
-         verified=False, rating=0.0, reviews=0, location='HUA', line_id='',
+         verified=False, rating=0.0, location='HUA', line_id='',
          bio='', animals={'Bearded Dragons': 1}, equipment=1),
 ]
 
@@ -324,11 +333,11 @@ class Command(BaseCommand):
             account_type=spec['account_type'],
             is_paid_account=spec['paid'],
             verified_seller=spec['verified'],
-            seller_rating=spec['rating'] if is_commercial else 0.0,
-            total_reviews=spec['reviews'] if is_commercial else 0,
             bio=spec['bio'] or None,
             line_id=spec['line_id'] or None,
         )
+        # The rating the demo reviews for this seller should average around (see create_reviews).
+        seller.demo_rating = spec['rating']
         planned = sum(spec['animals'].values()) + spec['equipment']
         assert planned <= seller.max_post_count, f"{seller.username} would exceed its post limit"
 
@@ -431,6 +440,26 @@ class Command(BaseCommand):
         )
         for reporter, post in zip(buyers, self.rng.sample(live_posts, len(buyers))):
             Report.objects.create(reporter=reporter, live_animal_post=post)
+        self.create_reviews(sellers)
+
+    def create_reviews(self, sellers):
+        # Real reviews from buyers who contacted a seller, so seller_rating and total_reviews come from
+        # account.reviews like they do on the site, around each seller's demo rating.
+        by_id = {seller.id: seller for seller in sellers}
+        pairs = set(ContactRequest.objects.filter(live_animal_post__account__in=sellers).values_list(
+            'requester_id', 'live_animal_post__account_id',
+        ))
+        for requester_id, seller_id in sorted(pairs):
+            seller = by_id[seller_id]
+            if requester_id == seller_id or not seller.demo_rating:
+                continue
+            rating = max(1, min(5, round(self.rng.gauss(seller.demo_rating, 0.6))))
+            Review.objects.create(
+                seller=seller, reviewer_id=requester_id, rating=rating,
+                comment=self.rng.choice(REVIEW_COMMENTS[rating >= 4]),
+            )
+        for seller in sellers:
+            refresh_rating(seller)
 
     # --- auctions -------------------------------------------------------------------------------
 
