@@ -1,0 +1,144 @@
+.upgrade-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+.upgrade-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.upgrade-kicker {
+  margin: 0;
+  color: #8ab4ff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.upgrade-title {
+  margin: 8px 0 0;
+  color: #f3f4f6;
+  font-size: 32px;
+}
+
+.upgrade-subtitle {
+  margin: 8px 0 0;
+  color: #cbd5e1;
+}
+
+.upgrade-back {
+  padding: 10px 18px;
+  border: 1px solid #3a4d72;
+  border-radius: 999px;
+  color: #dce7ff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.upgrade-loading {
+  color: #cbd5e1;
+}
+
+.upgrade-error {
+  color: #fca5a5;
+}
+
+.upgrade-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.upgrade-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid #2d3748;
+  border-radius: 18px;
+  background: #111827;
+}
+
+.upgrade-plan.is-current {
+  border-color: #60a5fa;
+}
+
+.upgrade-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.upgrade-plan-name {
+  margin: 0;
+  color: #f9fafb;
+  font-size: 20px;
+}
+
+.upgrade-plan-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.upgrade-plan-description {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.upgrade-plan-features {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+/* Pushes the button to the bottom so buttons line up across plans of different lengths. */
+.upgrade-plan-choose {
+  margin-top: auto;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  color: #08111f;
+  background: #60a5fa;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upgrade-plan-choose:hover {
+  background: #93c5fd;
+}
+
+.upgrade-checkout-placeholder {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border: 1px dashed #3a4d72;
+  border-radius: 14px;
+  color: #cbd5e1;
+  background: #0f172a;
+}
+
+.upgrade-checkout-placeholder p {
+  margin: 0;
+}
+
+.upgrade-checkout-placeholder .upgrade-checkout-title {
+  margin-bottom: 6px;
+  color: #f9fafb;
+  font-weight: 700;
+}

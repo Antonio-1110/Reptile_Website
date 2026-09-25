@@ -1,0 +1,68 @@
+.marketplace-page {
+  min-height: 100vh;
+  color: oklch(96.7% 0.003 264.542);
+  background-color: oklch(21% 0.034 264.665);
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.marketplace-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.5rem;
+}
+
+.marketplace-main {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.marketplace-results {
+  width: 100%;
+}
+
+.marketplace-heading {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: calc(1.75 / 1.25);
+}
+
+@media (min-width: 48rem) {
+  .marketplace-layout {
+    flex-direction: row;
+  }
+}
+
+.marketplace-feed {
+  transition: opacity 150ms ease;
+}
+
+/* Previous results stay on screen, dimmed, while a new search/filter loads. */
+.marketplace-feed.is-refreshing {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.marketplace-sentinel {
+  height: 1px;
+}
+
+.marketplace-status {
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.marketplace-status--more {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.marketplace-retry {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid oklch(72.3% 0.219 149.579);
+  border-radius: 999px;
+  color: oklch(87.1% 0.15 154.449);
+  cursor: pointer;
+}

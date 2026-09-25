@@ -1,0 +1,6 @@
+.include-exclude-filter { position: relative; width: 100%; }
+.include-exclude-trigger { display: flex; justify-content: space-between; width: 100%; padding: 8px; color: var(--color-text-muted); background: var(--color-surface-muted); border: 1px solid var(--color-border); border-radius: 4px; cursor: pointer; text-align: left; }
+.include-exclude-trigger.selected { border-color: var(--color-accent-bright); }
+.include-exclude-popover { position: absolute; z-index: 10; width: 224px; margin-top: 6px; padding: 10px; background: var(--color-surface-deep); border: 1px solid var(--color-border); border-radius: 6px; box-shadow: 0 8px 20px var(--color-overlay); }
+.include-exclude-modes, .include-exclude-options { display: flex; flex-wrap: wrap; gap: 4px; }
+.include-exclude-modes { margin-bottom: 8px; }

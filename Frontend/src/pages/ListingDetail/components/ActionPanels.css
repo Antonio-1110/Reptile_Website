@@ -1,0 +1,184 @@
+/* Shared by the summary panel's action boxes: ContactSellerPanel, BuyNowPanel and OrderPanel. */
+.action-panel-primary,
+.action-panel-secondary {
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.action-panel-primary {
+  width: 100%;
+  border: none;
+  color: #08111f;
+  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.3);
+}
+
+.action-panel-secondary {
+  border: 1px solid #3b82f6;
+  color: #dbeafe;
+  background: #0f172a;
+  white-space: nowrap;
+}
+
+.action-panel-primary:disabled,
+.action-panel-secondary:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.action-panel-primary:focus-visible,
+.action-panel-secondary:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.action-panel-hint {
+  padding: 14px 16px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  color: #94a3b8;
+  background: #0f172a;
+  font-size: 14px;
+  text-align: center;
+}
+
+.action-panel-card {
+  padding: 18px;
+  border: 1px solid #1d4ed8;
+  border-radius: 16px;
+  background: #0f172a;
+}
+
+.action-panel-heading {
+  margin-bottom: 12px;
+  color: #dbeafe;
+  font-weight: 700;
+}
+
+.action-panel-card p {
+  margin: 0 0 12px;
+  color: #94a3b8;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.action-panel-lines {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.action-panel-lines > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-panel-lines dt {
+  color: #94a3b8;
+}
+
+.action-panel-lines dd {
+  margin: 0;
+  color: #f8fafc;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.action-panel-card .action-panel-small {
+  font-size: 12px;
+}
+
+.action-panel-small a {
+  color: #93c5fd;
+}
+
+.action-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.action-panel-row .action-panel-primary {
+  flex: 1 1 auto;
+  width: auto;
+}
+
+/* Buy now */
+.action-panel-card--buy-now {
+  border-color: #1e3a8a;
+}
+
+.action-panel-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 10px;
+}
+
+.action-panel-price strong {
+  color: #dbeafe;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.action-panel-card .action-panel-race {
+  padding: 10px 12px;
+  border: 1px solid rgba(251, 146, 60, 0.5);
+  border-radius: 12px;
+  color: #fed7aa;
+  background: rgba(124, 45, 18, 0.35);
+}
+
+.action-panel-card .action-panel-confirm {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.action-panel-card--success {
+  border-color: rgba(74, 222, 128, 0.55);
+}
+
+.action-panel-subheading {
+  margin-top: 16px;
+}
+
+.action-panel-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.action-panel-input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  color: #f8fafc;
+  background: #111827;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.action-panel-input:focus {
+  border-color: #60a5fa;
+  outline: 3px solid rgb(96 165 250 / 20%);
+}
+
+.action-panel-error {
+  margin: 8px 0 0;
+  color: #f87171;
+  font-size: 13px;
+}
+

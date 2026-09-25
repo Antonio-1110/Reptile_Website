@@ -1,0 +1,172 @@
+.card-container {
+  --card-radius: 1rem;
+  --card-border: rgba(148, 163, 184, 0.2);
+  --card-bg: #111827;
+  --card-muted: #94a3b8;
+  --card-text: #f8fafc;
+  --card-accent: #60a5fa;
+  --card-accent-strong: #3b82f6;
+  --card-price: #4ade80;
+
+  display: block;
+  width: 100%;
+  min-height: 420px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.card-container:hover {
+  border-color: rgba(148, 163, 184, 0.45);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
+  transform: translateY(-1px);
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  /* Matches the cover crop tool's aspect ratio (COVER_ASPECT_RATIO in ImageCropModal.jsx). */
+  aspect-ratio: 4 / 3;
+  height: auto;
+  object-fit: cover;
+  background: #0f172a;
+}
+
+.card-content {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.card-title {
+  margin: 0;
+  color: var(--card-text);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.8em;
+}
+
+.card-sex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #dbeafe;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Exactly two badge rows on every card, like the title's two lines, so the location, price and seller
+   rows line up across the grid no matter how many genes a listing has. Extra rows are clipped; the
+   full list is in the tooltip. */
+.card-genes {
+  --gene-badge-height: 1.5rem;
+  --gene-gap: 0.35rem;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--gene-gap);
+  height: calc(2 * var(--gene-badge-height) + var(--gene-gap));
+  overflow: hidden;
+}
+
+.card-gene-badge {
+  box-sizing: border-box;
+  display: inline-block;
+  height: var(--gene-badge-height);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 0.5rem;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  border-radius: 0.45rem;
+  background: rgba(20, 83, 45, 0.35);
+  color: #bbf7d0;
+  font-size: 0.68rem;
+  /* Centres the text vertically inside the fixed height (minus the 1px top and bottom borders). */
+  line-height: calc(var(--gene-badge-height) - 2px);
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.card-location {
+  min-width: 0;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--card-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.card-price {
+  color: var(--card-price);
+  font-size: 1.15rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.card-seller-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 0.25rem;
+}
+
+.card-seller-row > span {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.card-seller-row > a {
+  color: #93c5fd;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 560px) {
+  .card-container {
+    min-height: 390px;
+  }
+
+  .card-image {
+    height: 200px;
+  }
+}

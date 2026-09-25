@@ -1,0 +1,195 @@
+.auctions-page {
+  min-height: 100vh;
+  color: #e5ebf7;
+  background: #0b1220;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.auctions-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.auctions-intro {
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #1f2937;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, #111827, #0f172a 60%, rgba(20, 83, 45, 0.35));
+}
+
+.auctions-kicker {
+  margin: 0 0 0.35rem;
+  color: #4ade80;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auctions-title {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.auctions-lead {
+  max-width: 48rem;
+  margin: 0.5rem 0 1.25rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.auctions-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auctions-step {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid #1f2937;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.auctions-step > span:last-child {
+  display: grid;
+  gap: 0.2rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.auctions-step strong {
+  color: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.auctions-step-number {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  color: #052e16;
+  background: #4ade80;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.auctions-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.auctions-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid #1f2937;
+  border-radius: 999px;
+  background: #111827;
+}
+
+.auctions-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 999px;
+  color: #94a3b8;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auctions-tab.is-active {
+  color: #052e16;
+  background: #4ade80;
+}
+
+.auctions-tab:focus-visible,
+.auctions-retry:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.auctions-count {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.auctions-status {
+  color: #94a3b8;
+}
+
+.auctions-status--more {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.auctions-retry {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #22c55e;
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.auctions-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  border: 1px dashed #334155;
+  border-radius: 1.5rem;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.auctions-empty > span {
+  font-size: 2.5rem;
+}
+
+.auctions-empty p {
+  margin: 0;
+}
+
+.auctions-empty a {
+  color: #93c5fd;
+}
+
+.auctions-sentinel {
+  height: 1px;
+}
+
+@media (max-width: 760px) {
+  .auctions-inner {
+    padding: 1rem;
+  }
+
+  .auctions-intro {
+    padding: 1.1rem;
+  }
+
+  .auctions-title {
+    font-size: 1.6rem;
+  }
+
+  .auctions-steps {
+    grid-template-columns: 1fr;
+  }
+}

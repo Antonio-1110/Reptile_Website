@@ -1,0 +1,107 @@
+/* Building blocks shared by the create/edit listing form sections. */
+
+.listing-form-section > :where(:not(:last-child)) {
+  margin-bottom: 1rem;
+}
+
+.listing-form-section--divided {
+  padding-top: 1.5rem;
+  border-top: 1px solid oklch(37.3% 0.034 259.733);
+}
+
+.listing-form-section-title {
+  color: oklch(96.7% 0.003 264.542);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: calc(1.75 / 1.125);
+}
+
+.listing-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: calc(1.25 / 0.875);
+}
+
+.listing-form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid oklch(37.3% 0.034 259.733);
+  border-radius: 0.5rem;
+  color: oklch(96.7% 0.003 264.542);
+  background-color: oklch(27.8% 0.033 256.848);
+  outline-style: none;
+}
+
+.listing-form-input:focus {
+  border-color: oklch(72.3% 0.219 149.579);
+}
+
+.listing-form-input--fixed {
+  height: 2.5rem;
+}
+
+.listing-form-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.listing-form-choices {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.listing-form-check-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid oklch(37.3% 0.034 259.733);
+  border-radius: 0.5rem;
+  color: oklch(87.2% 0.01 258.338);
+  background-color: oklch(27.8% 0.033 256.848);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+.listing-form-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: oklch(72.3% 0.219 149.579);
+}
+
+.listing-form-hint,
+.listing-form-error {
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+.listing-form-hint {
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.listing-form-error {
+  color: oklch(70.4% 0.191 22.216);
+}
+
+@media (min-width: 40rem) {
+  .listing-form-choices {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 48rem) {
+  .listing-form-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .listing-form-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .listing-form-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

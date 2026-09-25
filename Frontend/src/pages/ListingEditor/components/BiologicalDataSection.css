@@ -1,0 +1,38 @@
+.biological-sex-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.biological-sex-option {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid oklch(37.3% 0.034 259.733);
+  border-radius: 0.5rem;
+  color: oklch(87.2% 0.01 258.338);
+  background-color: oklch(27.8% 0.033 256.848);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: calc(1.25 / 0.875);
+}
+
+.biological-sex-option.is-selected {
+  border-color: oklch(72.3% 0.219 149.579);
+  color: #fff;
+  background-color: oklch(62.7% 0.194 149.214);
+}
+
+.biological-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.biological-trait {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  color: oklch(79.2% 0.209 151.711);
+  background-color: oklch(26.6% 0.065 152.934);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+}

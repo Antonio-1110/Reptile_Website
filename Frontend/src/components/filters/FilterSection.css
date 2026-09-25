@@ -1,0 +1,22 @@
+.filter-section { margin: 0; }
+.filter-section h4 { margin: 0 0 8px; font-size: 14px; }
+
+.filter-controls {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+/* Toggle-style option button shared by the multi-select and include/exclude sections. */
+.filter-option {
+  padding: 6px 8px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-option.selected { color: var(--color-text); background: var(--color-accent); border-color: var(--color-accent-bright); }

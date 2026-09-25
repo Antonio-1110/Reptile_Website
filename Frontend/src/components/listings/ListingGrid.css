@@ -1,0 +1,26 @@
+/* auto-fill (not auto-fit) keeps empty columns, so one or two results stay the same width as a
+   full row instead of stretching across the page. */
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  max-width: none;
+  align-items: stretch;
+}
+
+.listing-grid--featured {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+@media (max-width: 900px) {
+  .listing-grid:not(.listing-grid--featured) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .listing-grid:not(.listing-grid--featured) {
+    grid-template-columns: 1fr;
+  }
+}

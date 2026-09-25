@@ -1,0 +1,2 @@
+.multi-select-options { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
+.multi-select-options .filter-option:hover { color: var(--color-text); background: var(--color-accent); border-color: var(--color-accent-bright); }

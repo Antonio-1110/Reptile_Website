@@ -24,3 +24,15 @@ dist-ssr
 *.sw?
 
 /docs/
+__pycache__/
+.dev/
+# Local secrets, data and uploads
+.env
+superuser.txt
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+.venv/
+
+# Vite dependency cache
+.vite/

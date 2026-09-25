@@ -1,0 +1,156 @@
+.my-listings-signed-out {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: #f8fafc;
+  background: #0b1220;
+}
+
+.my-listings-signed-out-inner {
+  text-align: center;
+}
+
+.my-listings-signed-out-inner h1 {
+  margin: 0;
+}
+
+.my-listings-signed-out-inner a {
+  display: inline-block;
+  margin-top: 16px;
+  color: #93c5fd;
+}
+
+.my-listings-page {
+  min-height: 100vh;
+  color: #e5ebf7;
+  background: #0b1220;
+  font-family: sans-serif;
+}
+
+.my-listings-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.my-listings-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.my-listings-header h1 {
+  margin: 0 0 4px;
+  font-size: 28px;
+}
+
+.my-listings-header p {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.my-listings-new {
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: #08111f;
+  background: #60a5fa;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.my-listings-error {
+  color: #f87171;
+}
+
+.my-listings-status {
+  color: #94a3b8;
+}
+
+.my-listings-empty {
+  padding: 32px;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  color: #94a3b8;
+  background: #111827;
+  text-align: center;
+}
+
+.my-listings-list {
+  display: grid;
+  gap: 12px;
+}
+
+.my-listings-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  background: #111827;
+}
+
+.my-listings-row-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.my-listings-row-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.my-listings-category {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #93c5fd;
+  background: #1e293b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.my-listings-price {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.my-listings-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.my-listings-edit,
+.my-listings-delete {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.my-listings-edit {
+  border: 1px solid #334155;
+  color: #dbeafe;
+  text-decoration: none;
+}
+
+.my-listings-delete {
+  border: 1px solid #7f1d1d;
+  color: #f87171;
+  background: transparent;
+  cursor: pointer;
+}
+
+.my-listings-delete:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

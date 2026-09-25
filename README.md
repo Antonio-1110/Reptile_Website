@@ -1,16 +1,147 @@
-# React + Vite
+# Reptile Marketplace
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A reptile marketplace app with a React + Vite frontend and a Django REST API backend.
 
-Currently, two official plugins are available:
+## Project overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project is organized into two main app areas:
 
-## React Compiler
+- **Frontend** — React UI for browsing listings, posting animals/equipment, and managing seller
+  accounts. See [Frontend/README.md](Frontend/README.md).
+- **Backend** — Django + DRF API for authentication, listings, filtering, and seller logic. See
+  [backend/README.md](backend/README.md).
 
-The React Compiler is not enabled on this template. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+- Frontend: React 19, Vite, Tailwind CSS, i18next
+- Backend: Django 5, Django REST Framework
+- Database: SQLite for local development
+- Auth: token-based authentication via Django REST Framework's authtoken
+- CORS: enabled for local frontend development ports
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Repository structure
+
+```text
+reptile_website/
+├── .github/
+│   ├── AGENTS.md               # guide for AI coding agents (source of truth)
+│   ├── copilot-instructions.md # Copilot summary, points to AGENTS.md
+│   └── TODO.md
+├── AGENTS.md / CLAUDE.md       # pointers to .github/AGENTS.md for agents that look at the root
+├── backend/
+│   ├── account/            # auth + seller profile
+│   ├── post/                # listings, species, image/post limits
+│   ├── backend/              # project settings, urls
+│   ├── manage.py
+│   ├── requirements.txt
+│   ├── db.sqlite3            # local dev database
+│   └── README.md
+├── Frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── index.html
+│   └── README.md
+├── docs/
+│   ├── README.md               # index of docs and what each one is for
+│   ├── API_ENDPOINTS.md         # current API contract (source of truth)
+│   ├── DEV_TROUBLESHOOTING.md   # seeding data, db reset, curl examples
+│   └── SYSTEM_DESIGN.md         # original architecture vision doc
+├── start-dev.sh
+├── stop-dev.sh
+└── README.md
+```
+
+## Local setup
+
+### Start and stop both services
+
+From the project root:
+
+```bash
+./start-dev.sh
+./stop-dev.sh
+```
+
+This runs the backend at `http://127.0.0.1:8000` and the frontend at `http://127.0.0.1:5173`. Runtime
+logs are written under `.dev/logs/`.
+
+### Frontend only
+
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Runs at `http://localhost:5173`. Details in [Frontend/README.md](Frontend/README.md).
+
+### Backend only
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # sets DJANGO_DEBUG=1; without it Django refuses to start with no secret key
+python3 manage.py migrate
+python3 manage.py runserver
+```
+
+Runs at `http://127.0.0.1:8000/`. Details in [backend/README.md](backend/README.md).
+
+## API overview
+
+Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md).
+
+### Authentication (`/api/auth/`)
+
+- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
+- `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota
+
+### Posts (`/api/posts/`)
+
+- `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
+- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
+- `GET /species/`
+
+### Auctions (`/api/auctions/`)
+
+- `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
+  species, genes) for cards
+- `POST /` — paid commercial accounts only
+- `POST /<id>/deposit/`, `GET`/`POST /<id>/bids/`, `POST /<id>/cancel/`, `POST /<id>/buy-now/`,
+  `GET`/`POST /seller-bond/` (auth required)
+- `/orders/`: after a sale, the buyer's and seller's view of it (pay, hand over, confirm, report a
+  problem, runner-up offers)
+
+Notes:
+
+- Anyone may read published listings; only the listing's owning account may update or delete it.
+- Token auth is required for authenticated requests; CORS allows local frontend ports (`5173`, `3000`).
+- The backend models and serializers are the source of truth for field names and validation rules.
+
+## Account model rules
+
+The project supports a distinction between hobbyist and commercial users:
+
+- Hobbyist accounts: no rating requirement, lower post/image limits
+- Commercial accounts: rating is relevant, higher limits (higher still when paid)
+
+This split is enforced on the `Account` model (see [backend/README.md](backend/README.md#domain-model))
+and must stay consistent between model, serializer, and frontend copy.
+
+## Post and image limit guidance
+
+Post and image constraints are enforced in backend serializer logic (`PostLimitSerializerMixin`), not
+only on the frontend, so the rules remain consistent across all clients. The frontend mirrors these
+limits for immediate user feedback but is never the enforcement authority.
+
+## Contributor notes
+
+- Keep frontend and backend responsibilities separated; treat the backend as the source of truth for
+  API contracts.
+- Update [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md) when adding new fields, routes, permissions, or
+  account rules.
+- See [.github/TODO.md](.github/TODO.md) for open work and planned features.

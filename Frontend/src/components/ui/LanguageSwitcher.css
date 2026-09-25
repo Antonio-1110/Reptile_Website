@@ -1,0 +1,42 @@
+.language-switcher {
+  width: 4.5rem;
+  flex: 0 0 4.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  line-height: 1.1;
+}
+
+.language-switcher button {
+  width: 100%;
+  padding: 1px 3px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: nowrap;
+}
+
+.language-divider {
+  width: 100%;
+  height: 1px;
+  margin: 1px 0;
+  overflow: hidden;
+  color: transparent;
+  background-color: var(--color-text-faint);
+}
+
+.language-option {
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.language-option:hover {
+  color: #fff;
+}
+
+.language-option.is-active {
+  color: oklch(79.2% 0.209 151.711);
+}

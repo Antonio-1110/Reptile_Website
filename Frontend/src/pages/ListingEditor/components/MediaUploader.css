@@ -1,0 +1,111 @@
+.media-dropzone {
+  display: block;
+  padding: 1.5rem;
+  border: 1px dashed oklch(44.6% 0.03 256.802);
+  border-radius: 0.5rem;
+  background-color: oklch(27.8% 0.033 256.848);
+  text-align: center;
+  cursor: pointer;
+}
+
+.media-dropzone:hover {
+  border-color: oklch(72.3% 0.219 149.579);
+}
+
+.media-dropzone.is-disabled {
+  border-color: oklch(44.6% 0.03 256.802);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.media-dropzone-text {
+  color: oklch(87.2% 0.01 258.338);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+/* Visually hidden; the surrounding label is the click target. */
+.media-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.media-item > :where(:not(:last-child)) {
+  margin-bottom: 0.5rem;
+}
+
+.media-frame {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid oklch(37.3% 0.034 259.733);
+  border-radius: 0.5rem;
+}
+
+.media-frame.is-cover {
+  border-color: oklch(72.3% 0.219 149.579);
+}
+
+.media-preview {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+.media-remove {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  color: #fff;
+  background-color: color-mix(in oklab, oklch(21% 0.034 264.665) 80%, transparent);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+}
+
+.media-remove:hover {
+  background-color: oklch(57.7% 0.245 27.325);
+}
+
+.media-cover-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: oklch(87.2% 0.01 258.338);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+.media-cover-radio {
+  accent-color: oklch(72.3% 0.219 149.579);
+}
+
+.media-recrop {
+  color: oklch(79.2% 0.209 151.711);
+  font-size: 0.75rem;
+  line-height: calc(1 / 0.75);
+  text-decoration-line: underline;
+}
+
+.media-recrop:hover {
+  color: oklch(87.1% 0.15 154.449);
+}
+
+@media (min-width: 40rem) {
+  .media-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

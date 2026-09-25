@@ -1,0 +1,63 @@
+.auction-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.auction-countdown--small {
+  font-size: 0.72rem;
+}
+
+.auction-countdown--large {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.95rem;
+}
+
+.auction-countdown--live {
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.85);
+}
+
+.auction-countdown--ending {
+  border-color: rgba(251, 146, 60, 0.6);
+  color: #fed7aa;
+  background: rgba(124, 45, 18, 0.9);
+}
+
+.auction-countdown--upcoming {
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #dbeafe;
+  background: rgba(30, 58, 138, 0.85);
+}
+
+.auction-countdown--ended,
+.auction-countdown--cancelled {
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
+  background: rgba(30, 41, 59, 0.9);
+}
+
+.auction-countdown-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: currentColor;
+  animation: auction-countdown-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes auction-countdown-pulse {
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auction-countdown-dot {
+    animation: none;
+  }
+}

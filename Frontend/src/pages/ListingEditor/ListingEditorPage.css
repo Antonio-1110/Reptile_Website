@@ -1,0 +1,115 @@
+.listing-editor-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  color: oklch(96.7% 0.003 264.542);
+  background-color: oklch(21% 0.034 264.665);
+}
+
+.listing-editor-card {
+  max-width: 64rem;
+  margin-inline: auto;
+  padding: 1.5rem;
+  border: 1px solid oklch(27.8% 0.033 256.848);
+  border-radius: 0.75rem;
+  background-color: oklch(21% 0.034 264.665);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.listing-editor-back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: oklch(79.2% 0.209 151.711);
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+.listing-editor-back:hover {
+  color: oklch(87.1% 0.15 154.449);
+}
+
+.listing-editor-title {
+  margin-bottom: 0.5rem;
+  color: oklch(72.3% 0.219 149.579);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: calc(2 / 1.5);
+}
+
+.listing-editor-subtitle,
+.listing-editor-notice,
+.listing-editor-loading,
+.listing-editor-result {
+  font-size: 0.875rem;
+  line-height: calc(1.25 / 0.875);
+}
+
+.listing-editor-subtitle {
+  margin-bottom: 2rem;
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.listing-editor-notice {
+  margin-bottom: 1.5rem;
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.listing-editor-notice--error {
+  color: oklch(70.4% 0.191 22.216);
+}
+
+.listing-editor-loading {
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.listing-editor-form > :where(:not(:last-child)) {
+  margin-bottom: 2rem;
+}
+
+.listing-editor-submit {
+  width: 100%;
+  padding-block: 0.75rem;
+  border-radius: 0.5rem;
+  color: #fff;
+  background-color: oklch(62.7% 0.194 149.214);
+  font-weight: 700;
+  transition-property: color, background-color, border-color, opacity, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.listing-editor-submit:hover {
+  background-color: oklch(72.3% 0.219 149.579);
+}
+
+.listing-editor-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.listing-editor-result {
+  text-align: center;
+}
+
+.listing-editor-result--error {
+  color: oklch(70.4% 0.191 22.216);
+}
+
+.listing-editor-result--success {
+  color: oklch(79.2% 0.209 151.711);
+}
+
+@media (min-width: 40rem) {
+  .listing-editor-page {
+    padding-inline: 1.5rem;
+  }
+
+  .listing-editor-card {
+    padding: 2rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .listing-editor-card {
+    padding: 2.5rem;
+  }
+}

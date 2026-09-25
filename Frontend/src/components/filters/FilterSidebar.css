@@ -1,0 +1,40 @@
+.filter-sidebar {
+  width: 256px;
+  flex: 0 0 256px;
+  height: fit-content;
+  color: var(--color-text);
+  position: sticky;
+  top: 92px;
+  /* Taller than the viewport otherwise, which made the lower filters unreachable while the
+     (infinitely scrolling) results kept the sidebar stuck. */
+  max-height: calc(100vh - 92px - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 12px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.filter-sidebar-content {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-sidebar-content h2 {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border-muted);
+  font-size: 18px;
+}
+
+.filter-group { display: flex; flex-direction: column; gap: 20px; }
+
+@media (max-width: 767px) {
+  .filter-sidebar { width: 100%; flex-basis: auto; position: static; max-height: none; overflow: visible; }
+}

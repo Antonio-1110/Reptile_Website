@@ -1,0 +1,486 @@
+.listing-detail-loading {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.listing-detail-missing {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: #f8fafc;
+  background: #0b1220;
+}
+
+.listing-detail-missing-inner {
+  text-align: center;
+}
+
+.listing-detail-missing-inner h1 {
+  margin: 0;
+}
+
+.listing-detail-missing-inner a {
+  display: inline-block;
+  margin-top: 16px;
+  color: #93c5fd;
+}
+
+.listing-detail-page {
+  min-height: 100vh;
+  color: #e5ebf7;
+  background: #0b1220;
+  font-family: sans-serif;
+}
+
+.listing-detail-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.listing-detail-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.listing-detail-back {
+  padding: 10px 16px;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  color: #dbeafe;
+  background: #111827;
+  text-decoration: none;
+}
+
+.listing-detail-seller-tag {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* --- Layout ---
+   A long left column (photos, then everything you read) and a summary panel on the right that stays
+   in view while you scroll it, so the two columns never need matching heights. On narrow screens it
+   stacks as photos → summary → the rest. */
+.listing-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  /* The second row takes any leftover height, so a tall summary never opens a gap under the photos. */
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "gallery summary"
+    "content summary";
+  gap: 24px;
+}
+
+.listing-detail-gallery {
+  grid-area: gallery;
+}
+
+.listing-detail-summary {
+  grid-area: summary;
+  align-self: start;
+}
+
+.listing-detail-content {
+  display: grid;
+  grid-area: content;
+  align-content: start;
+  gap: 24px;
+}
+
+/* Pin the summary on screens tall enough for it. If it still grows past the screen (e.g. the buy-now
+   confirmation opens), it scrolls on its own, so its bottom buttons are never out of reach. */
+@media (min-width: 901px) and (min-height: 760px) {
+  .listing-detail-summary {
+    position: sticky;
+    /* Clears the sticky site header (about 82px tall; see components/layout/Header.css). */
+    top: 98px;
+    max-height: calc(100vh - 98px - 16px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 900px) {
+  .listing-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas:
+      "gallery"
+      "summary"
+      "content";
+  }
+}
+
+.listing-detail-card {
+  border: 1px solid #1f2937;
+  border-radius: 24px;
+  background: #111827;
+}
+
+/* --- Gallery --- */
+.listing-detail-gallery {
+  padding: 18px;
+}
+
+.listing-detail-hero-frame {
+  overflow: hidden;
+  border: 1px solid #334155;
+  border-radius: 18px;
+  background: #0f172a;
+}
+
+.listing-detail-hero-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.listing-detail-hero-image {
+  display: block;
+  width: 100%;
+  /* Matches the cover crop tool's aspect ratio (COVER_ASPECT_RATIO in ImageCropModal.jsx) and the cards. */
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #0f172a;
+}
+
+.listing-detail-thumbnails {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-top: 16px;
+}
+
+.listing-detail-thumbnail {
+  flex-shrink: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.listing-detail-thumbnail.is-selected {
+  border: 2px solid #60a5fa;
+}
+
+.listing-detail-thumbnail img {
+  display: block;
+  width: 110px;
+  height: 82px;
+  object-fit: cover;
+}
+
+/* --- Summary panel --- */
+.listing-detail-summary {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+.listing-detail-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.listing-detail-kicker {
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.listing-detail-kicker--auction {
+  color: #4ade80;
+}
+
+.listing-detail-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.listing-detail-rating {
+  color: #fbbf24;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.listing-detail-report {
+  padding: 0;
+  border: none;
+  color: #64748b;
+  background: transparent;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.listing-detail-report:disabled {
+  cursor: default;
+}
+
+.listing-detail-report.is-reported {
+  text-decoration: none;
+}
+
+.listing-detail-title {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.listing-detail-subtitle {
+  margin-top: -8px;
+  color: #cbd5e1;
+  font-size: 18px;
+}
+
+.listing-detail-genes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.listing-detail-gene {
+  padding: 8px 10px;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  color: #dbeafe;
+  background: #1e293b;
+  font-size: 12px;
+}
+
+.listing-detail-price {
+  font-size: 42px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.listing-detail-note {
+  margin: -4px 0 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.listing-detail-alert {
+  margin: 0;
+  color: #fbbf24;
+  font-size: 14px;
+}
+
+.listing-detail-retry {
+  padding: 2px 10px;
+  border: 1px solid #22c55e;
+  border-radius: 999px;
+  color: #bbf7d0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Auction price + countdown */
+.listing-detail-bid-price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.listing-detail-bid-price > div {
+  display: grid;
+  gap: 2px;
+}
+
+.listing-detail-bid-price span {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.listing-detail-bid-price strong {
+  color: #4ade80;
+  font-size: 40px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.listing-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.listing-detail-stats > div {
+  padding: 10px 12px;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  background: #0f172a;
+}
+
+.listing-detail-stats dt {
+  margin-bottom: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.listing-detail-stats dd {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.listing-detail-more-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  color: #dbeafe;
+  background: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.listing-detail-back:focus-visible,
+.listing-detail-hero-button:focus-visible,
+.listing-detail-thumbnail:focus-visible,
+.listing-detail-more-link:focus-visible,
+.listing-detail-retry:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* --- Lightbox --- */
+.listing-detail-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 6, 23, 0.82);
+}
+
+.listing-detail-lightbox-frame {
+  position: relative;
+  width: min(1100px, 92vw);
+  max-height: 90vh;
+  overflow: hidden;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  background: #020817;
+}
+
+.listing-detail-lightbox-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.8);
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.listing-detail-lightbox-image {
+  display: block;
+  width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+/* --- Left column sections --- */
+.listing-detail-section {
+  padding: 24px;
+}
+
+.listing-detail-section h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.listing-detail-about p {
+  margin: 0;
+  color: #dbeafe;
+  line-height: 1.8;
+}
+
+.listing-detail-care {
+  margin-top: 24px;
+}
+
+.listing-detail-care h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.listing-detail-facts-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.listing-detail-fact {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.listing-detail-fact:not(:last-child) {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.listing-detail-fact dt {
+  color: #94a3b8;
+}
+
+.listing-detail-fact dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 560px) {
+  .listing-detail-inner {
+    padding: 16px 16px 40px;
+  }
+
+  .listing-detail-title {
+    font-size: 28px;
+  }
+
+  .listing-detail-price,
+  .listing-detail-bid-price strong {
+    font-size: 32px;
+  }
+
+  .listing-detail-section {
+    padding: 18px;
+  }
+}

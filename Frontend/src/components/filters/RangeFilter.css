@@ -1,0 +1,16 @@
+.range-filter { width: 100%; }
+.range-filter-inputs { display: flex; gap: 8px; margin-top: 8px; }
+
+.range-filter-inputs > input {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px;
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.range-filter-inputs > input:focus { outline: none; border-color: var(--color-accent-bright); }

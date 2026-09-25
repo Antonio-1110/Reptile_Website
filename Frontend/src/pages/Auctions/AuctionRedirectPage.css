@@ -1,0 +1,13 @@
+.auction-redirect {
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  min-height: 60vh;
+  padding: 1rem;
+  color: #e5ebf7;
+  text-align: center;
+}
+
+.auction-redirect a {
+  color: #93c5fd;
+}
