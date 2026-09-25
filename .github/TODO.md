@@ -7,7 +7,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 ## High priority
 
 - [ ] Finalize the frontend/backend data contract for listing creation and profile updates
-- [ ] Validate hobbyist vs commercial account workflows end-to-end
+- [x] Validate hobbyist vs commercial account workflows end-to-end (checked by hand; now covered by
+      `account.tests.PlanWorkflowTests`)
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
 - [ ] Confirm authentication flow works in the browser for login and signup
