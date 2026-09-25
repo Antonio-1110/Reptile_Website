@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
 import { getSexKey } from '../../api/listingsApi';
+import FavoriteButton from './FavoriteButton';
 
 export default function ListingCard({ animal }) {
   const { t } = useTranslation();
@@ -12,13 +13,16 @@ export default function ListingCard({ animal }) {
     // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
     // The title link stretches over the whole card instead (see .card-title-link::after).
     <article className="card-container">
-      <img
-        src={animal.image}
-        alt={animal.title}
-        className="card-image"
-        loading="lazy"
-        decoding="async"
-      />
+      <div className="card-media">
+        <img
+          src={animal.image}
+          alt={animal.title}
+          className="card-image"
+          loading="lazy"
+          decoding="async"
+        />
+        <FavoriteButton listingId={animal.id} initial={animal.isFavorite} className="card-favorite" />
+      </div>
       
       <div className="card-content">
         <div className="card-header">

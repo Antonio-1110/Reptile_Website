@@ -5,7 +5,7 @@ import FilterSidebar from "../components/filters/FilterSidebar";
 import EndOfResultsCard from "../components/listings/EndOfResultsCard";
 import ListingCard from "../components/listings/ListingCard";
 import ListingGrid from "../components/listings/ListingGrid";
-import { getListingsPage } from "../api/listingsApi";
+import { getListingsPage, isLoggedIn } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 
 const initialFilters = {
@@ -94,7 +94,10 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
         <FilterSidebar filters={filters} setFilters={setFilters} />
         <main className="marketplace-main">
           <div className="marketplace-results" aria-busy={Boolean(feed.loadingPage)}>
-            <h1 className="marketplace-heading">{t("listings.available", { count: feed.count })}</h1>
+            <div className="marketplace-heading-row">
+              <h1 className="marketplace-heading">{t("listings.available", { count: feed.count })}</h1>
+              {isLoggedIn() && <a href="/saved" className="marketplace-saved-link">♥ {t("favorites.title")}</a>}
+            </div>
             {isFirstLoad && <p className="marketplace-status">{t("listings.loading")}</p>}
 
             {(hasListings || reachedEnd) && (

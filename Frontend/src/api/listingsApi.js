@@ -26,6 +26,7 @@ function normalizeListing(item) {
     size: item.size_cm,
     weight: item.weight_grams,
     shippingMethods: item.shipping_methods || [],
+    isFavorite: Boolean(item.is_favorite), // saved by the signed-in viewer
     postedDays: item.posted_days ?? 0,
     guideNotes: item.guide_notes || "",
     gallery: item.gallery || [],
@@ -41,6 +42,17 @@ async function request(path) {
 }
 
 const requestWithAuth = authFetch;
+
+// Public listing reads, sent with the viewer's token when there is one so `is_favorite` is theirs. A
+// token that can't be refreshed any more mustn't break a public page, so a 401 retries anonymously.
+async function readListings(path) {
+  try {
+    return await authFetch(path, { method: "GET" });
+  } catch (error) {
+    if (error.status === 401) return request(path);
+    throw error;
+  }
+}
 const requestWithAuthGet = (path) => authFetch(path, { method: "GET" });
 
 // List endpoints are paginated (DRF PAGE_SIZE); the UI filters client-side, so it needs every page.
@@ -206,7 +218,7 @@ function buildListingParams({ search = "", tags = [], filters = {} }) {
 export async function getListingsPage({ page = 1, ...query } = {}) {
   const params = buildListingParams(query);
   params.set("page", page);
-  const payload = await request(`/posts/live-animals/?${params}`);
+  const payload = await readListings(`/posts/live-animals/?${params}`);
   return {
     results: payload.results.map(normalizeListing),
     count: payload.count,
@@ -214,8 +226,20 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
   };
 }
 
+// Save (on = true) or unsave a listing for the signed-in user. Returns the new state.
+export async function setFavorite(id, category, on) {
+  const result = await requestWithAuth(`${listingEndpoint(category, id)}favorite/`, { method: on ? "POST" : "DELETE" });
+  return Boolean(result?.is_favorite);
+}
+
+// One page of the signed-in user's saved animals, most recently saved first.
+export async function getFavoritesPage(page = 1) {
+  const payload = await requestWithAuth(`/posts/live-animals/favorites/?page=${page}`, { method: "GET" });
+  return { results: payload.results.map(normalizeListing), count: payload.count, hasMore: Boolean(payload.next) };
+}
+
 export async function getListing(id) {
-  return normalizeListing(await request(`/posts/live-animals/${id}/`));
+  return normalizeListing(await readListings(`/posts/live-animals/${id}/`));
 }
 
 // What "Contact seller" would send: the signed-in user's own contact details ({contact, already_sent}).

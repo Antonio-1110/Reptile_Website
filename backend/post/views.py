@@ -4,15 +4,18 @@ import uuid
 from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import transaction
+from django.db.models import Exists, OuterRef
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
+from common.money import format_money
 from common.notifications import contact_lines, send_notification
 from .serializer import (
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
 from .filters import LiveAnimalPostFilter
-from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Report
+from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -42,6 +45,62 @@ def send_inquiry_to_seller(requester, post):
         return subject, body
 
     send_notification([post.account.email], build)
+
+
+def notify_price_drop(post, old_price, favorite_field):
+    """Email everyone who saved the listing (except its owner) that its price went down."""
+    values = {'title': post.title, 'old': format_money(old_price), 'new': format_money(post.price)}
+    savers = Favorite.objects.filter(**{favorite_field: post}).exclude(account=post.account)
+    # One email each: a shared To: line would show every saver's address to the others.
+    for email in savers.values_list('account__email', flat=True).distinct():
+        send_notification([email], lambda: (
+            _('Price drop: %(title)s') % values,
+            _('A listing you saved, "%(title)s", is now %(new)s (it was %(old)s).') % values,
+        ))
+
+
+class FavoritesMixin:
+    """
+    Lets signed-in users save listings: POST/DELETE `<id>/favorite/` and GET `favorites/` (their saved
+    listings, newest first). Listing responses carry `is_favorite` for the viewer, and lowering a
+    listing's price emails the people who saved it.
+    """
+    favorite_field = None  # set by subclass to 'live_animal_post' or 'equipment_post'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated:
+            queryset = queryset.annotate(is_favorite=Exists(
+                Favorite.objects.filter(account=user, **{self.favorite_field: OuterRef('pk')})
+            ))
+        return queryset
+
+    # Anyone signed in may save any listing, so this skips the owner-only object permission.
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[permissions.IsAuthenticated])
+    def favorite(self, request, pk=None):
+        post = self.get_object()
+        lookup = {'account': request.user, self.favorite_field: post}
+        if request.method == 'POST':
+            Favorite.objects.get_or_create(**lookup)
+            return Response({'is_favorite': True})
+        Favorite.objects.filter(**lookup).delete()
+        return Response({'is_favorite': False})
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def favorites(self, request):
+        queryset = self.get_queryset().filter(favorites__account=request.user).order_by('-favorites__created_at')
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page if page is not None else queryset, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        old_price = serializer.instance.price
+        post = serializer.save()
+        if old_price is not None and post.price is not None and post.price < old_price:
+            transaction.on_commit(lambda: notify_price_drop(post, old_price, self.favorite_field))
 
 
 class ContactSellerMixin:
@@ -168,7 +227,7 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species').all()
     serializer_class = LiveAnimalPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
@@ -178,13 +237,14 @@ class LiveAnimalViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin
     ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm']
     ordering = ['-created_at', '-id']
     contact_request_field = 'live_animal_post'
+    favorite_field = 'live_animal_post'
     report_request_field = 'live_animal_post'
     
     def perform_create(self, serializer):
         serializer.save(account=self.request.user)
 
 
-class EquipmentViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
@@ -194,6 +254,7 @@ class EquipmentViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin,
     ordering_fields = ['price', 'created_at']
     ordering = ['-created_at']
     contact_request_field = 'equipment_post'
+    favorite_field = 'equipment_post'
     report_request_field = 'equipment_post'
     
     def perform_create(self, serializer):

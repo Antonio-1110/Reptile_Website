@@ -122,3 +122,30 @@ class Report(models.Model):
     @property
     def post(self):
         return self.live_animal_post or self.equipment_post
+
+class Favorite(models.Model):
+    """A listing a user saved to come back to; they're emailed if its price drops."""
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='favorites')
+    live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='favorites')
+    equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='favorites')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Favorite'
+        verbose_name_plural = 'Favorites'
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(live_animal_post__isnull=False, equipment_post__isnull=True)
+                    | models.Q(live_animal_post__isnull=True, equipment_post__isnull=False)
+                ),
+                name='favorite_has_exactly_one_listing',
+            ),
+            models.UniqueConstraint(fields=['account', 'live_animal_post'], name='one_favorite_per_live_animal_post'),
+            models.UniqueConstraint(fields=['account', 'equipment_post'], name='one_favorite_per_equipment_post'),
+        ]
+
+    @property
+    def post(self):
+        return self.live_animal_post or self.equipment_post

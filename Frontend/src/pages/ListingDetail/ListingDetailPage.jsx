@@ -9,6 +9,7 @@ import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import Toast from '../../components/ui/Toast';
+import FavoriteButton from '../../components/listings/FavoriteButton';
 import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
@@ -143,6 +144,7 @@ export default function ListingDetailPage({ listingId }) {
               </span>
               <div className="listing-detail-summary-actions">
                 <span className="listing-detail-rating">★ {listing.rating}</span>
+                <FavoriteButton listingId={listingId} initial={listing.isFavorite} />
                 <button
                   type="button"
                   onClick={handleReportListing}

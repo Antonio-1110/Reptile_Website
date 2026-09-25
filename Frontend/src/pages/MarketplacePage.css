@@ -66,3 +66,19 @@
   color: oklch(87.1% 0.15 154.449);
   cursor: pointer;
 }
+
+.marketplace-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.marketplace-saved-link {
+  color: #fb7185;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.marketplace-saved-link:hover { text-decoration: underline; }

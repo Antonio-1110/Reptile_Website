@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Species, LiveAnimalPost, EquipmentPost, ContactRequest, Report
+from .models import Species, LiveAnimalPost, EquipmentPost, ContactRequest, Favorite, Report
 
 # Register your models here.
 @admin.register(Species)
@@ -16,3 +16,7 @@ class ContactRequestAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('id', 'reporter', 'post', 'created_at')
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'account', 'post', 'created_at')

@@ -84,7 +84,15 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class FavoriteFlagMixin(serializers.Serializer):
+    # Whether the viewer saved the listing; the viewsets annotate it (FavoritesMixin), else False.
+    is_favorite = serializers.SerializerMethodField()
+
+    def get_is_favorite(self, obj):
+        return bool(getattr(obj, 'is_favorite', False))
+
+
+class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
     # Nested seller info
     seller = PublicSellerSerializer(source='account', read_only=True)
     seller_id = serializers.IntegerField(source='account.id', read_only=True)
@@ -94,9 +102,9 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         fields = [
             'id', 'title', 'description', 'price', 'location', 'contact_info',
             'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id'
+            'seller', 'seller_id', 'is_favorite'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'is_favorite']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -104,7 +112,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -131,11 +139,11 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name',
-            'seller_rating', 'species_name', 'genes', 'posted_days'
+            'seller_rating', 'species_name', 'genes', 'posted_days', 'is_favorite'
         ]
     
     def get_genes(self, obj):

@@ -69,7 +69,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Add richer filtering for equipment (price range, search tags, equipment category)
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
-- [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
+- [x] Add saved favorites or watchlist functionality (optional price-drop alerts)
 - [ ] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation

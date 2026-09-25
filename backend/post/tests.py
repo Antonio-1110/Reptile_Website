@@ -11,7 +11,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
-from .models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, Species
+from .models import ContactRequest, EquipmentPost, Favorite, LiveAnimalPost, Report, Species
 
 
 class PostLimitTests(APITestCase):
@@ -618,3 +618,68 @@ class ListingPhotoUploadTests(APITestCase):
 	def test_three_photos_with_cover_in_gallery_fit_hobbyist_limit(self):
 		self.client.force_authenticate(self.seller)
 		self.assertEqual(self.upload([make_image(f'{index}.png') for index in range(3)]).status_code, 200)
+
+
+class FavoritesTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='fav-seller', email='seller@example.com', password='pass1234')
+		self.buyer = Account.objects.create_user(username='fav-buyer', email='buyer@example.com', password='pass1234')
+		self.other = Account.objects.create_user(username='fav-other', email='other@example.com', password='pass1234')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.post = LiveAnimalPost.objects.create(
+			account=self.seller, species=Species.objects.create(name='Fav Pythons'),
+			title='Banana Python', description='d', contact_info='{}', price=10000,
+		)
+		self.url = reverse('live-animal-favorite', args=[self.post.id])
+
+	def detail(self, user):
+		self.client.force_authenticate(user)
+		return self.client.get(reverse('live-animal-detail', args=[self.post.id])).data
+
+	def test_anonymous_users_cannot_save_listings(self):
+		self.assertEqual(self.client.post(self.url).status_code, 401)
+		self.assertFalse(self.client.get(reverse('live-animal-detail', args=[self.post.id])).data['is_favorite'])
+
+	def test_saving_and_unsaving_a_listing(self):
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.post(self.url).data, {'is_favorite': True})
+		self.assertEqual(self.client.post(self.url).status_code, 200)  # saving twice is harmless
+		self.assertEqual(Favorite.objects.count(), 1)
+		self.assertTrue(self.detail(self.buyer)['is_favorite'])
+		self.assertFalse(self.detail(self.other)['is_favorite'])  # per viewer
+
+		self.client.force_authenticate(self.buyer)
+		saved = self.client.get(reverse('live-animal-favorites')).data
+		self.assertEqual([item['title'] for item in saved['results']], ['Banana Python'])
+		self.assertTrue(saved['results'][0]['is_favorite'])
+
+		self.assertEqual(self.client.delete(self.url).data, {'is_favorite': False})
+		self.assertEqual(self.client.get(reverse('live-animal-favorites')).data['count'], 0)
+
+	def test_equipment_can_be_saved_too(self):
+		tank = EquipmentPost.objects.create(account=self.seller, title='Tank', description='d', contact_info='')
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.post(reverse('equipment-favorite', args=[tank.id])).status_code, 200)
+		self.assertEqual(self.client.get(reverse('equipment-favorites')).data['count'], 1)
+
+	def test_price_drop_emails_each_saver_separately(self):
+		for user in (self.buyer, self.other, self.seller):  # the owner saving their own listing isn't emailed
+			Favorite.objects.create(account=user, live_animal_post=self.post)
+		self.client.force_authenticate(self.seller)
+		with self.captureOnCommitCallbacks(execute=True):
+			response = self.client.patch(reverse('live-animal-detail', args=[self.post.id]), {'price': 8000}, format='json')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(sorted(message.to[0] for message in mail.outbox), ['buyer@example.com', 'other@example.com'])
+		self.assertTrue(all(len(message.to) == 1 for message in mail.outbox))
+		self.assertIn('8,000', mail.outbox[0].body)
+		self.assertIn('10,000', mail.outbox[0].body)
+
+	def test_price_rise_or_other_edits_send_nothing(self):
+		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)
+		self.client.force_authenticate(self.seller)
+		url = reverse('live-animal-detail', args=[self.post.id])
+		with self.captureOnCommitCallbacks(execute=True):
+			self.client.patch(url, {'price': 12000}, format='json')
+			self.client.patch(url, {'title': 'Banana Ball Python'}, format='json')
+		self.assertEqual(mail.outbox, [])

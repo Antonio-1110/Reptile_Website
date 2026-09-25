@@ -49,6 +49,18 @@
   inset: 0;
 }
 
+.card-media {
+  position: relative;
+}
+
+/* Above the stretched title link, so it saves instead of opening the listing. */
+.card-favorite {
+  position: absolute;
+  z-index: 1;
+  top: 0.6rem;
+  right: 0.6rem;
+}
+
 .card-image {
   display: block;
   width: 100%;
