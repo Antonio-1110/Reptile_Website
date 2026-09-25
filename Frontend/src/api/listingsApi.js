@@ -36,7 +36,12 @@ export { isLoggedIn } from "./authApi";
 
 async function request(path) {
   const response = await apiFetch(`${API_BASE_URL}${path}`);
-  if (!response.ok) throw new Error(requestFailedMessage(response.status));
+  if (!response.ok) {
+    const error = new Error(requestFailedMessage(response.status));
+    // Lets pages tell "this doesn't exist" (404) apart from "couldn't load it right now".
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
 

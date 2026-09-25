@@ -2,6 +2,7 @@ import "./AccountSettingsPage.css";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getCurrentProfile, updateCurrentProfile } from "../api/listingsApi";
+import EmptyState from "../components/ui/EmptyState";
 import { errorText, toErrorState } from "../utils/errorState";
 
 // Form field → the profile API field whose validation errors belong under it.
@@ -39,14 +40,17 @@ function AccountSettingsPage() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [savedMessage, setSavedMessage] = useState("");
 
-  useEffect(() => {
+  const loadProfile = () => {
+    setLoadError(null);
     getCurrentProfile()
       .then((loaded) => {
         setProfile(loaded);
         setForm(toForm(loaded));
       })
       .catch((error) => setLoadError(toErrorState(error, "accountSettings.loadError")));
-  }, []);
+  };
+
+  useEffect(loadProfile, []);
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -112,9 +116,15 @@ function AccountSettingsPage() {
     return (
       <div className="account-settings-page">
         {header}
-        {loadError
-          ? <p role="alert" className="account-settings-error">{errorText(t, loadError)}</p>
-          : <p className="account-settings-loading">{t("accountSettings.loading")}</p>}
+        {loadError ? (
+          <EmptyState
+            tone="error"
+            title={errorText(t, loadError)}
+            actions={<button type="button" onClick={loadProfile}>{t("listings.retry")}</button>}
+          />
+        ) : (
+          <p className="account-settings-loading" role="status">{t("accountSettings.loading")}</p>
+        )}
       </div>
     );
   }

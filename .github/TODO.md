@@ -94,7 +94,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 
 - [ ] Improve the home page copy and layout polish
 - [ ] Refine English and Chinese wording consistency across the app
-- [ ] Improve empty states and loading states for listings and profile pages
+- [x] Improve empty states and loading states for listings and profile pages
 - [ ] Add clearer success/error messages for posting and login flows
 - [ ] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
 - [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
