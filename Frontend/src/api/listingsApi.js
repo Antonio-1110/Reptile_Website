@@ -244,20 +244,27 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
   };
 }
 
-export async function getListing(id) {
-  return normalizeListing(await request(`/posts/live-animals/${id}/`));
+// `category` is "live_animal" (default) or "equipment" in the functions below.
+export async function getListing(id, category = "live_animal") {
+  const item = await request(listingEndpoint(category, id));
+  return category === "equipment" ? normalizeEquipment(item) : normalizeListing(item);
 }
 
 // What "Contact seller" would send: the signed-in user's own contact details ({contact, already_sent}).
 // The seller's details are never returned; the seller gets in touch with the buyer.
-export async function getContactPreview(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/contact/`, { method: "GET" });
+export async function getContactPreview(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}contact/`, { method: "GET" });
 }
 
-export async function requestSellerContact(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/contact/`, { method: "POST" });
+export async function requestSellerContact(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}contact/`, { method: "POST" });
 }
 
-export async function reportListing(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/report/`, { method: "POST" });
+export async function reportListing(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}report/`, { method: "POST" });
+}
+
+// Where a listing's public page is: animals at /posts/:id, equipment at /equipment/:id.
+export function listingPagePath(id, category = "live_animal") {
+  return category === "equipment" ? `/equipment/${id}` : `/posts/${id}`;
 }

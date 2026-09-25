@@ -2,21 +2,20 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
-import { getSexKey } from '../../api/listingsApi';
+import { getSexKey, listingPagePath } from '../../api/listingsApi';
 
 // Draws a live animal or (animal.kind === "equipment") a piece of equipment.
 export default function ListingCard({ animal }) {
   const { t } = useTranslation();
   const locationName = getLocationLabel(t, animal.location);
   const isEquipment = animal.kind === 'equipment';
-  // Equipment has no public detail page yet, so its card isn't a link (only the seller is).
-  const detailHref = isEquipment ? null : `/posts/${animal.id}`;
+  const detailHref = listingPagePath(animal.id, isEquipment ? 'equipment' : 'live_animal');
   const badges = isEquipment ? [t(`createListing.equipment.types.${animal.equipmentCategory}`)] : animal.genes;
 
   return (
     // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
     // The title link stretches over the whole card instead (see .card-title-link::after).
-    <article className={`card-container${detailHref ? '' : ' card-container--static'}`}>
+    <article className="card-container">
       {animal.image ? (
         <img
           src={animal.image}
@@ -32,7 +31,7 @@ export default function ListingCard({ animal }) {
       <div className="card-content">
         <div className="card-header">
           <h3 className="card-title">
-            {detailHref ? <a href={detailHref} className="card-title-link">{animal.title}</a> : animal.title}
+            <a href={detailHref} className="card-title-link">{animal.title}</a>
           </h3>
           <span className="card-sex">
             {isEquipment
