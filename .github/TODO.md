@@ -92,7 +92,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       descendant of <a>"); make the card a non-link container with a stretched title link
 - [ ] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
 
-- [ ] Improve the home page copy and layout polish
+- [x] Improve the home page copy and layout polish
 - [x] Refine English and Chinese wording consistency across the app
 - [ ] Improve empty states and loading states for listings and profile pages
 - [ ] Add clearer success/error messages for posting and login flows
