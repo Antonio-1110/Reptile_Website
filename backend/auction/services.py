@@ -176,7 +176,9 @@ def start_buy_now(auction, buyer):
     with transaction.atomic():
         auction = Auction.objects.select_for_update().get(pk=auction.pk)
         if auction.seller_id == buyer.id:
-            raise AuctionError(_("You can't buy your own animal."))
+            raise AuctionError(
+                _("You can't buy your own item.") if auction.equipment_post_id else _("You can't buy your own animal.")
+            )
         if auction.buy_now_price is None:
             raise AuctionError(_("The seller hasn't offered a buy-now price for this auction."))
         if not auction.buy_now_open(auction.current_price):
