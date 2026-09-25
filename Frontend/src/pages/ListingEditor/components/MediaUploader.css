@@ -109,3 +109,9 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* The file input is visually hidden inside the label, so show its keyboard focus on the dropzone. */
+.media-dropzone:focus-within {
+  outline: 2px solid oklch(72.3% 0.219 149.579);
+  outline-offset: 2px;
+}

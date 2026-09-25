@@ -31,6 +31,8 @@ const en = {
   },
   search: { placeholder: "Search species, morphs, genetics...", suggestions: "Search suggestions", submit: "Search", removeTag: "Remove {{value}}", types: { species: "Species", morph: "Morph" } },
   filters: {
+    rangeMin: "Minimum {{label}}",
+    rangeMax: "Maximum {{label}}",
     title: "Filter Listings",
     species: "Species",
     allSpecies: "All Species",
@@ -309,6 +311,8 @@ const en = {
         error: "Unable to crop this image. Please try again.",
         cropCover: "Crop cover photo",
         recrop: "Edit crop",
+        area: "Crop area",
+        keyboardHint: "Drag or use the arrow keys to move the photo (Shift for small steps); + and − or the slider to zoom. Esc cancels.",
       },
     },
     basic: {

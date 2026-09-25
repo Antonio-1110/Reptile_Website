@@ -80,7 +80,7 @@
 .searchSuggestions button:hover { background: var(--color-accent); }
 .searchSuggestions small { color: var(--color-text-subtle); }
 .searchButton { align-self: stretch; padding: 0 18px; border: 0; border-radius: 999px; color: var(--color-text); background: var(--color-accent); cursor: pointer; font-weight: 600; }
-.searchButton:hover { background: var(--color-accent-bright); }
+.searchButton:hover { background: var(--color-accent-strong); }
 
 .searchBar {
   width: 100%;
@@ -147,7 +147,7 @@
 }
 
 .headerButton:hover {
-  background-color: var(--color-accent-bright);
+  background-color: var(--color-accent-strong);
   transform: translateY(-1px);
 }
 
