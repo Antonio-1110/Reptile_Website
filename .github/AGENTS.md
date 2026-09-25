@@ -59,6 +59,7 @@ cd backend
 ../.venv/bin/python manage.py seed_demo --reset        # demo accounts + ~70 listings
 ../.venv/bin/python manage.py close_auctions           # settle auctions past their end time
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
+../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
 ../.venv/bin/python manage.py compilemessages
 ../.venv/bin/python manage.py check --deploy           # production settings audit

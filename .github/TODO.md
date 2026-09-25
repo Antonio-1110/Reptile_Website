@@ -22,7 +22,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       deleted: today it cascades and the deposit records disappear. Probably block deletion while an
       auction is active or deposits are held
 - [ ] Schedule `manage.py close_auctions` and `manage.py process_orders` (cron / worker, every few
-      minutes) wherever the backend is hosted
+      minutes) and `manage.py send_search_alerts` (every few hours) wherever the backend is hosted
 - [x] Buy now: optional seller price, paid in full up front, first payment wins and closes the
       auction, deposits refunded, everyone emailed; contact details only shared after a paid sale
 - [x] Orders: winner pays the rest within a deadline or loses the deposit; seller may then offer the
@@ -80,7 +80,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Species care sheets (temperature, humidity, diet, enclosure) linked from listings
 - [ ] Permit / CITES field and warnings for protected species
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
-- [ ] Saved searches with email alerts (search state is already in the URL)
+- [x] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
 - [ ] Let sellers reorder or remove individual photos without re-uploading all of them
 

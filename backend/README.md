@@ -284,6 +284,12 @@ real login flows.
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
 - `GET /species/`
+- `GET`/`POST /saved-searches/`, `PATCH`/`DELETE /saved-searches/<id>/` (signed in) — the user's saved
+  marketplace searches: `query` is the live-animals list query (e.g. `search=pied&sex=1.0`), checked
+  against the real filters and stored sorted; `name` defaults to the search text. Up to
+  `SAVED_SEARCH_LIMIT` per account. `python manage.py send_search_alerts` (schedule it, e.g. every few
+  hours) emails each user the listings posted since their last alert that match, with links built from
+  `DJANGO_FRONTEND_URL`.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).

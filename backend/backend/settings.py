@@ -208,6 +208,10 @@ SELLER_BOND_AMOUNT = env_decimal('SELLER_BOND_AMOUNT', '0')
 # Accounts with at least this many incidents (unpaid buy-nows, defaults, no-shows) are highlighted
 # in the admin's "Accounts to review". Nothing is blocked automatically.
 INCIDENT_REVIEW_THRESHOLD = env_int('INCIDENT_REVIEW_THRESHOLD', 2)
+# Saved searches a user may keep (each is emailed about by `manage.py send_search_alerts`).
+SAVED_SEARCH_LIMIT = env_int('SAVED_SEARCH_LIMIT', 20)
+# Where the website lives, for links in emails (e.g. https://example.com). No trailing slash.
+FRONTEND_URL = os.environ.get('DJANGO_FRONTEND_URL', 'http://localhost:5173').rstrip('/')
 
 
 # Static files (CSS, JavaScript, Images)

@@ -202,6 +202,26 @@ function buildListingParams({ search = "", tags = [], filters = {} }) {
   return params;
 }
 
+// The listing API query for the marketplace's current search and filters (what a saved search stores).
+export function listingQueryString(query) {
+  return buildListingParams(query).toString();
+}
+
+// The signed-in user's saved searches ({ id, name, query, createdAt }), newest first.
+export async function getSavedSearches() {
+  const payload = await requestWithAuth("/posts/saved-searches/", { method: "GET" });
+  return payload.results.map((item) => ({ id: item.id, name: item.name, query: item.query, createdAt: new Date(item.created_at) }));
+}
+
+// Saves a search so the user is emailed about new matches; name defaults to the search text.
+export async function createSavedSearch(query, name = "") {
+  return requestWithAuth("/posts/saved-searches/", { method: "POST", body: JSON.stringify({ query, name }) });
+}
+
+export async function deleteSavedSearch(id) {
+  return requestWithAuth(`/posts/saved-searches/${id}/`, { method: "DELETE" });
+}
+
 // One page of live-animal listings matching the query, plus the total match count.
 export async function getListingsPage({ page = 1, ...query } = {}) {
   const params = buildListingParams(query);

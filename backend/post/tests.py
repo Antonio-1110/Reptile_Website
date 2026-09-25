@@ -11,7 +11,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
-from .models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, Species
+from .models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, SavedSearch, Species
 
 
 class PostLimitTests(APITestCase):
@@ -618,3 +618,79 @@ class ListingPhotoUploadTests(APITestCase):
 	def test_three_photos_with_cover_in_gallery_fit_hobbyist_limit(self):
 		self.client.force_authenticate(self.seller)
 		self.assertEqual(self.upload([make_image(f'{index}.png') for index in range(3)]).status_code, 200)
+
+
+class SavedSearchTests(APITestCase):
+	def setUp(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		self.timedelta, self.timezone = timedelta, timezone
+		self.user = Account.objects.create_user(username='searcher', email='searcher@example.com', password='pass1234')
+		self.seller = Account.objects.create_user(username='breeder', email='breeder@example.com', password='pass1234')
+		self.pythons = Species.objects.create(name='Search Pythons')
+		self.geckos = Species.objects.create(name='Search Geckos')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.url = reverse('saved-search-list')
+
+	def save(self, query, **fields):
+		self.client.force_authenticate(self.user)
+		return self.client.post(self.url, {'query': query, **fields}, format='json')
+
+	def listing(self, title, species, account=None, **fields):
+		return LiveAnimalPost.objects.create(
+			account=account or self.seller, species=species, title=title, description='d', contact_info='{}', **fields,
+		)
+
+	def test_saving_needs_an_account(self):
+		self.assertEqual(self.client.post(self.url, {'query': 'search=pied'}, format='json').status_code, 401)
+
+	def test_query_is_checked_and_stored_in_a_stable_form(self):
+		response = self.save('sex=1.0&search=pied&page=3&price_max=9000')
+		self.assertEqual(response.status_code, 201, response.data)
+		self.assertEqual(response.data['query'], 'price_max=9000&search=pied&sex=1.0')  # sorted, page dropped
+		self.assertEqual(response.data['name'], 'pied')  # defaults to the search text
+
+	def test_unknown_or_invalid_filters_are_rejected(self):
+		self.assertEqual(self.save('colour=red').status_code, 400)
+		self.assertEqual(self.save('price_min=cheap').status_code, 400)
+
+	@override_settings(SAVED_SEARCH_LIMIT=2)
+	def test_saved_searches_are_capped_per_account(self):
+		self.save('search=a')
+		self.save('search=b')
+		response = self.save('search=c')
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('2', str(response.data))
+
+	def test_users_only_see_and_delete_their_own(self):
+		saved = self.save('search=pied', name='Pied males').data
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.get(self.url).data['count'], 0)
+		self.assertEqual(self.client.delete(reverse('saved-search-detail', args=[saved['id']])).status_code, 404)
+		self.client.force_authenticate(self.user)
+		self.assertEqual(self.client.delete(reverse('saved-search-detail', args=[saved['id']])).status_code, 204)
+
+	@override_settings(FRONTEND_URL='https://reptiles.example')
+	def test_alerts_email_only_new_matches_once(self):
+		self.listing('Old Pied Python', self.pythons)  # posted before the search was saved
+		saved = SavedSearch.objects.get(pk=self.save('search=pied&species_name=search pythons').data['id'])
+		SavedSearch.objects.filter(pk=saved.pk).update(last_alerted_at=self.timezone.now() - self.timedelta(seconds=1))
+		LiveAnimalPost.objects.filter(title='Old Pied Python').update(created_at=self.timezone.now() - self.timedelta(days=1))
+
+		match = self.listing('New Pied Python', self.pythons, price=8000)
+		self.listing('New Pied Gecko', self.geckos)  # wrong species
+		self.listing('New Normal Python', self.pythons)  # no "pied"
+		self.listing('My Own Pied Python', self.pythons, account=self.user)  # the user's own
+
+		from django.core.management import call_command
+		call_command('send_search_alerts', stdout=io.StringIO())
+		self.assertEqual(len(mail.outbox), 1)
+		body = mail.outbox[0].body
+		self.assertEqual(mail.outbox[0].to, ['searcher@example.com'])
+		self.assertIn('New Pied Python', body)
+		self.assertIn(f'https://reptiles.example/posts/{match.id}', body)
+		for other in ('Old Pied Python', 'New Pied Gecko', 'New Normal Python', 'My Own Pied Python'):
+			self.assertNotIn(other, body)
+
+		call_command('send_search_alerts', stdout=io.StringIO())
+		self.assertEqual(len(mail.outbox), 1)  # nothing new since the last alert
