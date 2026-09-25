@@ -407,6 +407,7 @@ const zh = {
       leading: "你目前是最高出價者。",
       outbid: "你的出價已被超越。",
       notOpenYet: "你已支付保證金，競標開始後即可出價。",
+      extendHint: "結束前 {{window}} 分鐘內有人出價時，競標會延長至該次出價後 {{by}} 分鐘，讓其他人也有機會回應。",
     },
     seller: {
       yourAuction: "這是你的競標，買家的出價會即時顯示在這裡。",
