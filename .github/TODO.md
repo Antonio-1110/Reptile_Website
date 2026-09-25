@@ -11,7 +11,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
 - [x] Confirm authentication flow works in the browser for login and signup
-- [ ] Better UI for choosing the image section for the post cover
+- [x] Better UI for choosing the image section for the post cover (covered by the cover crop tool and #10's photo reordering)
 - [ ] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
       (move `profile/` over first; the listing editor depends on it)
 - [x] Frontend for auctions: browse (`/auctions`), detail, pay deposit, bid, results, seller cancel
