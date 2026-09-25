@@ -82,7 +82,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
 - [ ] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
-- [ ] Let sellers reorder or remove individual photos without re-uploading all of them
+- [x] Let sellers reorder or remove individual photos without re-uploading all of them
 
 ## UX improvements
 
@@ -96,7 +96,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Refine English and Chinese wording consistency across the app
 - [ ] Improve empty states and loading states for listings and profile pages
 - [ ] Add clearer success/error messages for posting and login flows
-- [ ] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
+- [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
 - [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
 ## Technical backlog

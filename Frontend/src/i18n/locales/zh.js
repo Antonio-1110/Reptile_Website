@@ -297,8 +297,10 @@ const zh = {
       selected: "已選擇 {{count}} 張照片",
       guidance: "最多 {{count}} 張照片，每張不超過 {{size}}。",
       validation: "請選擇最多 {{count}} 張圖片，且每張圖片不得超過 {{size}}。",
-      replaceHint: "選擇新照片將取代此刊登目前的照片；若要保留原照片，請勿選擇。",
       remove: "移除",
+      removeNamed: "移除 {{name}}",
+      moveEarlier: "將 {{name}} 往前移",
+      moveLater: "將 {{name}} 往後移",
       cover: "封面照片",
       crop: {
         title: "裁切封面照片",

@@ -121,7 +121,7 @@ export async function createListing(formData) {
   });
 }
 
-// Partial update: omits gallery/image/contact_info (photos go through uploadListingPhotos, and the
+// Partial update: omits gallery/image/contact_info (photos go through saveListingPhotos, and the
 // form has no contact controls yet), so editing a listing can't wipe out existing media or contact details.
 export async function updateListing(id, formData) {
   const isLiveAnimal = formData.category === "live_animal";
@@ -143,11 +143,18 @@ export async function updateListing(id, formData) {
   });
 }
 
-// Replaces a listing's photos with `files` (File objects); the one at coverIndex becomes the cover.
-export async function uploadListingPhotos(id, category, files, coverIndex = 0) {
+// Sets a listing's photos to `items`, cover first: { url } keeps one of its current photos, { file }
+// uploads a new one. Current photos left out are removed (see ListingPhotoUploadSerializer).
+export async function saveListingPhotos(id, category, items) {
   const body = new FormData();
-  files.forEach((file) => body.append("photos", file));
-  body.append("cover_index", String(coverIndex));
+  let uploads = 0;
+  const order = items.map((item) => {
+    if (item.url) return item.url;
+    body.append("photos", item.file);
+    uploads += 1;
+    return `new:${uploads - 1}`;
+  });
+  body.append("order", JSON.stringify(order));
   return requestWithAuth(`${listingEndpoint(category, id)}photos/`, { method: "POST", body });
 }
 

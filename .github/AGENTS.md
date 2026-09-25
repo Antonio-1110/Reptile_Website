@@ -152,9 +152,10 @@ update that file **and** the API overview in the root README.
   the client requests one page at a time. Don't reintroduce "download everything and filter".
 - Async error state uses `utils/errorState.js` (`toErrorState` / `errorText`) so messages follow a
   language switch.
-- Photos: the editor saves the listing first, then `uploadListingPhotos()` posts multipart to
-  `<id>/photos/`, which replaces all photos; `image` is the cover and `gallery` lists every photo,
-  cover first.
+- Photos: the editor saves the listing first, then `saveListingPhotos()` posts multipart to
+  `<id>/photos/` with the final `order` (kept photo URLs and `new:<n>` for uploads, cover first), so
+  sellers can reorder or remove photos without re-uploading; `image` is the cover and `gallery` lists
+  every photo, cover first.
 
 ### Local dev auth bypass
 
