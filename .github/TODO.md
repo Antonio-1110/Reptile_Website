@@ -30,7 +30,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       (sale completes if they do neither); seller no-show refunds the buyer. Emails at every step
 - [x] Track accounts behaving oddly (incidents + admin "Accounts to review"); nothing auto-blocked
 - [ ] Decide the real numbers: payment / handover / confirm windows, fee, seller bond amount, review
-      threshold. All are env-var settings with placeholder defaults (see `backend/.env.example`)
+      threshold, anti-sniping window. All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
 - [ ] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
@@ -90,7 +90,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
 - [ ] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
-- [ ] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+- [x] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+      (`AUCTION_EXTEND_WINDOW_MINUTES` / `AUCTION_EXTEND_BY_MINUTES`, default 5 / 5)
 
 - [ ] Improve the home page copy and layout polish
 - [ ] Refine English and Chinese wording consistency across the app
