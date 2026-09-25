@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Toast from '../components/ui/Toast';
 import { errorText, toErrorState } from '../utils/errorState';
-import { deleteListing, getMyListings, isLoggedIn } from '../api/listingsApi';
+import { deleteListing, getCurrentProfile, getMyListings, isLoggedIn } from '../api/listingsApi';
+import { getMyAuctions } from '../api/auctionsApi';
 
 export default function MyListingsPage() {
   const { t } = useTranslation();
@@ -11,6 +12,10 @@ export default function MyListingsPage() {
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [toast, setToast] = useState(null);
+  // For the auction buttons: whether the account may auction, and which listings have one running.
+  // Not critical, so a failure just hides the buttons.
+  const [canAuction, setCanAuction] = useState(false);
+  const [runningAuctions, setRunningAuctions] = useState(new Set());
 
   const loadListings = () => {
     getMyListings()
@@ -20,6 +25,16 @@ export default function MyListingsPage() {
 
   useEffect(() => {
     loadListings();
+    if (!isLoggedIn()) return;
+    getCurrentProfile()
+      .then((profile) => {
+        setCanAuction(Boolean(profile.can_start_auction));
+        if (!profile.can_start_auction) return null;
+        return getMyAuctions().then((auctions) => setRunningAuctions(new Set(
+          auctions.filter((auction) => auction.status === 'active').map((auction) => `${auction.listing.category}-${auction.listing.id}`),
+        )));
+      })
+      .catch(() => setCanAuction(false));
   }, []);
 
   const handleDelete = async (listing) => {
@@ -82,6 +97,13 @@ export default function MyListingsPage() {
                   <p className="my-listings-price">${listing.price ?? '—'}</p>
                 </div>
                 <div className="my-listings-actions">
+                  {canAuction && (runningAuctions.has(`${listing.category}-${listing.id}`) ? (
+                    <span className="my-listings-auction-running">{t('myListings.auctionRunning')}</span>
+                  ) : (
+                    <a href={`/auctions/new?listing=${listing.id}&category=${listing.category}`} className="my-listings-auction">
+                      {t('myListings.startAuction')}
+                    </a>
+                  ))}
                   <a href={`/postinput?edit=${listing.id}&category=${listing.category}`} className="my-listings-edit">
                     {t('myListings.edit')}
                   </a>

@@ -301,6 +301,8 @@ and each `*_exclude` variant inverts its counterpart:
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
 - `POST /` — paid commercial accounts only (`403` otherwise)
 - `GET /mine/` — the current user's auctions as a seller
+- `GET /rules/` — public: currency, duration limits, deposit rate/minimum and whether a seller bond is
+  required (the "start an auction" form explains and pre-checks these)
 - `POST /<id>/deposit/` — start or look up the current user's deposit; safe to repeat
 - `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`)
 - `POST /<id>/cancel/` — seller only, only while there are no bids

@@ -136,6 +136,15 @@ class StartAuctionTests(AuctionTestCase):
         self.assertIsNone(result['buy_now_price'])
         self.assertFalse(result['buy_now_available'])
 
+    @override_settings(AUCTION_MIN_DURATION_HOURS=2, AUCTION_MAX_DURATION_DAYS=10, SELLER_BOND_AMOUNT=Decimal('3000'))
+    def test_rules_describe_the_settings_the_form_needs(self):
+        rules = self.client.get(reverse('auction-rules')).data  # public
+        self.assertEqual(rules['min_duration_hours'], 2)
+        self.assertEqual(rules['max_duration_days'], 10)
+        self.assertEqual(rules['deposit_rate'], str(settings.AUCTION_DEPOSIT_RATE))
+        self.assertTrue(rules['bond_required'])
+        self.assertEqual(rules['bond_amount'], '3000')
+
     def test_auction_list_query_count_does_not_grow_with_auctions(self):
         self.create_auction()
         for index in range(3):

@@ -49,8 +49,10 @@ async function parseError(response) {
       fields[key] = Array.isArray(value) ? value.join(" ") : String(value);
     }
   });
-  const message = typeof body.detail === "string"
-    ? body.detail
+  // `detail` is usually a string, but serializer-level errors raised as {'detail': ...} arrive as a list.
+  const detail = Array.isArray(body.detail) ? body.detail.join(" ") : body.detail;
+  const message = typeof detail === "string" && detail
+    ? detail
     : Object.values(fields).join(" ") || requestFailedMessage(response.status);
   const error = new Error(message);
   error.status = response.status;
