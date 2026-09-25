@@ -92,11 +92,11 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
     class Meta:
         model = EquipmentPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
             'seller', 'seller_id'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'is_hidden']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -127,14 +127,14 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     class Meta:
         model = LiveAnimalPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
             'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
         read_only_fields = [
-            'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name',
+            'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
             'seller_rating', 'species_name', 'genes', 'posted_days'
         ]
     
