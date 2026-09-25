@@ -238,6 +238,7 @@ Useful tricks:
   "no matches found".
 
 ### Report honestly
+Pull requests follow `.github/pull_request_template.md`.
 Say what you verified and how, what you didn't verify, and anything left for the user (migrations to
 run, env vars to set, servers to restart). Never commit or push unless asked.
 
