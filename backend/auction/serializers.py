@@ -172,6 +172,8 @@ class AuctionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'detail': _('You can only auction your own listings.'),
             })
+        if post.status == post.Status.SOLD:
+            raise serializers.ValidationError({'detail': _("A sold listing can't be auctioned.")})
         listing_filter = {'live_animal_post': post} if live_animal_post else {'equipment_post': post}
         if Auction.objects.filter(status=Auction.Status.ACTIVE, **listing_filter).exists():
             raise serializers.ValidationError({

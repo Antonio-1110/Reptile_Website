@@ -10,14 +10,19 @@ export default function ListingCard({ animal }) {
 
   return (
     <a href={`/posts/${animal.id}`} className="card-container">
-      <img
-        src={animal.image}
-        alt={animal.title}
-        className="card-image"
-        loading="lazy"
-        decoding="async"
-      />
-      
+      <div className="card-media">
+        <img
+          src={animal.image}
+          alt={animal.title}
+          className="card-image"
+          loading="lazy"
+          decoding="async"
+        />
+        {animal.status && animal.status !== 'available' && (
+          <span className={`card-status card-status--${animal.status}`}>{t(`listingStatus.${animal.status}`)}</span>
+        )}
+      </div>
+
       <div className="card-content">
         <div className="card-header">
           <h3 className="card-title">{animal.title}</h3>

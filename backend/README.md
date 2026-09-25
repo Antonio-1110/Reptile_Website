@@ -284,6 +284,10 @@ real login flows.
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
 - `GET /species/`
+- Listings have a `status`: `available` (default), `reserved` or `sold`, set by the owner with `PATCH`.
+  List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
+  listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
+  listing sold.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).

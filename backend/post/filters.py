@@ -26,6 +26,7 @@ class LiveAnimalPostFilter(django_filters.FilterSet):
     `*_exclude` param inverts its counterpart.
     """
 
+    status = CommaListFilter(field_name='status', lookup_expr='in')
     sex = CommaListFilter(field_name='sex', lookup_expr='in')
     life_stage = CommaListFilter(field_name='life_stage', lookup_expr='in')
     life_stage_exclude = CommaListFilter(field_name='life_stage', lookup_expr='in', exclude=True)

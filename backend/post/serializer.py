@@ -92,7 +92,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
     class Meta:
         model = EquipmentPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info',
             'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
             'seller', 'seller_id'
         ]
@@ -127,7 +127,7 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     class Meta:
         model = LiveAnimalPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info',
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',

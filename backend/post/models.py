@@ -31,7 +31,15 @@ class BasePost(models.Model):
         LIE = 'LIE', '連江縣'
         OTH = 'OTH', '其他'
     
+    # Sellers mark a listing reserved or sold instead of deleting it. Sold listings drop out of the
+    # marketplace but keep their page; a completed auction sale marks the listing sold.
+    class Status(models.TextChoices):
+        AVAILABLE = 'available', 'Available'
+        RESERVED = 'reserved', 'Reserved'
+        SOLD = 'sold', 'Sold'
+
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='%(class)s_posts')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
     title = models.CharField(max_length=200)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

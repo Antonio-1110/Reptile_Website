@@ -207,6 +207,9 @@
   color: #4ade80;
 }
 
+.listing-detail-kicker--reserved { color: #fbbf24; }
+.listing-detail-kicker--sold { color: #f87171; }
+
 .listing-detail-summary-actions {
   display: flex;
   align-items: center;
