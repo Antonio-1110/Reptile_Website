@@ -80,6 +80,10 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 - `npm test` — run the tests once (Vitest + React Testing Library, jsdom); `npm run test:watch` re-runs on save.
   Tests sit next to the code they cover (`*.test.js` / `*.test.jsx`); `src/test/setup.js` loads the
   English translations and DOM matchers
+- `npm run e2e` — end-to-end tests with Playwright (`e2e/`): starts a throwaway backend on :8001 with its
+  own database and the demo data (`e2e/start-backend.sh`) and Vite on :5174, then drives Chromium
+  through real flows (list an animal with a photo → a buyer finds it and contacts the seller; sign-in).
+  First time only: `npx playwright install chromium`
 
 ## Talking to the backend
 
