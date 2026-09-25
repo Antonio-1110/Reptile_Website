@@ -120,6 +120,9 @@ const toDate = (value) => (value ? new Date(value) : null);
 function normalizeOrder(item) {
   return {
     id: item.id,
+    auctionId: item.auction,
+    listing: item.listing, // { id, title, category }
+    createdAt: toDate(item.created_at),
     role: item.role, // "buyer" or "seller": which side the viewer is on
     source: item.source, // "bid", "buy_now" or "runner_up"
     status: item.status,
@@ -139,6 +142,14 @@ function normalizeOrder(item) {
     // The other side's contact details, once the order has got far enough (null before that).
     counterpart: item.counterpart,
   };
+}
+
+// One page of the viewer's orders, newest first. role: "buyer", "seller" or "" (both).
+export async function getMyOrdersPage({ role = "", page = 1 } = {}) {
+  const params = new URLSearchParams({ page });
+  if (role) params.set("role", role);
+  const payload = await get(`/auctions/orders/?${params}`);
+  return { results: payload.results.map(normalizeOrder), count: payload.count, hasMore: Boolean(payload.next) };
 }
 
 // The viewer's latest order for an auction (as buyer or seller), or null.

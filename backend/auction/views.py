@@ -6,6 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
+import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 
 from . import orders, services
@@ -152,15 +153,29 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         })
 
 
+class OrderFilter(django_filters.FilterSet):
+    # `role=buyer|seller`: which side of the sale the viewer is on (the "My orders" tabs).
+    role = django_filters.ChoiceFilter(choices=[('buyer', 'buyer'), ('seller', 'seller')], method='filter_role')
+
+    class Meta:
+        model = Order
+        fields = ['auction', 'status']
+
+    def filter_role(self, queryset, name, value):
+        user = self.request.user
+        return queryset.filter(buyer=user) if value == 'buyer' else queryset.filter(auction__seller=user)
+
+
 class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     Orders after a sale, visible only to their buyer and seller. `?auction=<id>` narrows the list to
-    one auction (the listing page uses it). Every action goes through auction.orders.
+    one auction (the listing page uses it); `?role=buyer|seller` to one side (the "My orders" page).
+    Every action goes through auction.orders.
     """
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['auction', 'status']
+    filterset_class = OrderFilter
     throttle_scope = None  # set per action
 
     def get_queryset(self):
