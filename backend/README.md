@@ -8,7 +8,7 @@ Django + Django REST Framework API powering authentication, listings, and seller
 - Django REST Framework 3.14
 - django-cors-headers, django-filter
 - SQLite for local development
-- JWT authentication (`djangorestframework-simplejwt`), plus legacy token auth (`rest_framework.authtoken`)
+- JWT authentication (`djangorestframework-simplejwt`)
 
 ## App layout
 
@@ -38,7 +38,7 @@ backend/
 │   └── migrations/
 ├── backend/            # project settings
 │   ├── settings.py
-│   ├── urls.py         # mounts /api/auth/ and /api/posts/
+│   ├── urls.py         # mounts /api/v1/auth/, /api/posts/ and /api/auctions/
 │   └── wsgi.py / asgi.py
 ├── manage.py
 ├── requirements.txt
@@ -230,12 +230,14 @@ webhook view that calls `services.confirm_deposit()` / `fail_deposit()` and `con
 
 See [docs/API_ENDPOINTS.md](../docs/API_ENDPOINTS.md) for full request/response examples.
 
-### Auth (`/api/auth/`)
+### Auth (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
-- `GET`/`PATCH /profile/` (auth required) — includes `post_count` and `remaining_post_count`
+The only authentication is JWT (SimpleJWT); the old token endpoints under `/api/auth/` were retired.
+Log out by discarding the tokens on the client.
 
-### JWT auth (`/api/v1/auth/`)
+- `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
+  `remaining_post_count`
+- `GET /plans/` — public: the account plans and their limits
 
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens

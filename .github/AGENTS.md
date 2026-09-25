@@ -23,8 +23,8 @@ listings, and bid in auctions.
 
 Django apps in `backend/`:
 
-- `account/` — `Account` user model (hobbyist vs commercial, paid tier, limits), legacy token auth at `/api/auth/`
-- `authentication/` — JWT auth at `/api/v1/auth/` (**this is what the frontend uses**)
+- `account/` — `Account` user model (hobbyist vs commercial, paid tier, limits), profile and plans views
+- `authentication/` — JWT auth at `/api/v1/auth/` (the only auth; also serves `profile/` and `plans/`)
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
 - `common/` — dev-only auth bypass middleware
@@ -130,8 +130,7 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 | Base path | What | Auth |
 | --- | --- | --- |
-| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/` | JWT |
-| `/api/auth/` | legacy token auth + `profile/` (quota info used by the listing editor) | Token or JWT |
+| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/`, `profile/` (quota info used by the listing editor), `plans/` | JWT |
 | `/api/posts/live-animals/`, `/api/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
 | `/api/posts/species/` | species lookup | public |
 | `/api/auctions/` | auctions, deposits, bids | read: public; write: authenticated |
@@ -272,8 +271,8 @@ Apply these whenever you build or review a feature — they're the common gaps i
   and `.dev/logs/backend.log`. A stale `.dev/pids` makes `start-dev.sh` refuse to start; run
   `./stop-dev.sh` first. `start-dev.sh` uses `.venv/` at the repo root (then `backend/.venv`, then the
   system `python3`, which usually lacks Django).
-- Two auth systems coexist (`/api/auth/` token, `/api/v1/auth/` JWT). New frontend code uses JWT via
-  `authFetch`. Don't build new features on the legacy token endpoints.
+- Auth is JWT only (`/api/v1/auth/`, `authFetch` on the frontend). The old `/api/auth/` token endpoints
+  were retired; a dev database may still have an unused `authtoken_token` table.
 - Seeded listing photos are hot-linked Wikimedia URLs; uploaded ones are absolute URLs under
   `/media/`. Code that deletes photo files must only touch the latter (see
   `ListingPhotosMixin._delete_uploaded_photos`).

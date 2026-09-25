@@ -55,17 +55,17 @@ async function requestAllPages(path, fetchPage = request) {
 }
 
 export async function getCurrentProfile() {
-  return requestWithAuth("/auth/profile/", { method: "GET" });
+  return requestWithAuth("/v1/auth/profile/", { method: "GET" });
 }
 
 // Public list of account plans with their limits (hobbyist, commercial, commercial_paid).
 export async function getAccountPlans() {
-  return request("/auth/plans/");
+  return request("/v1/auth/plans/");
 }
 
 // Partial update of the signed-in user's profile; `fields` uses backend names (phone_number, line_id, …).
 export async function updateCurrentProfile(fields) {
-  return requestWithAuth("/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
+  return requestWithAuth("/v1/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
 }
 
 async function getSpeciesId(value) {

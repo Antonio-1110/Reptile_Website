@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken',
     'corsheaders',
     'django_filters',
     'post',
@@ -241,9 +240,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         # Session auth that ignores the DevAuthBypassMiddleware user, so that user doesn't trigger CSRF.
         'common.middleware.DevAwareSessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
         # Dev-only fallback; DEBUG-gated internally, so it's inert in production. Kept last so
-        # real JWT/Token/Session credentials are always tried first.
+        # real JWT/Session credentials are always tried first.
         'common.middleware.DevAuthBypassAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
