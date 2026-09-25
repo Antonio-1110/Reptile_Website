@@ -10,7 +10,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Validate hobbyist vs commercial account workflows end-to-end
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
-- [ ] Confirm authentication flow works in the browser for login and signup
+- [x] Confirm authentication flow works in the browser for login and signup
 - [ ] Better UI for choosing the image section for the post cover
 - [ ] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
       (move `profile/` over first; the listing editor depends on it)
@@ -111,7 +111,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
-- [ ] Remove the empty `.github/appmod/` folder if it's no longer used
+- [x] Remove the empty `.github/appmod/` folder if it's no longer used (already gone)
 
 ## Nice-to-have
 
