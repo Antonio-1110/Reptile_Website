@@ -43,16 +43,17 @@ Frontend/src/
 └── pages/                     # one file per route
     ├── HomePage               # /
     ├── MarketplacePage        # /marketplace
-    ├── ListingDetail/         # /posts/:id — the one page per animal, for sale or being auctioned
+    ├── ListingDetail/         # /posts/:id (animal) and /equipment/:id — one page per listing, for sale or being auctioned
     │   ├── ListingDetailPage.jsx
     │   ├── useListingAuction.js   # the listing's latest auction + bids, refreshed while it runs
+    │   ├── useListingTranslation.js  # t() that prefers `key_equipment` variants on equipment pages
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
-    ├── Auctions/              # /auctions (?tab=ended); cards link to the animal's /posts/:id page
+    ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page
     │   ├── AuctionsPage.jsx
-    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the animal's page
+    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the listing's page
     │   └── components/        # AuctionCard
     └── ListingEditor/         # /postinput (create) and /postinput?edit=<id>&category= (edit)
         ├── ListingEditorPage.jsx

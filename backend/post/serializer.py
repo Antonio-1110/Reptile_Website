@@ -84,7 +84,17 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class PublicListingFieldsMixin(serializers.Serializer):
+    """Read-only fields the listing detail page shows for both listing types."""
+    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
+    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
+    posted_days = serializers.SerializerMethodField()
+
+    def get_posted_days(self, obj):
+        return max(0, (timezone.now() - obj.created_at).days)
+
+
+class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
     # Nested seller info
@@ -96,9 +106,9 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         fields = [
             'id', 'title', 'description', 'price', 'location', 'contact_info',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -106,7 +116,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -122,9 +132,6 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     
     # Convert genetics string to list on serialization
     genes = serializers.SerializerMethodField()
-    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
-    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
-    posted_days = serializers.SerializerMethodField()
     
     class Meta:
         model = LiveAnimalPost
@@ -145,9 +152,6 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
         if obj.genetics:
             return [gene.strip() for gene in obj.genetics.split('/') if gene.strip()]
         return []
-
-    def get_posted_days(self, obj):
-        return max(0, (timezone.now() - obj.created_at).days)
     
     def create(self, validated_data):
         # Set the account from the request user

@@ -37,9 +37,10 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       animal's page (and in emails)
 - [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
-- [ ] Equipment has no public detail page: equipment cards in the marketplace aren't clickable (only
-      the seller link is), buyers can't contact the seller from the site, and equipment auctions have
-      nowhere to be shown
+- [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
+      seller, or the auction with bids, buy now and the order), with equipment facts and wording
+- [ ] Auction/order emails (`auction/notifications.py`) and the "can't buy your own animal" error say
+      "animal" even for equipment; they need equipment wording (plus `zh_Hant` translations)
 - [x] Add Traditional Chinese translations for the new photo-upload errors ("Cover index is out of
       range.", "\"%(name)s\" is larger than 5 MB.") via `makemessages` / `compilemessages`
 
