@@ -66,6 +66,7 @@ cd backend
 # Frontend
 cd Frontend
 npm run lint
+npm test               # Vitest + React Testing Library (src/**/*.test.js[x])
 npm run build          # also catches import/JSX errors lint misses
 npm run dev
 ```
@@ -221,7 +222,7 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
 
 ### Verify before declaring done
 CI (`.github/workflows/ci.yml`) runs on every PR: backend `check`, `makemigrations --check`, the test
-suite (with `DEBUG` off), and frontend `lint` + `build`. Run the same locally before pushing; CI green
+suite (with `DEBUG` off), and frontend `lint`, `test` + `build`. Run the same locally before pushing; CI green
 is the floor, not the bar.
 
 Tests passing is necessary, not sufficient, for web work. Pick what fits the change:
@@ -230,7 +231,7 @@ Tests passing is necessary, not sufficient, for web work. Pick what fits the cha
 | --- | --- |
 | Backend logic / permissions | `manage.py test`, including a new test for the new behaviour and its failure case |
 | API contract | tests + `curl` the real endpoint and inspect the JSON shape |
-| Frontend code | `npm run lint` and `npm run build` |
+| Frontend code | `npm run lint`, `npm test` and `npm run build` (add a `*.test.js[x]` next to logic you change) |
 | UI / user flow | run both servers and exercise the flow in a browser (or with a browser-automation tool): happy path, an error path, both languages, and a narrow (~375 px) viewport |
 | Settings / deploy | `manage.py check --deploy` with production-like env vars |
 
