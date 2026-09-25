@@ -95,10 +95,11 @@ Runs at `http://127.0.0.1:8000/`. Details in [backend/README.md](backend/README.
 
 Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md).
 
-### Authentication (`/api/auth/`)
+### Authentication (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
+- `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/`, `GET /me/`
 - `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota
+- `GET /plans/` — public plan comparison
 
 ### Posts (`/api/posts/`)
 
