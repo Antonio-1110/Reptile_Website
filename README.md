@@ -103,7 +103,9 @@ Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINT
 ### Posts (`/api/posts/`)
 
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
-- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
+- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
+  (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`, `transport`, `other`) and a
+  `condition` (0–2); the list filters by both, plus price, location, shipping and posting date
 - `GET /species/`
 
 ### Auctions (`/api/auctions/`)
