@@ -11,6 +11,19 @@ function getNextPath() {
 
 const emptyForm = { username: '', email: '', password: '', confirmPassword: '' };
 
+// Errors for fields the form doesn't show (e.g. non_field_errors) would otherwise vanish, so they're
+// collected into the form-level message instead.
+function splitFieldErrors(fields) {
+  const shown = {};
+  const other = [];
+  Object.entries(fields).forEach(([name, message]) => {
+    if (name in emptyForm) shown[name] = message;
+    else other.push(message);
+  });
+  if (other.length) shown.form = other.join(' ');
+  return shown;
+}
+
 export default function SignInPage() {
   const { t } = useTranslation();
   const [mode, setMode] = useState(() => (
@@ -20,6 +33,7 @@ export default function SignInPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const isRegister = mode === 'register';
+  const [hasNext] = useState(() => new URLSearchParams(window.location.search).has('next'));
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
@@ -49,11 +63,19 @@ export default function SignInPage() {
       }
       window.location.href = getNextPath();
     } catch (error) {
+      setSubmitting(false);
+      // register() signs in right after creating the account; if only that step failed, the account
+      // exists and retrying "Create account" would just report the username as taken.
+      if (error.accountCreated) {
+        setMode('signin');
+        setForm((current) => ({ ...current, password: '', confirmPassword: '' }));
+        setErrors({ form: t('auth.registeredButLoginFailed') });
+        return;
+      }
       const hasFieldErrors = error.fields && Object.keys(error.fields).length > 0;
       setErrors(hasFieldErrors
-        ? error.fields
+        ? splitFieldErrors(error.fields)
         : { form: error.status === 401 ? t('auth.invalidCredentials') : (error.message || t('auth.genericError')) });
-      setSubmitting(false);
     }
   };
 
@@ -87,6 +109,7 @@ export default function SignInPage() {
 
         <h1 className="authTitle">{isRegister ? t('auth.registerTitle') : t('auth.signInTitle')}</h1>
         <p className="authSubtitle">{isRegister ? t('auth.registerSubtitle') : t('auth.signInSubtitle')}</p>
+        {hasNext && !isRegister && <p className="authNotice" role="status">{t('auth.signInToContinue')}</p>}
 
         <form className="authForm" onSubmit={handleSubmit}>
           {field('username', t('auth.username'), 'text', 'username')}
