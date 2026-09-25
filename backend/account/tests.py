@@ -170,3 +170,46 @@ class AccountPlansTests(APITestCase):
         self.assertFalse(plans['commercial']['can_start_auction'])
         self.assertTrue(plans['commercial_paid']['can_start_auction'])
 
+
+
+class SellerProfileTests(APITestCase):
+    def setUp(self):
+        from post.models import EquipmentPost, LiveAnimalPost, Species
+
+        self.seller = Account.objects.create_user(
+            username='gecko_shop', email='shop@example.com', password='pass1234', first_name='Mei', last_name='Lin',
+            phone_number='0911222333', line_id='shopline', bio='Crested geckos since 2015.', verified_seller=True,
+        )
+        self.buyer = Account.objects.create_user(username='just_buying', email='buyer@example.com', password='pass1234')
+        species = Species.objects.create(name='Profile Geckos')
+        LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+        self.gecko = LiveAnimalPost.objects.create(account=self.seller, species=species, title='Gecko', description='d', contact_info='{}')
+        self.other = LiveAnimalPost.objects.create(account=self.buyer, species=species, title='Not theirs', description='d', contact_info='{}')
+        LiveAnimalPost.objects.filter(pk=self.other.pk).delete()
+        EquipmentPost.objects.create(account=self.seller, title='Tank', description='d', contact_info='')
+
+    def test_seller_profile_is_public_and_has_no_contact_details(self):
+        response = self.client.get(reverse('seller-profile', args=[self.seller.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['display_name'], 'Mei Lin')
+        self.assertEqual(response.data['bio'], 'Crested geckos since 2015.')
+        self.assertTrue(response.data['verified_seller'])
+        self.assertEqual((response.data['live_animal_count'], response.data['equipment_count']), (1, 1))
+        for private in ('email', 'phone_number', 'line_id', 'contact_email', 'personal_id', 'instagram', 'facebook'):
+            self.assertNotIn(private, response.data)
+        self.assertNotIn('0911222333', str(response.data))
+
+    def test_accounts_without_listings_have_no_public_profile(self):
+        self.assertEqual(self.client.get(reverse('seller-profile', args=[self.buyer.id])).status_code, 404)
+
+    def test_deactivated_sellers_have_no_public_profile(self):
+        Account.objects.filter(pk=self.seller.pk).update(is_active=False)
+        self.assertEqual(self.client.get(reverse('seller-profile', args=[self.seller.id])).status_code, 404)
+
+    def test_listings_can_be_filtered_to_one_seller(self):
+        live = self.client.get(reverse('live-animal-list'), {'seller': self.seller.id}).data
+        self.assertEqual([item['title'] for item in live['results']], ['Gecko'])
+        equipment = self.client.get(reverse('equipment-list'), {'seller': self.seller.id}).data
+        self.assertEqual([item['title'] for item in equipment['results']], ['Tank'])
+        self.assertEqual(self.client.get(reverse('equipment-list'), {'seller': self.buyer.id}).data['count'], 0)

@@ -9,7 +9,7 @@ import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import Toast from '../../components/ui/Toast';
-import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
+import { getListing, getSexKey, isLoggedIn, reportListing, sellerPagePath } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
 import useNow from '../../hooks/useNow';
@@ -109,7 +109,7 @@ export default function ListingDetailPage({ listingId }) {
           <a href={showAuction ? '/auctions' : '/marketplace'} className="listing-detail-back">
             {showAuction ? t('auctions.detail.back') : t('listingDetail.back')}
           </a>
-          <div className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</div>
+          <a href={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</a>
         </div>
 
         <div className="listing-detail-layout">
@@ -227,7 +227,7 @@ export default function ListingDetailPage({ listingId }) {
             )}
 
             <a
-              href={`/marketplace?search=${encodeURIComponent(listing.sellerTag || listing.seller)}`}
+              href={sellerPagePath(listing.sellerId)}
               className="listing-detail-more-link"
             >
               {t('listingDetail.moreFromSeller')}

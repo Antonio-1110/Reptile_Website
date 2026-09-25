@@ -134,6 +134,7 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 | `/api/auth/` | legacy token auth + `profile/` (quota info used by the listing editor) | Token or JWT |
 | `/api/posts/live-animals/`, `/api/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
 | `/api/posts/species/` | species lookup | public |
+| `/api/sellers/<id>/` | seller's public profile (no contact details) | public |
 | `/api/auctions/` | auctions, deposits, bids | read: public; write: authenticated |
 | `/media/…` | uploaded listing photos (served by Django only when `DEBUG`) | public |
 

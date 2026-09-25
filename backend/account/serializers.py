@@ -55,6 +55,23 @@ class PublicSellerSerializer(AccountSerializer):
         fields = [field for field in AccountSerializer.Meta.fields if field != 'email']
 
 
+class SellerProfileSerializer(serializers.ModelSerializer):
+    """A seller's public page (/api/sellers/<id>/): who they are and their track record, never contact details."""
+    display_name = serializers.CharField(source='get_display_name', read_only=True)
+    is_commercial = serializers.BooleanField(read_only=True)
+    member_since = serializers.DateTimeField(source='date_joined', read_only=True)
+    live_animal_count = serializers.IntegerField(read_only=True)
+    equipment_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Account
+        fields = [
+            'id', 'username', 'display_name', 'account_type', 'is_commercial', 'verified_seller',
+            'seller_rating', 'total_reviews', 'bio', 'member_since', 'live_animal_count', 'equipment_count',
+        ]
+        read_only_fields = fields
+
+
 class ProfileAccountSerializer(AccountSerializer):
     """The signed-in user's own profile (/api/auth/profile/). Private contact fields live only here,
     never on AccountSerializer, because PublicSellerSerializer builds on that one."""

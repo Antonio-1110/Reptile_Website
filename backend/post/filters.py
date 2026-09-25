@@ -4,7 +4,7 @@ import django_filters
 from django.db.models import Q
 from django.utils import timezone
 
-from .models import LiveAnimalPost
+from .models import EquipmentPost, LiveAnimalPost
 
 
 class CommaListFilter(django_filters.BaseInFilter, django_filters.CharFilter):
@@ -17,6 +17,14 @@ def json_list_has_any(field, values):
     for value in values:
         query |= Q(**{f'{field}__icontains': f'"{value}"'})
     return query
+
+
+class EquipmentPostFilter(django_filters.FilterSet):
+    seller = django_filters.NumberFilter(field_name='account')
+
+    class Meta:
+        model = EquipmentPost
+        fields = ['condition', 'location']
 
 
 class LiveAnimalPostFilter(django_filters.FilterSet):
@@ -32,6 +40,7 @@ class LiveAnimalPostFilter(django_filters.FilterSet):
     location = CommaListFilter(field_name='location', lookup_expr='in')
     location_exclude = CommaListFilter(field_name='location', lookup_expr='in', exclude=True)
     species_name = django_filters.CharFilter(field_name='species__name', lookup_expr='iexact')
+    seller = django_filters.NumberFilter(field_name='account')  # a seller's page lists their listings
     genes = django_filters.CharFilter(method='filter_genes')
 
     price_min = django_filters.NumberFilter(field_name='price', lookup_expr='gte')

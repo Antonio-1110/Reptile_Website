@@ -60,7 +60,10 @@
 .listing-detail-seller-tag {
   color: #94a3b8;
   font-size: 14px;
+  text-decoration: none;
 }
+
+.listing-detail-seller-tag:hover { color: #cbd5e1; text-decoration: underline; }
 
 /* --- Layout ---
    A long left column (photos, then everything you read) and a summary panel on the right that stays

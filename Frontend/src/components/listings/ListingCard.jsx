@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
-import { getSexKey } from '../../api/listingsApi';
+import { getSexKey, sellerPagePath } from '../../api/listingsApi';
 
 export default function ListingCard({ animal }) {
   const { t } = useTranslation();
@@ -43,7 +43,7 @@ export default function ListingCard({ animal }) {
         <div className="card-seller-row">
           <span>{t('listings.seller')}</span>
           <a
-            href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}
+            href={sellerPagePath(animal.sellerId)}
             onClick={(event) => event.stopPropagation()}
           >
             {animal.sellerTag || animal.seller}

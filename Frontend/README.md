@@ -48,6 +48,7 @@ Frontend/src/
     │   ├── useListingAuction.js   # the listing's latest auction + bids, refreshed while it runs
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
+    ├── SellerProfilePage      # /sellers/:id — a seller's public profile and listings
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
     ├── Auctions/              # /auctions (?tab=ended); cards link to the animal's /posts/:id page

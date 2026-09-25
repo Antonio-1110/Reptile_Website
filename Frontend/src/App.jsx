@@ -6,6 +6,7 @@ import ListingEditorPage from "./pages/ListingEditor/ListingEditorPage";
 import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ListingDetailPage from "./pages/ListingDetail/ListingDetailPage";
 import MyListingsPage from "./pages/MyListingsPage";
+import SellerProfilePage from "./pages/SellerProfilePage";
 import AuctionsPage from "./pages/Auctions/AuctionsPage";
 import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
@@ -26,6 +27,8 @@ function RedirectToSignIn() {
 function renderPage(pathname, search, clearSearch) {
   const detailMatch = pathname.match(/^\/posts\/(\d+)$/);
   if (detailMatch) return <ListingDetailPage listingId={Number(detailMatch[1])} />;
+  const sellerMatch = pathname.match(/^\/sellers\/(\d+)$/);
+  if (sellerMatch) return <SellerProfilePage key={sellerMatch[1]} sellerId={Number(sellerMatch[1])} />;
   const auctionMatch = pathname.match(/^\/auctions\/(\d+)$/);
   if (auctionMatch) return <AuctionRedirectPage key={auctionMatch[1]} auctionId={Number(auctionMatch[1])} />;
   if (pathname === "/auctions") return <AuctionsPage />;
