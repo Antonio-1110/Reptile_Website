@@ -61,7 +61,7 @@ cd backend
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
 ../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
-../.venv/bin/python manage.py compilemessages
+../.venv/bin/python manage.py compilemessages         # .mo isn't committed; start-dev.sh and tests run this
 ../.venv/bin/python manage.py check --deploy           # production settings audit
 
 # Frontend
@@ -127,7 +127,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
   English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
-  `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
+  `backend/locale/zh_Hant/LC_MESSAGES/django.po`. Commit only the `.po`: the compiled `django.mo` is
+  git-ignored and built by `compilemessages` (which `start-dev.sh`, `manage.py test` and CI run).
 
 ---
 
@@ -256,7 +257,7 @@ run, env vars to set, servers to restart). Never commit or push unless asked.
 
 ### Working in parallel with other agents
 Several agents often work on separate branches at once. Almost every conflict so far has been in the
-same few shared files: the locale files, `django.po`/`.mo`, `TODO.md`, the READMEs, `App.jsx`
+same few shared files: the locale files, `django.po`, `TODO.md`, the READMEs, `App.jsx`
 routes and `post/migrations/`. To keep merges cheap:
 - Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
   (don't rebase a pushed branch) right before asking for review.
@@ -266,9 +267,8 @@ routes and `post/migrations/`. To keep merges cheap:
 - Leave the READMEs, `AGENTS.md` and `TODO.md` alone unless the change needs them; note doc
   updates in the PR description, and they can be batched into a docs PR.
 - Resolving a conflict in a translation file means **keeping both sides' keys** (per key or msgid),
-  then running `makemessages`/`compilemessages` and `npm run lint` (which catches duplicate keys).
-  Never resolve these with a whole-file "accept incoming/current". Regenerate `django.mo` rather
-  than picking a side.
+  then running `makemessages` and `npm test` (which checks both languages match). Never resolve
+  these with a whole-file "accept incoming/current".
 - Two branches that both add a migration to the same app need a merge migration
   (`makemigrations --merge`, renamed descriptively) once the second one reaches `master`.
 
@@ -319,6 +319,8 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - Buy-now emails are sent with `transaction.on_commit`; in tests wrap the request in
   `self.captureOnCommitCallbacks(execute=True)` or `mail.outbox` stays empty.
 - `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
+  Without it the dev server and tests still run, but Chinese API messages fall back to English (a
+  warning says so) and the tests of Chinese responses fail.
   New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
   them and drop the flag, or the new text silently falls back to English.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
