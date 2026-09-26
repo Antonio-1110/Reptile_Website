@@ -5,9 +5,6 @@
 }
 
 .account-settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 24px;
 }
 
@@ -24,14 +21,6 @@
   margin: 8px 0 0;
   color: #f3f4f6;
   font-size: 32px;
-}
-
-.account-settings-back {
-  padding: 10px 18px;
-  border: 1px solid #3a4d72;
-  border-radius: 999px;
-  color: #dce7ff;
-  text-decoration: none;
 }
 
 .account-settings-form {

@@ -2,7 +2,7 @@ export default {
   title: "開始競標",
   loading: "載入中…",
   loadError: "無法載入這則刊登，請確認它屬於你後再試一次。",
-  backToListings: "← 返回我的刊登",
+  backToListings: "返回我的刊登",
   intro: "買家出價前需先支付可退還的保證金。時間結束時的最高出價者得標，得標者再透過我們付清餘款。",
   paidOnly: "競標功能僅開放給付費商業帳號。",
   seePlans: "查看方案",

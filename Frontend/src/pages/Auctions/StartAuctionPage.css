@@ -22,7 +22,6 @@
 .start-auction-card h2 { margin: 8px 0 0; font-size: 1.2rem; }
 .start-auction-card p { margin: 0; line-height: 1.5; }
 
-.start-auction-back { color: #93c5fd; font-size: 0.9rem; }
 .start-auction-listing { color: var(--color-accent-bright); font-weight: 700; }
 .start-auction-intro, .start-auction-hint { color: var(--color-text-muted); }
 .start-auction-hint { margin-top: 6px !important; font-size: 0.85rem; }

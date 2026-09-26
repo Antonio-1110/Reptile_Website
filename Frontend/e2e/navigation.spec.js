@@ -18,7 +18,7 @@ test('browsing moves between pages client-side and Back restores the marketplace
 
   await page.locator('.card-title-link').first().click();
   await expect(page).toHaveURL(/\/equipment\/\d+$/);
-  await expect(page.locator('.listing-detail-back')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back to marketplace' })).toBeVisible();
 
   await page.goBack();
   await expect(page).toHaveURL(/\/marketplace\?category=equipment$/);

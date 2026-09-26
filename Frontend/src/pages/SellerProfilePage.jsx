@@ -1,6 +1,7 @@
 import './SellerProfilePage.css';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import BackLink from '../components/ui/BackLink';
 import ListingCard from '../components/listings/ListingCard';
 import ListingGrid from '../components/listings/ListingGrid';
 import { getListingsPage, getSellerProfile } from '../api/listingsApi';
@@ -59,6 +60,7 @@ export default function SellerProfilePage({ sellerId }) {
   return (
     <div className="seller-page">
       <div className="seller-page-inner">
+        <BackLink to="/marketplace">{t('navigation.backToMarketplace')}</BackLink>
         <section className="seller-card">
           <div className="seller-avatar" aria-hidden="true">{(profile.displayName || profile.username).slice(0, 1).toUpperCase()}</div>
           <div className="seller-card-body">

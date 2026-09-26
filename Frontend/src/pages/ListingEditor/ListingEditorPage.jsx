@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import "./ListingEditorPage.css";
 import BasicDetailsSection from "./components/BasicDetailsSection";
 import BiologicalDataSection from "./components/BiologicalDataSection";
+import BackLink from "../../components/ui/BackLink";
 import CategorySwitch from "../../components/ui/CategorySwitch";
 import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
@@ -282,9 +283,9 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     <>
       <main className="listing-editor-page">
         <div className="listing-editor-card">
-        <Link to={isEditing ? "/my-listings" : "/marketplace"} className="listing-editor-back">
+        <BackLink to={isEditing ? "/my-listings" : "/marketplace"}>
           {isEditing ? t("createListing.edit.back") : t("navigation.backToMarketplace")}
-        </Link>
+        </BackLink>
         <h1 className="listing-editor-title">{isEditing ? t("createListing.edit.heading") : t("createListing.heading")}</h1>
         <p className="listing-editor-subtitle">{isEditing ? t("createListing.edit.subtitle") : t("createListing.subtitle")}</p>
         {listingLoadError && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{errorText(t, listingLoadError)}</p>}

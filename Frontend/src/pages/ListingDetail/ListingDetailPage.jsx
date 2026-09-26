@@ -9,6 +9,7 @@ import ImageLightbox from './components/ImageLightbox';
 import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
+import BackLink from '../../components/ui/BackLink';
 import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
@@ -160,9 +161,9 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
     <div className="listing-detail-page">
       <div className="listing-detail-inner">
         <div className="listing-detail-topbar">
-          <Link to={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)} className="listing-detail-back">
+          <BackLink to={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)}>
             {showAuction ? t('auctions.detail.back') : t('listingDetail.back')}
-          </Link>
+          </BackLink>
           <Link to={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</Link>
         </div>
 
