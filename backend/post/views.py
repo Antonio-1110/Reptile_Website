@@ -13,7 +13,7 @@ from .serializer import (
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
-from .filters import LiveAnimalPostFilter
+from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
@@ -192,10 +192,10 @@ class EquipmentViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin,
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['condition', 'location']
+    filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
     ordering_fields = ['price', 'created_at']
-    ordering = ['-created_at']
+    ordering = ['-created_at', '-id']
     contact_request_field = 'equipment_post'
     report_request_field = 'equipment_post'
     
