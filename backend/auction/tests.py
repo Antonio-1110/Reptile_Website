@@ -225,7 +225,6 @@ class BiddingTests(AuctionTestCase):
         self.assertNotIn('bidder', bid)
 
 
-@override_settings(AUCTION_PAYMENT_GATEWAY=MANUAL)
 class HiddenListingAuctionTests(AuctionTestCase):
     def setUp(self):
         super().setUp()
@@ -258,6 +257,7 @@ class HiddenListingAuctionTests(AuctionTestCase):
         self.assertEqual(self.client.get(reverse('auction-detail', args=[equipment_auction.id])).status_code, 200)
 
 
+@override_settings(AUCTION_PAYMENT_GATEWAY=MANUAL)
 class ManualDepositTests(AuctionTestCase):
     def test_deposit_stays_pending_until_confirmed(self):
         auction = self.create_auction()
