@@ -212,6 +212,9 @@ SELLER_BOND_AMOUNT = env_decimal('SELLER_BOND_AMOUNT', '0')
 # Accounts with at least this many incidents (unpaid buy-nows, defaults, no-shows) are highlighted
 # in the admin's "Accounts to review". Nothing is blocked automatically.
 INCIDENT_REVIEW_THRESHOLD = env_int('INCIDENT_REVIEW_THRESHOLD', 2)
+# A listing reported by this many different accounts (with the reports still pending) is hidden until
+# staff review it, and staff are emailed. 0 turns auto-hiding off: reports then only queue for review.
+REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
 
 
 # Static files (CSS, JavaScript, Images)

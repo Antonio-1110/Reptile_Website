@@ -209,6 +209,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </div>
             </div>
 
+            {listing.isHidden && <p className="listing-detail-alert" role="status">{t('listingDetail.hiddenNotice')}</p>}
             <h1 className="listing-detail-title">{listing.title}</h1>
             <div className="listing-detail-subtitle">
               {isEquipment ? (

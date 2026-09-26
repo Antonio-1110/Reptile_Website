@@ -112,6 +112,7 @@ export default function MyListingsPage() {
                       {t(`myListings.categories.${listing.category}`, { defaultValue: listing.category })}
                     </span>
                     <h2>{listing.title}</h2>
+                    {listing.is_hidden && <span className="my-listings-hidden" title={t('myListings.hiddenHint')}>{t('myListings.hidden')}</span>}
                   </div>
                   <p className="my-listings-price">${listing.price ?? '—'}</p>
                 </div>

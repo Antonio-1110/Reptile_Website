@@ -134,6 +134,7 @@ const en = {
     loadErrorBody: "Check your connection and try again.",
     back: "← Back to marketplace",
     forSale: "For sale",
+    hiddenNotice: "This listing is hidden while our team reviews reports about it. Only you can see it. If you think this is a mistake, contact support.",
     report: "⚑ Report",
     reported: "Reported",
     seller: "Seller",
@@ -247,6 +248,8 @@ const en = {
   myListings: {
     signedOutTitle: "Log in to manage your listings",
     subtitle: "Update or remove listings you've published.",
+    hidden: "Hidden",
+    hiddenHint: "Hidden while our team reviews reports about it",
     orders: "My orders",
     newListing: "+ New listing",
     loading: "Loading your listings…",

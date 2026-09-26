@@ -26,6 +26,7 @@ function normalizeListing(item) {
     size: item.size_cm,
     weight: item.weight_grams,
     shippingMethods: item.shipping_methods || [],
+    isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
     postedDays: item.posted_days ?? 0,
     guideNotes: item.guide_notes || "",
     gallery: item.gallery || [],
