@@ -1,0 +1,18 @@
+export default {
+  loading: "Loading seller…",
+  loadError: "Unable to load this seller right now.",
+  notFound: "Seller not found",
+  verified: "Verified seller",
+  commercial: "Commercial seller",
+  hobbyist: "Hobbyist",
+  rating_one: "★ {{rating}} · {{count}} review",
+  rating_other: "★ {{rating}} · {{count}} reviews",
+  noReviews: "No reviews yet",
+  memberSince: "Member since {{date}}",
+  listings_one: "{{count}} animal for sale",
+  listings_other: "{{count}} animals for sale",
+  equipmentCount_one: "Also selling {{count}} equipment listing.",
+  equipmentCount_other: "Also selling {{count}} equipment listings.",
+  noListings: "No animals listed right now.",
+  showMore: "Show more",
+};

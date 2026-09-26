@@ -121,7 +121,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
-  `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+  `Frontend/src/i18n/locales/en/<section>.js` and `zh/<section>.js` (Traditional Chinese, Taiwan
+  usage). `npm test` fails if a key is missing from either language.
 - Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
   English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
@@ -259,8 +260,9 @@ same few shared files: the locale files, `django.po`/`.mo`, `TODO.md`, the READM
 routes and `post/migrations/`. To keep merges cheap:
 - Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
   (don't rebase a pushed branch) right before asking for review.
-- Add new locale keys as a **new section** at the end of the object rather than editing a shared
-  one, and don't reorder or reformat existing keys. Same for new routes in `App.jsx`.
+- Put a new feature's strings in **its own section file** (`i18n/locales/en/<section>.js` plus the
+  `zh/` twin; it's loaded automatically) rather than adding to a shared one, and don't reorder or
+  reformat existing keys. Add new routes in `App.jsx` next to, not in the middle of, others.
 - Leave the READMEs, `AGENTS.md` and `TODO.md` alone unless the change needs them; note doc
   updates in the PR description, and they can be batched into a docs PR.
 - Resolving a conflict in a translation file means **keeping both sides' keys** (per key or msgid),

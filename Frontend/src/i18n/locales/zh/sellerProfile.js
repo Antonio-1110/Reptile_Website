@@ -1,0 +1,15 @@
+export default {
+  loading: "正在載入賣家…",
+  loadError: "目前無法載入這位賣家。",
+  notFound: "找不到這位賣家",
+  verified: "已驗證賣家",
+  commercial: "商業賣家",
+  hobbyist: "個人玩家",
+  rating_other: "★ {{rating}} · {{count}} 則評價",
+  noReviews: "尚無評價",
+  memberSince: "{{date}} 加入",
+  listings_other: "{{count}} 隻個體出售中",
+  equipmentCount_other: "另有 {{count}} 項器材出售中。",
+  noListings: "目前沒有刊登任何個體。",
+  showMore: "顯示更多",
+};
