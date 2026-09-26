@@ -399,9 +399,9 @@ class LegacyTokenAuthRetiredTests(APITestCase):
         for path in ('/api/auth/register/', '/api/auth/login/', '/api/auth/logout/', '/api/auth/profile/'):
             self.assertEqual(self.client.post(path, {}).status_code, 404, path)
 
-    def test_profile_and_plans_live_next_to_the_jwt_endpoints(self):
-        self.assertEqual(reverse('profile'), '/api/v1/auth/profile/')
-        self.assertEqual(reverse('account-plans'), '/api/v1/auth/plans/')
+    def test_profile_and_plans_live_under_the_account_endpoints(self):
+        self.assertEqual(reverse('profile'), '/api/v1/account/profile/')
+        self.assertEqual(reverse('account-plans'), '/api/v1/account/plans/')
 
     def test_a_jwt_from_login_opens_the_profile(self):
         Account.objects.create_user(username='jwt_user', email='jwt@example.com', password='S3curePass!23')

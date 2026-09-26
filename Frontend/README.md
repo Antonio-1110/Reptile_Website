@@ -77,7 +77,7 @@ npm run dev
 ```
 
 Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
-`http://localhost:8000/api`.
+`http://localhost:8000/api` (the API root; requests go to its `/v1/`).
 
 ## Scripts
 

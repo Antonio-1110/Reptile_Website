@@ -144,8 +144,7 @@ class FavoriteFlagMixin(serializers.Serializer):
 
 class PublicListingFieldsMixin(serializers.Serializer):
     """Read-only fields the listing detail page shows for both listing types."""
-    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
-    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
+    seller = PublicSellerSerializer(source='account', read_only=True)
     posted_days = serializers.SerializerMethodField()
 
     def get_posted_days(self, obj):
@@ -155,18 +154,15 @@ class PublicListingFieldsMixin(serializers.Serializer):
 class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
-    # Nested seller info
-    seller = PublicSellerSerializer(source='account', read_only=True)
-    seller_id = serializers.IntegerField(source='account.id', read_only=True)
-    
+
     class Meta:
         model = EquipmentPost
         fields = [
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
+            'seller', 'posted_days', 'is_favorite'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden', 'is_favorite']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'posted_days', 'is_hidden', 'is_favorite']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -178,10 +174,6 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
     contact_info = ContactInfoField()
     # Null while the listing's species is under review (see species_review).
     species_name = serializers.CharField(source='species.name', read_only=True, allow_null=True)
-    
-    # Nested seller info
-    seller = PublicSellerSerializer(source='account', read_only=True)
-    seller_id = serializers.IntegerField(source='account.id', read_only=True)
     
     # Send `species` (an id from /posts/species/) or `requested_species` (a name as the seller typed
     # it). A name that matches a species or one of its aliases picks it; any other name is saved for
@@ -203,11 +195,11 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
             'species', 'species_name', 'requested_species', 'species_review', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
+            'seller', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
-            'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
-            'seller_rating', 'species_name', 'species_review', 'genes', 'posted_days', 'is_favorite'
+            'id', 'created_at', 'updated_at', 'seller', 'is_hidden', 'species_name', 'species_review', 'genes',
+            'posted_days', 'is_favorite'
         ]
     
     def get_species_review(self, obj):

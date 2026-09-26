@@ -24,7 +24,7 @@ function normalizeAuction(item) {
   return {
     id: item.id,
     status: item.status,
-    sellerName: item.seller_name,
+    sellerName: item.seller?.display_name,
     isSeller: Boolean(item.is_seller),
     listing: {
       id: listing.id,

@@ -94,13 +94,27 @@ Runs at `http://127.0.0.1:8000/`. Details in [backend/README.md](backend/README.
 
 Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md).
 
+Conventions every endpoint follows:
+
+- Everything lives under `/api/v1/`. URL segments are plural, kebab-case nouns (`/live-animals/`,
+  `/saved-searches/`); JSON fields and query parameters are `snake_case`.
+- Errors are `{"detail": "message"}` for the request as a whole (always one string) and/or
+  `{"field": ["message", …]}` for particular fields. Messages follow `Accept-Language`.
+- Lists are paginated: `{count, next, previous, results}` (`?page=N`).
+- The person selling appears as a nested `seller` object (`id`, `username`, `display_name`,
+  `is_commercial`, `verified_seller`, `seller_rating`, `total_reviews`) on listings and auctions, never
+  with contact details.
+
 ### Authentication (`/api/v1/auth/`, JWT)
 
 - `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/`, `GET /me/`
+
+### Account (`/api/v1/account/`)
+
 - `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota
 - `GET /plans/` — public plan comparison
 
-### Posts (`/api/posts/`)
+### Posts (`/api/v1/posts/`)
 
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
@@ -110,7 +124,11 @@ Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINT
   `requested_species` (a typed name): a name that isn't a species or alias is held for staff review,
   and the listing stays unpublished (`species_review`) until staff map or add the species
 
-### Auctions (`/api/auctions/`)
+### Sellers (`/api/v1/sellers/`)
+
+- `GET /<id>/` — public profile (no contact details); `GET`/`POST`/`DELETE /<id>/reviews/`
+
+### Auctions (`/api/v1/auctions/`)
 
 - `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
   species, genes) for cards, and the anti-sniping rule (`extend_window_minutes`, `extend_by_minutes`):
@@ -124,7 +142,7 @@ Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINT
 Notes:
 
 - Anyone may read published listings; only the listing's owning account may update or delete it.
-- Token auth is required for authenticated requests; CORS allows local frontend ports (`5173`, `3000`).
+- JWT auth (`Authorization: Bearer <access>`) is required for authenticated requests; CORS allows local frontend ports (`5173`, `3000`).
 - The backend models and serializers are the source of truth for field names and validation rules.
 
 ## Account model rules

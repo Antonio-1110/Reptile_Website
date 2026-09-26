@@ -34,8 +34,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class MeSerializer(serializers.ModelSerializer):
-    is_verified = serializers.BooleanField(source='verified_seller', read_only=True)
-
     class Meta:
         model = Account
-        fields = ['id', 'username', 'email', 'is_verified']
+        fields = ['id', 'username', 'email', 'verified_seller']
+        read_only_fields = fields

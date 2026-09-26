@@ -24,7 +24,7 @@ listings, and bid in auctions.
 Django apps in `backend/`:
 
 - `account/` — `Account` user model (hobbyist vs commercial, paid tier, limits), profile and plans views
-- `authentication/` — JWT auth at `/api/v1/auth/` (the only auth; also serves `profile/` and `plans/`)
+- `authentication/` — JWT auth at `/api/v1/auth/` (the only auth); `account/` serves `/api/v1/account/profile/` and `plans/`
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
 - `common/` — dev-only auth bypass middleware
@@ -138,11 +138,17 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 | Base path | What | Auth |
 | --- | --- | --- |
-| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/`, `profile/` (quota info used by the listing editor), `plans/` | JWT |
-| `/api/posts/live-animals/`, `/api/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
-| `/api/posts/species/` | species lookup | public |
-| `/api/sellers/<id>/` | seller's public profile (no contact details) | public |
-| `/api/auctions/` | auctions, deposits, bids | read: public; write: authenticated |
+| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/` | JWT |
+| `/api/v1/account/` | `profile/` (quota info used by the listing editor), `plans/` | profile: JWT; plans: public |
+| `/api/v1/posts/live-animals/`, `/api/v1/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
+| `/api/v1/posts/species/` | species lookup | public |
+| `/api/v1/sellers/<id>/` | seller's public profile (no contact details) | public |
+| `/api/v1/auctions/` | auctions, deposits, bids, `orders/` | read: public; write: authenticated |
+
+API conventions (keep new endpoints to them): everything under `/api/v1/`, plural kebab-case URL
+segments, `snake_case` fields; errors are `{"detail": "one string"}` and/or `{"field": ["…"]}`
+(`common/exceptions.py`; raise `ValidationError`/`AuctionError` rather than building error responses);
+the seller is a nested `seller` object (`PublicSellerSerializer`), not flat `seller_*` fields.
 | `/media/…` | uploaded listing photos (served by Django only when `DEBUG`) | public |
 
 Full request/response examples: `docs/API_ENDPOINTS.md` (local only). When you change the contract,
@@ -242,7 +248,7 @@ Tests passing is necessary, not sufficient, for web work. Pick what fits the cha
 | Settings / deploy | `manage.py check --deploy` with production-like env vars |
 
 Useful tricks:
-- The DRF browsable API (`http://127.0.0.1:8000/api/posts/live-animals/`) is the quickest way to see
+- The DRF browsable API (`http://127.0.0.1:8000/api/v1/posts/live-animals/`) is the quickest way to see
   real responses and try filters.
 - Start a throwaway backend on another port (`runserver 127.0.0.1:8010`) for end-to-end checks
   without disturbing the user's running server; clean up any records you create.
@@ -303,7 +309,7 @@ Apply these whenever you build or review a feature — they're the common gaps i
 
 ## 8. Known gotchas
 
-- If the site shows no listings, check the backend first: `curl http://127.0.0.1:8000/api/posts/live-animals/`
+- If the site shows no listings, check the backend first: `curl http://127.0.0.1:8000/api/v1/posts/live-animals/`
   and `.dev/logs/backend.log`. A stale `.dev/pids` makes `start-dev.sh` refuse to start; run
   `./stop-dev.sh` first. `start-dev.sh` uses `.venv/` at the repo root (then `backend/.venv`, then the
   system `python3`, which usually lacks Django).

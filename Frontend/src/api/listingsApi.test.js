@@ -49,18 +49,24 @@ describe('getListingsPage: marketplace filters → API query', () => {
     expect(Object.fromEntries(requestedParams(fetchMock))).toEqual({ page: '1' });
   });
 
+  it('asks the versioned API for the chosen listing type', async () => {
+    const fetchMock = mockFetch();
+    await getListingsPage({ category: 'equipment' });
+    expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/api/v1/posts/equipment/');
+  });
+
   it('maps API fields to the names the UI uses', async () => {
     mockFetch([{
       id: 7, title: 'Pied', species_name: 'Ball Pythons', location: 'TPE', life_stage: 'adult', age_years: 2,
       size_cm: 90, weight_grams: 800, shipping_methods: ['shipping'], posted_days: 3, genes: ['Pied'],
-      seller: { username: 'apex', display_name: 'Apex Exotics', seller_rating: 4.9 },
+      seller: { id: 3, username: 'apex', display_name: 'Apex Exotics', seller_rating: 4.9 },
     }], { next: 'http://x/?page=2', count: 30 });
     const { results, count, hasMore } = await getListingsPage({});
     expect(count).toBe(30);
     expect(hasMore).toBe(true);
     expect(results[0]).toMatchObject({
       species: 'Ball Pythons', location: 'taipei', lifeStage: 'adult', ageYears: 2, size: 90, weight: 800,
-      shippingMethods: ['shipping'], postedDays: 3, seller: 'Apex Exotics', sellerTag: 'apex', rating: 4.9,
+      shippingMethods: ['shipping'], postedDays: 3, seller: 'Apex Exotics', sellerTag: 'apex', sellerId: 3, rating: 4.9,
     });
   });
 });

@@ -551,9 +551,9 @@ class EquipmentFilterTests(APITestCase):
 	def test_detail_has_public_seller_fields_but_no_contact_details(self):
 		post = EquipmentPost.objects.get(title='UVB Kit')
 		data = self.client.get(reverse('equipment-detail', args=[post.id])).data
-		self.assertEqual(data['seller_name'], post.account.get_display_name())
+		self.assertEqual(data['seller']['display_name'], post.account.get_display_name())
 		self.assertEqual(data['posted_days'], 1)
-		self.assertIn('seller_rating', data)
+		self.assertIn('seller_rating', data['seller'])
 		self.assertNotIn('contact_info', data)
 		self.assertNotIn('email', data['seller'])
 
