@@ -131,6 +131,7 @@ const en = {
     forSale: "For sale",
     reservedNote: "Reserved: the seller is holding this for a buyer. You can still get in touch in case it falls through.",
     soldNote: "This has been sold.",
+    hiddenNotice: "This listing is hidden while our team reviews reports about it. Only you can see it. If you think this is a mistake, contact support.",
     report: "⚑ Report",
     reported: "Reported",
     seller: "Seller",
@@ -245,6 +246,8 @@ const en = {
   myListings: {
     signedOutTitle: "Log in to manage your listings",
     subtitle: "Update or remove listings you've published.",
+    hidden: "Hidden",
+    hiddenHint: "Hidden while our team reviews reports about it",
     orders: "My orders",
     status: "Status",
     statusSaved: "\"{{title}}\" is now marked {{status}}.",

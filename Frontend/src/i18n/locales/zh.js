@@ -130,6 +130,7 @@ const zh = {
     forSale: "出售中",
     reservedNote: "已保留：賣家正為某位買家保留這則刊登。若交易未成，你仍可與賣家聯絡。",
     soldNote: "這則刊登已售出。",
+    hiddenNotice: "這則刊登因收到檢舉，正在由我們的團隊審核，目前已暫時隱藏，只有你看得到。若你認為有誤，請聯絡客服。",
     report: "⚑ 檢舉",
     reported: "已檢舉",
     seller: "賣家",
@@ -244,6 +245,8 @@ const zh = {
   myListings: {
     signedOutTitle: "登入後即可管理你的刊登",
     subtitle: "更新或移除你已發布的刊登。",
+    hidden: "已隱藏",
+    hiddenHint: "因檢舉審核中而暫時隱藏",
     orders: "我的訂單",
     status: "狀態",
     statusSaved: "「{{title}}」已標記為{{status}}。",
