@@ -50,6 +50,7 @@ Frontend/src/
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
     ├── MyOrdersPage           # /orders — the user's orders as buyer and seller
+    ├── SavedSearchesPage      # /saved-searches — searches the user is emailed about (saved from the marketplace)
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
     ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page

@@ -215,6 +215,10 @@ INCIDENT_REVIEW_THRESHOLD = env_int('INCIDENT_REVIEW_THRESHOLD', 2)
 # A listing reported by this many different accounts (with the reports still pending) is hidden until
 # staff review it, and staff are emailed. 0 turns auto-hiding off: reports then only queue for review.
 REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
+# Saved searches a user may keep (each is emailed about by `manage.py send_search_alerts`).
+SAVED_SEARCH_LIMIT = env_int('SAVED_SEARCH_LIMIT', 20)
+# Where the website lives, for links in emails (e.g. https://example.com). No trailing slash.
+FRONTEND_URL = os.environ.get('DJANGO_FRONTEND_URL', 'http://localhost:5173').rstrip('/')
 
 
 # Static files (CSS, JavaScript, Images)
