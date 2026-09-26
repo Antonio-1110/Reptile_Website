@@ -338,6 +338,20 @@ const zh = {
       other: "其他",
     },
     categories: { live_animal: "活體動物", enclosure: "飼養設備", heating: "加熱設備", food: "食物", accessories: "配件" },
+    equipment: {
+      type: "器材類型",
+      condition: "物品狀況",
+      types: {
+        enclosure: "飼養箱／爬箱",
+        heating: "加熱設備",
+        lighting: "照明／UVB",
+        climate: "溫控器與溫濕度計",
+        substrateDecor: "底材與造景",
+        transport: "外出盒與運輸",
+        other: "其他",
+      },
+      conditions: { 2: "全新", 1: "二手", 0: "故障（零件用）" },
+    },
     biological: {
       title: "生物資料",
       sex: "性別",
@@ -418,6 +432,7 @@ const zh = {
       leading: "你目前是最高出價者。",
       outbid: "你的出價已被超越。",
       notOpenYet: "你已支付保證金，競標開始後即可出價。",
+      extendHint: "結束前 {{window}} 分鐘內有人出價時，競標會延長至該次出價後 {{by}} 分鐘，讓其他人也有機會回應。",
     },
     seller: {
       yourAuction: "這是你的競標，買家的出價會即時顯示在這裡。",

@@ -110,6 +110,10 @@ async function buildLiveAnimalFields(formData) {
   };
 }
 
+function buildEquipmentFields(formData) {
+  return { category: formData.equipmentCategory, condition: Number(formData.condition) };
+}
+
 export async function createListing(formData) {
   const isLiveAnimal = formData.category === "live_animal";
   const payload = {
@@ -124,7 +128,7 @@ export async function createListing(formData) {
   if (isLiveAnimal) {
     Object.assign(payload, await buildLiveAnimalFields(formData));
   } else {
-    payload.condition = 1;
+    Object.assign(payload, buildEquipmentFields(formData));
   }
 
   return requestWithAuth(listingEndpoint(isLiveAnimal ? "live_animal" : "equipment"), {
@@ -147,6 +151,8 @@ export async function updateListing(id, formData) {
 
   if (isLiveAnimal) {
     Object.assign(payload, await buildLiveAnimalFields(formData));
+  } else {
+    Object.assign(payload, buildEquipmentFields(formData));
   }
 
   return requestWithAuth(listingEndpoint(isLiveAnimal ? "live_animal" : "equipment", id), {

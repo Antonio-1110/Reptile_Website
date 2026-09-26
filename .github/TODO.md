@@ -30,7 +30,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       (sale completes if they do neither); seller no-show refunds the buyer. Emails at every step
 - [x] Track accounts behaving oddly (incidents + admin "Accounts to review"); nothing auto-blocked
 - [ ] Decide the real numbers: payment / handover / confirm windows, fee, seller bond amount, review
-      threshold. All are env-var settings with placeholder defaults (see `backend/.env.example`)
+      threshold, anti-sniping window. All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
 - [ ] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
@@ -66,7 +66,10 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       already require a paid account)
 - [x] Add image upload support with per-account limits
 - [x] Add richer filtering for location, price and species (live animals)
-- [ ] Add richer filtering for equipment (price range, search tags, equipment category)
+- [x] Add richer filtering for equipment (price range, search tags, equipment category): new
+      `category` field (set in the editor with `condition`) and `EquipmentPostFilter`
+- [ ] Equipment browse page: the equipment filters exist on the API, but the marketplace only lists
+      live animals
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [x] Add saved favorites or watchlist functionality (optional price-drop alerts)
@@ -90,7 +93,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
 - [x] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
-- [ ] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+- [x] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+      (`AUCTION_EXTEND_WINDOW_MINUTES` / `AUCTION_EXTEND_BY_MINUTES`, default 5 / 5)
 
 - [ ] Improve the home page copy and layout polish
 - [ ] Refine English and Chinese wording consistency across the app
@@ -108,7 +112,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Document frontend component responsibilities and API integration patterns
 - [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
 - [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
-- [ ] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+- [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+      (`.github/workflows/ci.yml`; also fails on a model change without its migration)
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
 - [ ] Remove the empty `.github/appmod/` folder if it's no longer used

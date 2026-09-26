@@ -93,6 +93,8 @@ class FavoriteFlagMixin(serializers.Serializer):
 
 
 class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+    # Same as live animals: the editor sends contact_info as an object.
+    contact_info = ContactInfoField()
     # Nested seller info
     seller = PublicSellerSerializer(source='account', read_only=True)
     seller_id = serializers.IntegerField(source='account.id', read_only=True)
@@ -101,7 +103,7 @@ class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Post
         model = EquipmentPost
         fields = [
             'id', 'title', 'description', 'price', 'location', 'contact_info',
-            'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
+            'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
             'seller', 'seller_id', 'is_favorite'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'is_favorite']
