@@ -98,6 +98,53 @@
   color: oklch(79.2% 0.209 151.711);
 }
 
+.listing-editor-result--success a,
+.listing-editor-result--error a,
+.listing-editor-created p a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.listing-editor-hint {
+  margin-top: -1.25rem;
+  color: oklch(70.7% 0.022 261.325);
+}
+
+.listing-editor-created {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid oklch(62.7% 0.194 149.214 / 50%);
+  border-radius: 0.75rem;
+  background-color: oklch(62.7% 0.194 149.214 / 10%);
+}
+
+.listing-editor-created h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.listing-editor-created-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.listing-editor-created-actions > * {
+  padding: 0.6rem 1rem;
+  border: 1px solid oklch(44.6% 0.03 256.802);
+  border-radius: 0.5rem;
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.listing-editor-created-actions > .listing-editor-created-primary {
+  border-color: transparent;
+  color: #fff;
+  background-color: oklch(52.7% 0.154 150.069);
+}
+
 @media (min-width: 40rem) {
   .listing-editor-page {
     padding-inline: 1.5rem;

@@ -18,7 +18,8 @@
 .biological-sex-option.is-selected {
   border-color: oklch(72.3% 0.219 149.579);
   color: #fff;
-  background-color: oklch(62.7% 0.194 149.214);
+  /* Dark enough for white text (≥ 4.5:1); the bright border still marks it selected. */
+  background-color: var(--color-accent);
 }
 
 .biological-traits {

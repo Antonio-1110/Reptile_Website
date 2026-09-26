@@ -7,12 +7,13 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 ## High priority
 
 - [ ] Finalize the frontend/backend data contract for listing creation and profile updates
-- [ ] Validate hobbyist vs commercial account workflows end-to-end
+- [x] Validate hobbyist vs commercial account workflows end-to-end (checked by hand; now covered by
+      `account.tests.PlanWorkflowTests`)
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
-- [ ] Confirm authentication flow works in the browser for login and signup
-- [ ] Better UI for choosing the image section for the post cover
-- [ ] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
+- [x] Confirm authentication flow works in the browser for login and signup
+- [x] Better UI for choosing the image section for the post cover (covered by the cover crop tool and #10's photo reordering)
+- [x] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
       (move `profile/` over first; the listing editor depends on it)
 - [x] Frontend for auctions: browse (`/auctions`), detail, pay deposit, bid, results, seller cancel
 - [ ] UI for starting an auction (paid commercial sellers, e.g. from My Listings), with the optional
@@ -22,7 +23,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       deleted: today it cascades and the deposit records disappear. Probably block deletion while an
       auction is active or deposits are held
 - [ ] Schedule `manage.py close_auctions` and `manage.py process_orders` (cron / worker, every few
-      minutes) wherever the backend is hosted
+      minutes) and `manage.py send_search_alerts` (every few hours) wherever the backend is hosted
 - [x] Buy now: optional seller price, paid in full up front, first payment wins and closes the
       auction, deposits refunded, everyone emailed; contact details only shared after a paid sale
 - [x] Orders: winner pays the rest within a deadline or loses the deposit; seller may then offer the
@@ -87,13 +88,13 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Species care sheets (temperature, humidity, diet, enclosure) linked from listings
 - [ ] Permit / CITES field and warnings for protected species
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
-- [ ] Saved searches with email alerts (search state is already in the URL)
+- [x] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
 - [x] Let sellers reorder or remove individual photos without re-uploading all of them
 
 ## UX improvements
 
-- [ ] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
+- [x] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
 - [x] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
@@ -103,9 +104,9 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Improve the home page copy and layout polish
 - [x] Refine English and Chinese wording consistency across the app
 - [x] Improve empty states and loading states for listings and profile pages
-- [ ] Add clearer success/error messages for posting and login flows
+- [x] Add clearer success/error messages for posting and login flows
 - [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
-- [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
+- [x] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
 ## Technical backlog
 
@@ -113,14 +114,14 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add tests for account validation, posting rules, and serializer behavior
 - [x] Review and clean up duplicate or legacy documentation files
 - [x] Consider a clearer separation between public listing endpoints and seller-only actions
-- [ ] Document frontend component responsibilities and API integration patterns
-- [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
-- [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
+- [x] Document frontend component responsibilities and API integration patterns (`Frontend/README.md`)
+- [x] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
+- [x] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
 - [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
       (`.github/workflows/ci.yml`; also fails on a model change without its migration)
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
-- [ ] Remove the empty `.github/appmod/` folder if it's no longer used
+- [x] Remove the empty `.github/appmod/` folder if it's no longer used (already gone)
 
 ## Nice-to-have
 

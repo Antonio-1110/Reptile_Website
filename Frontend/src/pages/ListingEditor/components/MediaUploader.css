@@ -110,6 +110,12 @@
   }
 }
 
+/* The file input is visually hidden inside the label, so show its keyboard focus on the dropzone. */
+.media-dropzone:focus-within {
+  outline: 2px solid oklch(72.3% 0.219 149.579);
+  outline-offset: 2px;
+}
+
 /* Move a photo one place earlier or later (the order is the gallery order on the listing page). */
 .media-move {
   position: absolute;

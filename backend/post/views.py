@@ -8,18 +8,21 @@ from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Exists, OuterRef
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
 from common.money import format_money
 from common.notifications import contact_lines, send_notification
 from .serializer import (
+    SavedSearchSerializer,
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
 from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
-from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report
+from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
+from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -278,7 +281,7 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = LiveAnimalPostFilter
-    search_fields = ['title', 'description', 'genetics', 'species__name']
+    search_fields = LIVE_ANIMAL_SEARCH_FIELDS
     ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm']
     ordering = ['-created_at', '-id']
     contact_request_field = 'live_animal_post'
@@ -304,3 +307,19 @@ class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixi
     
     def perform_create(self, serializer):
         serializer.save(account=self.request.user)
+
+class SavedSearchViewSet(viewsets.ModelViewSet):
+    """
+    The signed-in user's saved marketplace searches (list, save, rename, delete). Each is emailed about
+    when new listings match it (manage.py send_search_alerts).
+    """
+    serializer_class = SavedSearchSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_queryset(self):
+        return SavedSearch.objects.filter(account=self.request.user)
+
+    def perform_create(self, serializer):
+        # Alerts cover listings posted from now on, not everything that already matches.
+        serializer.save(account=self.request.user, last_alerted_at=timezone.now())

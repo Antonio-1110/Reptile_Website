@@ -8,7 +8,7 @@ Django + Django REST Framework API powering authentication, listings, and seller
 - Django REST Framework 3.14
 - django-cors-headers, django-filter
 - SQLite for local development
-- JWT authentication (`djangorestframework-simplejwt`), plus legacy token auth (`rest_framework.authtoken`)
+- JWT authentication (`djangorestframework-simplejwt`)
 
 ## App layout
 
@@ -38,7 +38,7 @@ backend/
 │   └── migrations/
 ├── backend/            # project settings
 │   ├── settings.py
-│   ├── urls.py         # mounts /api/auth/ and /api/posts/
+│   ├── urls.py         # mounts /api/v1/auth/, /api/posts/ and /api/auctions/
 │   └── wsgi.py / asgi.py
 ├── manage.py
 ├── requirements.txt
@@ -241,12 +241,14 @@ webhook view that calls `services.confirm_deposit()` / `fail_deposit()` and `con
 
 See [docs/API_ENDPOINTS.md](../docs/API_ENDPOINTS.md) for full request/response examples.
 
-### Auth (`/api/auth/`)
+### Auth (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
-- `GET`/`PATCH /profile/` (auth required) — includes `post_count` and `remaining_post_count`
+The only authentication is JWT (SimpleJWT); the old token endpoints under `/api/auth/` were retired.
+Log out by discarding the tokens on the client.
 
-### JWT auth (`/api/v1/auth/`)
+- `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
+  `remaining_post_count`
+- `GET /plans/` — public: the account plans and their limits
 
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
@@ -304,6 +306,12 @@ real login flows.
   List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
   listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
   listing sold.
+- `GET`/`POST /saved-searches/`, `PATCH`/`DELETE /saved-searches/<id>/` (signed in) — the user's saved
+  marketplace searches: `query` is the live-animals list query (e.g. `search=pied&sex=1.0`), checked
+  against the real filters and stored sorted; `name` defaults to the search text. Up to
+  `SAVED_SEARCH_LIMIT` per account. `python manage.py send_search_alerts` (schedule it, e.g. every few
+  hours) emails each user the listings posted since their last alert that match, with links built from
+  `DJANGO_FRONTEND_URL`.
 - `POST`/`DELETE /live-animals/<id>/favorite/` (and `equipment/…`) — save or unsave a listing (signed in);
   `GET /live-animals/favorites/` lists the user's saved listings, newest first. Listing responses carry
   `is_favorite` for the viewer. Lowering a listing's price emails everyone who saved it (one email each).

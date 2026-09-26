@@ -2,7 +2,7 @@ import json
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
-from .models import EquipmentPost, LiveAnimalPost, Species
+from .models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
 from account.serializers import PublicSellerSerializer
 
 
@@ -210,3 +210,35 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class SavedSearchSerializer(serializers.ModelSerializer):
+    """A saved marketplace search. `query` is checked against the real listing filters and stored in a
+    stable form; `name` defaults to the search text."""
+    name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    class Meta:
+        model = SavedSearch
+        fields = ['id', 'name', 'query', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_query(self, value):
+        from .search_alerts import normalize_query
+        try:
+            return normalize_query(value)
+        except ValueError as error:
+            raise serializers.ValidationError(
+                _('This search has filters that can\'t be saved: %(names)s.') % {'names': ', '.join(error.args[0])}
+            )
+
+    def validate(self, attrs):
+        from django.conf import settings
+        from django.http import QueryDict
+        account = self.context['request'].user
+        if self.instance is None and SavedSearch.objects.filter(account=account).count() >= settings.SAVED_SEARCH_LIMIT:
+            raise serializers.ValidationError({
+                'detail': _('You can keep up to %(count)s saved searches. Delete one to save another.') % {'count': settings.SAVED_SEARCH_LIMIT},
+            })
+        if not attrs.get('name'):
+            attrs['name'] = QueryDict(attrs['query']).get('search') or _('Marketplace search')
+        return attrs

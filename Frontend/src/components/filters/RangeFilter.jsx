@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import FilterSection from "./FilterSection";
 import "./RangeFilter.css";
 
@@ -13,6 +14,9 @@ export default function RangeFilter({
   allowDecimal = false,
   formatWithCommas = false,
 }) {
+  const { t } = useTranslation();
+  // The inputs only show placeholders ("0", "100"), so they need their own names.
+  const label = t(title);
   const valuePattern = allowDecimal ? /^\d*(\.\d?)?$/ : /^\d*$/;
   const handleInputChange = (value, onChange) => {
     const unformattedValue = value.replace(/,/g, "");
@@ -46,6 +50,7 @@ export default function RangeFilter({
             step={step}
             value={displayValue(min)}
             placeholder={minPlaceholderText}
+            aria-label={t("filters.rangeMin", { label })}
             onChange={(event) => handleInputChange(event.target.value, onMinChange)}
             onKeyDown={handleKeyDown}
             onBlur={(event) => clampValue(event.target.value, onMinChange)}
@@ -58,6 +63,7 @@ export default function RangeFilter({
             step={step}
             value={displayValue(max)}
             placeholder={maxPlaceholderText}
+            aria-label={t("filters.rangeMax", { label })}
             onChange={(event) => handleInputChange(event.target.value, onMaxChange)}
             onKeyDown={handleKeyDown}
             onBlur={(event) => clampValue(event.target.value, onMaxChange)}
