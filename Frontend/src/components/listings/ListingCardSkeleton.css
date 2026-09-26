@@ -1,0 +1,14 @@
+.listing-card-skeleton,
+.listing-card-skeleton:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+.listing-card-skeleton-image {
+  aspect-ratio: 4 / 3;
+  border-radius: 0;
+}
+
+.listing-card-skeleton-line {
+  height: 0.9rem;
+}
