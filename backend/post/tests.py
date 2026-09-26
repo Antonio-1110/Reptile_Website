@@ -861,3 +861,91 @@ class FavoritesTests(APITestCase):
 			self.client.patch(url, {'price': 12000}, format='json')
 			self.client.patch(url, {'title': 'Banana Ball Python'}, format='json')
 		self.assertEqual(mail.outbox, [])
+
+
+class ReportModerationTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='mod-seller', email='seller@example.com', password='pass1234')
+		self.reporters = [
+			Account.objects.create_user(username=f'reporter{index}', email=f'r{index}@example.com', password='pass1234')
+			for index in range(3)
+		]
+		self.staff = Account.objects.create_superuser(username='staff', email='staff@example.com', password='pass1234')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.post = LiveAnimalPost.objects.create(
+			account=self.seller, species=Species.objects.create(name='Mod Pythons'),
+			title='Suspicious Python', description='d', contact_info='{}',
+		)
+		self.detail_url = reverse('live-animal-detail', args=[self.post.id])
+
+	def report(self, user):
+		self.client.force_authenticate(user)
+		return self.client.post(reverse('live-animal-report', args=[self.post.id]))
+
+	def listed_titles(self):
+		return [item['title'] for item in self.client.get(reverse('live-animal-list')).data['results']]
+
+	def test_hidden_listing_is_only_visible_to_its_owner_and_staff(self):
+		LiveAnimalPost.objects.filter(pk=self.post.pk).update(is_hidden=True)
+		self.assertEqual(self.listed_titles(), [])  # anonymous
+		self.assertEqual(self.client.get(self.detail_url).status_code, 404)
+		self.client.force_authenticate(self.reporters[0])
+		self.assertEqual(self.client.get(self.detail_url).status_code, 404)
+		self.client.force_authenticate(self.seller)
+		self.assertTrue(self.client.get(self.detail_url).data['is_hidden'])
+		self.assertEqual(self.client.get(reverse('live-animal-mine')).data['count'], 1)
+		self.client.force_authenticate(self.staff)
+		self.assertEqual(self.client.get(self.detail_url).status_code, 200)
+
+	def test_reports_only_queue_for_review_by_default(self):
+		for reporter in self.reporters:
+			self.report(reporter)
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+		self.assertEqual(Report.objects.filter(status=Report.Status.PENDING).count(), 3)
+
+	@override_settings(REPORT_AUTO_HIDE_THRESHOLD=2, ADMINS=[('Staff', 'staff@example.com')])
+	def test_listing_hides_itself_after_enough_different_reporters(self):
+		with self.captureOnCommitCallbacks(execute=True):
+			self.report(self.reporters[0])
+			self.report(self.reporters[0])  # the same account twice still counts once
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+
+		with self.captureOnCommitCallbacks(execute=True):
+			self.report(self.reporters[1])
+		self.post.refresh_from_db()
+		self.assertTrue(self.post.is_hidden)
+		self.assertEqual(len(mail.outbox), 1)
+		self.assertIn('Suspicious Python', mail.outbox[0].subject)
+
+	def admin_action(self, action, reports):
+		self.client.force_login(self.staff)
+		return self.client.post(reverse('admin:post_report_changelist'), {
+			'action': action, '_selected_action': [report.pk for report in reports],
+		})
+
+	def test_staff_can_hide_and_resolve_or_dismiss_from_the_admin(self):
+		self.report(self.reporters[0])
+		self.report(self.reporters[1])
+		reports = list(Report.objects.all())
+
+		self.assertEqual(self.admin_action('hide_and_resolve', reports[:1]).status_code, 302)
+		self.post.refresh_from_db()
+		self.assertTrue(self.post.is_hidden)
+		resolved = Report.objects.get(pk=reports[0].pk)
+		self.assertEqual((resolved.status, resolved.reviewed_by), (Report.Status.RESOLVED, self.staff))
+		self.assertIsNotNone(resolved.reviewed_at)
+
+		self.admin_action('dismiss', reports[1:])
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+		self.assertEqual(Report.objects.get(pk=reports[1].pk).status, Report.Status.DISMISSED)
+		self.assertEqual(Report.objects.get(pk=reports[0].pk).status, Report.Status.RESOLVED)  # closed reports stay closed
+
+	def test_admin_lists_listings_with_their_pending_reports(self):
+		self.report(self.reporters[0])
+		self.client.force_login(self.staff)
+		response = self.client.get(reverse('admin:post_liveanimalpost_changelist'))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Suspicious Python')

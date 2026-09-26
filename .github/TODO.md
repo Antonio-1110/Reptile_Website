@@ -30,12 +30,12 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       (sale completes if they do neither); seller no-show refunds the buyer. Emails at every step
 - [x] Track accounts behaving oddly (incidents + admin "Accounts to review"); nothing auto-blocked
 - [ ] Decide the real numbers: payment / handover / confirm windows, fee, seller bond amount, review
-      threshold, anti-sniping window. All are env-var settings with placeholder defaults (see `backend/.env.example`)
+      threshold, anti-sniping window, report auto-hide threshold (`REPORT_AUTO_HIDE_THRESHOLD`, off by default). All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
 - [x] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
       animal's page (and in emails)
-- [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
+- [x] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
 - [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
       seller, or the auction with bids, buy now and the order), with equipment facts and wording
@@ -80,7 +80,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation
-- [ ] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
+- [x] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
 - [ ] Structured genetics: a `Gene` model per species (recessive / co-dominant / dominant, het %)
       replacing the free-text `genetics` field
 - [ ] Pairing calculator: predicted offspring odds for two morphs, linking to matching listings

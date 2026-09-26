@@ -21,8 +21,17 @@ def _when(moment):
     return timezone.localtime(moment).strftime('%Y-%m-%d %H:%M')
 
 
-def _handover_instructions(values):
-    return _('Hand the animal over (or ship it) by %(handover_due)s, then mark it as handed over on the listing page. If it isn\'t handed over by then, the buyer is refunded in full and it counts against your account.') % values
+def _for_listing(auction, animal, equipment):
+    """The wording for what's being sold: most emails say "the animal", which is wrong for equipment."""
+    return equipment if auction.equipment_post_id else animal
+
+
+def _handover_instructions(auction, values):
+    return _for_listing(
+        auction,
+        _('Hand the animal over (or ship it) by %(handover_due)s, then mark it as handed over on the listing page. If it isn\'t handed over by then, the buyer is refunded in full and it counts against your account.'),
+        _('Hand the item over (or ship it) by %(handover_due)s, then mark it as handed over on the listing page. If it isn\'t handed over by then, the buyer is refunded in full and it counts against your account.'),
+    ) % values
 
 
 def _values(auction, purchase=None):
@@ -43,7 +52,11 @@ def buy_now_competition(auction, purchases):
         ))
     send_notification([auction.seller.email], lambda: (
         _('Several buyers are buying "%(title)s" at your buy-now price') % values,
-        _('%(count)s buyers are paying your buy-now price of %(price)s for "%(title)s" right now. The first payment to arrive wins and closes the auction; anyone who pays after is refunded in full. You don\'t need to do anything. If you have more than one of these animals, you can reach the other buyers after the sale.') % {**values, 'count': len(purchases)},
+        _for_listing(
+            auction,
+            _('%(count)s buyers are paying your buy-now price of %(price)s for "%(title)s" right now. The first payment to arrive wins and closes the auction; anyone who pays after is refunded in full. You don\'t need to do anything. If you have more than one of these animals, you can reach the other buyers after the sale.'),
+            _('%(count)s buyers are paying your buy-now price of %(price)s for "%(title)s" right now. The first payment to arrive wins and closes the auction; anyone who pays after is refunded in full. You don\'t need to do anything. If you have more than one of these items, you can reach the other buyers after the sale.'),
+        ) % {**values, 'count': len(purchases)},
     ))
 
 
@@ -55,15 +68,23 @@ def bought(order, bidder_deposits, cancelled_purchases):
 
     send_notification([buyer.email], lambda: (
         _('You bought "%(title)s"') % values,
-        _('Your payment of %(paid)s for "%(title)s" has arrived, so the animal is yours and the auction has closed. We hold your payment until you have received the animal, and only then pay the seller.') % values
+        _for_listing(
+            auction,
+            _('Your payment of %(paid)s for "%(title)s" has arrived, so the animal is yours and the auction has closed. We hold your payment until you have received the animal, and only then pay the seller.'),
+            _('Your payment of %(paid)s for "%(title)s" has arrived, so the item is yours and the auction has closed. We hold your payment until you have received the item, and only then pay the seller.'),
+        ) % values
         + '\n\n' + _('The seller has until %(handover_due)s to hand it over or ship it. If they don\'t, you get a full refund.') % values
         + '\n\n' + _("The seller's contact details, to arrange the handover:") + '\n' + contact_lines(seller.contact_details())
         + '\n\n' + _pay_through_us_warning(),
     ))
     send_notification([seller.email], lambda: (
         _('"%(title)s" was bought at your buy-now price') % values,
-        _('A buyer paid your buy-now price of %(paid)s for "%(title)s", so the auction has closed and every bidder\'s deposit is being refunded. We hold the payment and pay you once the animal has been handed over.') % values
-        + '\n\n' + _handover_instructions(values)
+        _for_listing(
+            auction,
+            _('A buyer paid your buy-now price of %(paid)s for "%(title)s", so the auction has closed and every bidder\'s deposit is being refunded. We hold the payment and pay you once the animal has been handed over.'),
+            _('A buyer paid your buy-now price of %(paid)s for "%(title)s", so the auction has closed and every bidder\'s deposit is being refunded. We hold the payment and pay you once the item has been handed over.'),
+        ) % values
+        + '\n\n' + _handover_instructions(auction, values)
         + '\n\n' + _("The buyer's contact details, to arrange the handover:") + '\n' + contact_lines(buyer.contact_details()),
     ))
     for deposit in bidder_deposits:
@@ -80,7 +101,7 @@ def bought(order, bidder_deposits, cancelled_purchases):
 
 
 def paid_too_late(purchase):
-    """A buy-now payment arrived after the animal was already sold (or the auction had closed)."""
+    """A buy-now payment arrived after the listing was already sold (or the auction had closed)."""
     values = _values(purchase.auction, purchase)
     send_notification([purchase.buyer.email], lambda: (
         _('Your payment for "%(title)s" is being refunded') % values,
@@ -118,7 +139,11 @@ def auction_won(order, losing_deposits):
     ))
     send_notification([seller.email], lambda: (
         _('"%(title)s" sold for %(price)s') % values,
-        _('Your auction for "%(title)s" ended with a winning bid of %(price)s. The winner has until %(payment_due)s to pay us the rest; we\'ll email you as soon as they do, and only then should you hand the animal over.') % values
+        _for_listing(
+            order.auction,
+            _('Your auction for "%(title)s" ended with a winning bid of %(price)s. The winner has until %(payment_due)s to pay us the rest; we\'ll email you as soon as they do, and only then should you hand the animal over.'),
+            _('Your auction for "%(title)s" ended with a winning bid of %(price)s. The winner has until %(payment_due)s to pay us the rest; we\'ll email you as soon as they do, and only then should you hand the item over.'),
+        ) % values
         + '\n\n' + _("The buyer's contact details, to arrange the handover:") + '\n' + contact_lines(buyer.contact_details()),
     ))
     for deposit in losing_deposits:
@@ -134,11 +159,15 @@ def order_paid(order):
     send_notification([order.auction.seller.email], lambda: (
         _('Payment received for "%(title)s": please hand it over') % values,
         _('The buyer has paid the full price of %(price)s for "%(title)s", and we are holding it.') % values
-        + '\n\n' + _handover_instructions(values),
+        + '\n\n' + _handover_instructions(order.auction, values),
     ))
     send_notification([order.buyer.email], lambda: (
         _('Payment received for "%(title)s"') % values,
-        _('We have received your payment for "%(title)s" and are holding it until you have the animal. The seller has until %(handover_due)s to hand it over or ship it; if they don\'t, you get a full refund.') % values,
+        _for_listing(
+            order.auction,
+            _('We have received your payment for "%(title)s" and are holding it until you have the animal. The seller has until %(handover_due)s to hand it over or ship it; if they don\'t, you get a full refund.'),
+            _('We have received your payment for "%(title)s" and are holding it until you have the item. The seller has until %(handover_due)s to hand it over or ship it; if they don\'t, you get a full refund.'),
+        ) % values,
     ))
 
 
@@ -155,7 +184,11 @@ def order_handed_over(order):
     send_notification([order.buyer.email], lambda: (
         _('"%(title)s" has been handed over: please confirm') % values,
         _('The seller says "%(title)s" has been handed over or shipped. Their note: %(note)s') % values
-        + '\n\n' + _('Once you have the animal and it is healthy, confirm on the listing page by %(confirm_due)s. If something is wrong, report a problem there instead and we will hold the payment while we look into it. If we hear nothing by then, the sale completes and the seller is paid.') % values,
+        + '\n\n' + _for_listing(
+            order.auction,
+            _('Once you have the animal and it is healthy, confirm on the listing page by %(confirm_due)s. If something is wrong, report a problem there instead and we will hold the payment while we look into it. If we hear nothing by then, the sale completes and the seller is paid.'),
+            _('Once you have the item and it is as described, confirm on the listing page by %(confirm_due)s. If something is wrong, report a problem there instead and we will hold the payment while we look into it. If we hear nothing by then, the sale completes and the seller is paid.'),
+        ) % values,
     ))
 
 
@@ -167,7 +200,11 @@ def order_completed(order):
     ))
     send_notification([order.buyer.email], lambda: (
         _('Sale completed: "%(title)s"') % values,
-        _('The sale of "%(title)s" is complete. Enjoy your new animal!') % values,
+        _for_listing(
+            order.auction,
+            _('The sale of "%(title)s" is complete. Enjoy your new animal!'),
+            _('The sale of "%(title)s" is complete. Enjoy!'),
+        ) % values,
     ))
 
 
@@ -197,15 +234,34 @@ def buyer_defaulted(order, runner_up):
     ))
     if runner_up is not None:
         offer_values = {**values, 'runner_up': format_money(runner_up.amount, order.currency)}
-        message = _('You can offer "%(title)s" to the next-highest bidder at their bid of %(runner_up)s: open the listing page to decide. If you don\'t want to, you keep the animal.') % offer_values
     else:
         offer_values = values
-        message = _('Nobody else bid on it, so you simply keep the animal.')
-    send_notification([order.auction.seller.email], lambda: (
-        _('The winner of "%(title)s" did not pay') % offer_values,
-        _('The winner of "%(title)s" did not pay by the deadline, so the sale is cancelled. Do not hand the animal over.') % offer_values
-        + '\n\n' + message,
-    ))
+    auction = order.auction
+
+    # Built per language inside send_notification, so the choice of message is made there too.
+    def build():
+        if runner_up is not None:
+            message = _for_listing(
+                auction,
+                _('You can offer "%(title)s" to the next-highest bidder at their bid of %(runner_up)s: open the listing page to decide. If you don\'t want to, you keep the animal.'),
+                _('You can offer "%(title)s" to the next-highest bidder at their bid of %(runner_up)s: open the listing page to decide. If you don\'t want to, you keep the item.'),
+            ) % offer_values
+        else:
+            message = _for_listing(
+                auction,
+                _('Nobody else bid on it, so you simply keep the animal.'),
+                _('Nobody else bid on it, so you simply keep the item.'),
+            )
+        return (
+            _('The winner of "%(title)s" did not pay') % offer_values,
+            _for_listing(
+                auction,
+                _('The winner of "%(title)s" did not pay by the deadline, so the sale is cancelled. Do not hand the animal over.'),
+                _('The winner of "%(title)s" did not pay by the deadline, so the sale is cancelled. Do not hand the item over.'),
+            ) % offer_values
+            + '\n\n' + message,
+        )
+    send_notification([auction.seller.email], build)
 
 
 def runner_up_offered(order):
@@ -221,7 +277,11 @@ def runner_up_declined(order):
     values = _order_values(order)
     send_notification([order.auction.seller.email], lambda: (
         _('Offer for "%(title)s" not taken up') % values,
-        _('The next-highest bidder did not take up your offer for "%(title)s", so you keep the animal.') % values,
+        _for_listing(
+            order.auction,
+            _('The next-highest bidder did not take up your offer for "%(title)s", so you keep the animal.'),
+            _('The next-highest bidder did not take up your offer for "%(title)s", so you keep the item.'),
+        ) % values,
     ))
 
 

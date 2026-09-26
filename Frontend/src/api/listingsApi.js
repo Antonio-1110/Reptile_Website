@@ -27,6 +27,7 @@ function normalizeListing(item) {
     weight: item.weight_grams,
     shippingMethods: item.shipping_methods || [],
     isFavorite: Boolean(item.is_favorite), // saved by the signed-in viewer
+    isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
     postedDays: item.posted_days ?? 0,
     guideNotes: item.guide_notes || "",
     gallery: item.gallery || [],

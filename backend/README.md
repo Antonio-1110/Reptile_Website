@@ -127,8 +127,13 @@ python3 manage.py test
   The seller's own details are never returned, so accounts can't be used to harvest them. Only the
   first request per buyer/listing pair triggers an email.
 - `Report` records buyers flagging a listing for manual moderation review (`ReportListingMixin` /
-  `report` action in `post/views.py`); reviewed via the `Report` admin list. Only the first report per
-  reporter/listing pair is stored.
+  `report` action in `post/views.py`). Only the first report per reporter/listing pair is stored.
+  Moderation rules live in `post/moderation.py`. In the admin, Reports filtered by "Pending review" is
+  the queue: **Hide the reported listings and resolve**, **Resolve**, or **Dismiss** (which shows the
+  listing again); each records who reviewed it and when. Listing admin pages show pending report counts
+  and can hide/unhide. A hidden listing (`is_hidden`) is 404 to everyone but its owner (who sees a
+  notice) and staff. With `REPORT_AUTO_HIDE_THRESHOLD` > 0, a listing reported by that many different
+  accounts hides itself and staff are emailed; 0 (the default) only queues reports.
 - `OwnListingsMixin` adds a `/mine/` action (`post/views.py`) so sellers can list only their own
   listings; standard update/delete endpoints (already owner-restricted) power editing and removal.
 
@@ -211,7 +216,9 @@ that never completes becomes `failed` (the bidder may retry) or `cancelled`.
 
 Order statuses: `offered` (runner-up) / `awaiting_payment` → `paid` → `handed_over` → `completed`,
 or `disputed` → `completed` / `refunded`; `buyer_defaulted`, `declined`, `seller_defaulted` when it
-falls through.
+falls through. Once the sale can't go ahead any more (and the seller has no runner-up offer left to
+make), the auction reports `sale_fell_through: true` (`orders.sale_fell_through`) and the listing page
+shows the listing as for sale again instead of the old winning bid.
 
 Buy-now purchase statuses: `pending` → `paid` (won; we hold the money) or `refunded` (paid after
 someone else, or after the auction closed); `failed` if the payment never goes through, `cancelled`

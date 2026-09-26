@@ -84,8 +84,9 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
   };
 
   const isRunning = phase === 'live' || phase === 'upcoming';
-  const soldInAuction = Boolean(auction) && phase === 'ended' && (auction.bidCount > 0 || Boolean(auction.soldVia));
-  // An auction that ended without a sale leaves the listing simply for sale again.
+  const soldInAuction = Boolean(auction) && phase === 'ended' && (auction.bidCount > 0 || Boolean(auction.soldVia))
+    && !auction.saleFellThrough;
+  // An auction that ended without a sale (or whose sale fell through) leaves the listing simply for sale again.
   const showAuction = Boolean(auction) && (isRunning || soldInAuction);
   const endedWithoutSale = Boolean(auction) && phase === 'ended' && !soldInAuction;
   const money = (amount) => formatMoney(amount, auction?.currency || 'TWD', language);
@@ -170,6 +171,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </div>
             </div>
 
+            {listing.isHidden && <p className="listing-detail-alert" role="status">{t('listingDetail.hiddenNotice')}</p>}
             <h1 className="listing-detail-title">{listing.title}</h1>
             <div className="listing-detail-subtitle">
               {isEquipment ? (
@@ -244,7 +246,11 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             ) : (
               <>
                 {hasPrice && <div className="listing-detail-price">{money(listing.price)}</div>}
-                {endedWithoutSale && <p className="listing-detail-note">{t('listingDetail.auctionEndedNoBids')}</p>}
+                {endedWithoutSale && (
+                  <p className="listing-detail-note">
+                    {t(auction.saleFellThrough ? 'listingDetail.saleFellThrough' : 'listingDetail.auctionEndedNoBids')}
+                  </p>
+                )}
                 <ContactSellerPanel listingId={listingId} category={category} onToast={showToast} />
               </>
             )}

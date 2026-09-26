@@ -129,6 +129,7 @@ const en = {
     notFound: "Listing not found",
     back: "← Back to marketplace",
     forSale: "For sale",
+    hiddenNotice: "This listing is hidden while our team reviews reports about it. Only you can see it. If you think this is a mistake, contact support.",
     report: "⚑ Report",
     reported: "Reported",
     seller: "Seller",
@@ -163,6 +164,7 @@ const en = {
       sentToast: "Sent — the seller will contact you.",
     },
     auctionEndedNoBids: "An auction on this animal ended without any bids.",
+    saleFellThrough: "This animal sold at auction, but the sale fell through, so it's for sale again.",
     auctionEndedNoBids_equipment: "An auction on this item ended without any bids.",
     toasts: {
       contactError: "Unable to reach the seller right now.",
@@ -252,6 +254,8 @@ const en = {
   myListings: {
     signedOutTitle: "Log in to manage your listings",
     subtitle: "Update or remove listings you've published.",
+    hidden: "Hidden",
+    hiddenHint: "Hidden while our team reviews reports about it",
     orders: "My orders",
     newListing: "+ New listing",
     loading: "Loading your listings…",
@@ -488,7 +492,7 @@ const en = {
     card: { buyNow: "Buy now {{amount}}" },
     bidCount_one: "{{count}} bid",
     bidCount_other: "{{count}} bids",
-    price: { currentBid: "Current bid", startingBid: "Starting bid", winningBid: "Winning bid", boughtNow: "Bought at the buy-now price" },
+    price: { currentBid: "Current bid", startingBid: "Starting bid", winningBid: "Winning bid", boughtNow: "Bought at the buy-now price", saleFellThrough: "Sale fell through" },
     duration: { days: "{{d}}d {{h}}h", hours: "{{h}}h {{m}}m", minutes: "{{m}}m {{s}}s" },
     countdown: { left: "{{time}} left", startsIn: "Starts in {{time}}" },
     phase: { ended: "Ended", cancelled: "Cancelled" },
