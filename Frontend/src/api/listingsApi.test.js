@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createListing, getListingsPage, getSexKey, listingQueryString, parseListingQuery } from './listingsApi';
+import { createListing, getListingsPage, updateListing, getSexKey, listingQueryString, parseListingQuery } from './listingsApi';
 
 // A fetch stand-in that records the URL and answers with one page of API results.
 function mockFetch(results = [], { next = null, count = results.length } = {}) {
@@ -104,6 +104,43 @@ describe('createListing: species', () => {
     const body = await sentBody({ species: ' Blue Tongue Skink ', speciesId: null });
     expect(body.requested_species).toBe('Blue Tongue Skink');
     expect(body).not.toHaveProperty('species');
+  });
+});
+
+describe('createListing and updateListing: the fields sent', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const common = { title: 'T', description: 'd', price: '', location: 'taipei', shippingMethods: ['shipping'] };
+  const sent = async (action) => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 1 }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await action();
+    const [url, init] = fetchMock.mock.calls[0];
+    return { url, method: init.method, body: JSON.parse(init.body) };
+  };
+
+  it('posts exactly the live-animal fields the API accepts, never photos or contact_info', async () => {
+    const form = {
+      ...common, category: 'live_animal', species: 'Ball Pythons', speciesId: 3, sex: 'female', genetics: ' Pied ',
+      lifeStage: 'adult', ageYears: '2', weight: '1500', size: '', diets: ['live'],
+    };
+    const { url, method, body } = await sent(() => createListing(form));
+    expect(method).toBe('POST');
+    expect(url).toMatch(/\/posts\/live-animals\/$/);
+    expect(Object.keys(body).sort()).toEqual([
+      'age_years', 'description', 'diets', 'genetics', 'life_stage', 'location', 'price', 'sex', 'shipping_methods',
+      'size_cm', 'species', 'title', 'weight_grams',
+    ]);
+    expect(body).toMatchObject({ sex: '0.1', genetics: 'Pied', age_years: 2, weight_grams: 1500, size_cm: null, price: null });
+  });
+
+  it('sends equipment edits to the equipment endpoint with its own fields', async () => {
+    const form = { ...common, category: 'enclosure', equipmentCategory: 'heating', condition: '1' };
+    const { url, method, body } = await sent(() => updateListing(7, form));
+    expect(method).toBe('PATCH');
+    expect(url).toMatch(/\/posts\/equipment\/7\/$/);
+    expect(Object.keys(body).sort()).toEqual(['category', 'condition', 'description', 'location', 'price', 'shipping_methods', 'title']);
+    expect(body).toMatchObject({ category: 'heating', condition: 1 });
   });
 });
 

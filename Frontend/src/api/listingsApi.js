@@ -128,50 +128,36 @@ function buildEquipmentFields(formData) {
   return { category: formData.equipmentCategory, condition: Number(formData.condition) };
 }
 
-export async function createListing(formData) {
-  const isLiveAnimal = formData.category === "live_animal";
-  const payload = {
+// The listing fields the editor writes, in API names, for both create (POST) and edit (PATCH).
+// `image`/`gallery` are read-only on the API (photos go through saveListingPhotos), and contact
+// details come from the seller's account, so neither is sent.
+function buildListingPayload(formData) {
+  return {
     title: formData.title.trim(),
     description: formData.description.trim(),
     price: formData.price === "" ? null : Number(formData.price),
     location: getLocationCode(formData.location) || formData.location,
-    contact_info: {},
     shipping_methods: formData.shippingMethods,
+    ...(formData.category === "live_animal" ? buildLiveAnimalFields(formData) : buildEquipmentFields(formData)),
   };
+}
 
-  if (isLiveAnimal) {
-    Object.assign(payload, buildLiveAnimalFields(formData));
-  } else {
-    Object.assign(payload, buildEquipmentFields(formData));
-  }
+// The editor's categories are "live_animal" and "enclosure" (every kind of equipment).
+function editorEndpoint(formData, id) {
+  return listingEndpoint(formData.category === "live_animal" ? "live_animal" : "equipment", id);
+}
 
-  return requestWithAuth(listingEndpoint(isLiveAnimal ? "live_animal" : "equipment"), {
+export async function createListing(formData) {
+  return requestWithAuth(editorEndpoint(formData), {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildListingPayload(formData)),
   });
 }
 
-// Partial update: omits gallery/image/contact_info (photos go through saveListingPhotos, and the
-// form has no contact controls yet), so editing a listing can't wipe out existing media or contact details.
 export async function updateListing(id, formData) {
-  const isLiveAnimal = formData.category === "live_animal";
-  const payload = {
-    title: formData.title.trim(),
-    description: formData.description.trim(),
-    price: formData.price === "" ? null : Number(formData.price),
-    location: getLocationCode(formData.location) || formData.location,
-    shipping_methods: formData.shippingMethods,
-  };
-
-  if (isLiveAnimal) {
-    Object.assign(payload, buildLiveAnimalFields(formData));
-  } else {
-    Object.assign(payload, buildEquipmentFields(formData));
-  }
-
-  return requestWithAuth(listingEndpoint(isLiveAnimal ? "live_animal" : "equipment", id), {
+  return requestWithAuth(editorEndpoint(formData, id), {
     method: "PATCH",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildListingPayload(formData)),
   });
 }
 

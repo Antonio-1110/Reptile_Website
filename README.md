@@ -111,7 +111,10 @@ Conventions every endpoint follows:
 
 ### Account (`/api/v1/account/`)
 
-- `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota
+- `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota.
+  Writable: `username`, `email`, `first_name`, `last_name` (`display_name` is derived from them), `bio`,
+  and the contact fields shared with the other side of a deal: `phone_number`, `line_id`,
+  `contact_email`, `instagram`, `facebook`. Plan, limits, rating and verification fields are read-only.
 - `GET /plans/` — public plan comparison
 
 ### Posts (`/api/v1/posts/`)
@@ -123,6 +126,26 @@ Conventions every endpoint follows:
 - `GET /species/` — each with its `aliases`. A live-animal listing takes `species` (an id) or
   `requested_species` (a typed name): a name that isn't a species or alias is held for staff review,
   and the listing stays unpublished (`species_review`) until staff map or add the species
+
+#### Creating and editing a listing
+
+`POST` creates and `PATCH` edits (only the owner), both with a JSON body using these fields; the frontend
+builds it in `buildListingPayload` (`Frontend/src/api/listingsApi.js`):
+
+| Fields | Listing type | Notes |
+| --- | --- | --- |
+| `title`, `description`, `price`, `location`, `shipping_methods` | both | `location` is a city code (`TPE`, …); `shipping_methods` from `localPickup`, `shipping` |
+| `species` or `requested_species`, `sex`, `genetics`, `life_stage`, `age_years`, `weight_grams`, `size_cm`, `diets` | live animals | `sex` is `1.0`, `0.1` or `unsexed`; `genetics` is genes joined with `/` (read back as `genes`) |
+| `category`, `condition` | equipment | see above |
+| `status` | both | `available`, `reserved`, `sold`; sent on its own by My listings |
+
+The response is the listing as its owner sees it. `id`, `seller`, `species_name`, `species_review`,
+`genes`, `is_hidden`, `is_favorite`, `posted_days`, `created_at`, `updated_at`, `image` and `gallery`
+are read-only. `contact_info` is a legacy field that clients leave out: buyers and sellers exchange the
+details on their accounts (see Privacy in `.github/AGENTS.md`). Photos are set afterwards with
+`POST /<id>/photos/` (multipart): `photos` (the new files) and `order`, a JSON list of the final photos,
+cover first, where each entry is a current photo URL to keep or `new:<n>` for the n-th upload. Photos
+left out are deleted. That endpoint enforces the plan's photo limit and 5 MB per file.
 
 ### Sellers (`/api/v1/sellers/`)
 
