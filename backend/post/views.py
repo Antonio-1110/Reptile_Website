@@ -69,6 +69,9 @@ class ContactSellerMixin:
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if post.status == post.Status.SOLD:
+            return Response({'detail': _('This listing has been sold.')}, status=status.HTTP_400_BAD_REQUEST)
+
         requests = ContactRequest.objects.filter(requester=requester, **{self.contact_request_field: post})
         if request.method == 'GET':
             return Response({'contact': requester.contact_details(), 'already_sent': requests.exists()})
@@ -177,6 +180,16 @@ class ListingPhotosMixin:
                 default_storage.delete(url[len(media_prefix):])
 
 
+class HideSoldListingsMixin:
+    """The marketplace list leaves sold listings out unless `?status=` asks for them."""
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        if self.action == 'list' and 'status' not in self.request.query_params:
+            queryset = queryset.exclude(status=queryset.model.Status.SOLD)
+        return queryset
+
+
 class OwnListingsMixin:
     """Adds a `/mine/` action so sellers can list and manage their own listings."""
 
@@ -196,7 +209,7 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(HiddenListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species').all()
     serializer_class = LiveAnimalPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
@@ -212,7 +225,7 @@ class LiveAnimalViewSet(HiddenListingsMixin, ContactSellerMixin, ReportListingMi
         serializer.save(account=self.request.user)
 
 
-class EquipmentViewSet(HiddenListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]

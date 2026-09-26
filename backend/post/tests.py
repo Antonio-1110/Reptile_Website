@@ -788,6 +788,87 @@ class ListingPhotoUploadTests(APITestCase):
 		self.client.force_authenticate(self.other)
 		self.assertEqual(self.set_order(list(reversed(kept))).status_code, 403)
 
+class ListingStatusTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='status-seller', email='s@example.com', password='pass1234')
+		self.buyer = Account.objects.create_user(username='status-buyer', email='b@example.com', password='pass1234')
+		species = Species.objects.create(name='Status Pythons')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+
+		def make(title, status):
+			return LiveAnimalPost.objects.create(
+				account=self.seller, species=species, title=title, description='d', contact_info='{}', status=status,
+			)
+
+		self.available = make('Available One', 'available')
+		self.reserved = make('Reserved One', 'reserved')
+		self.sold = make('Sold One', 'sold')
+
+	def titles(self, **params):
+		return sorted(item['title'] for item in self.client.get(reverse('live-animal-list'), params).data['results'])
+
+	def test_marketplace_hides_sold_listings_unless_asked(self):
+		self.assertEqual(self.titles(), ['Available One', 'Reserved One'])
+		self.assertEqual(self.titles(status='sold'), ['Sold One'])
+		self.assertEqual(self.titles(status='available,reserved,sold'), ['Available One', 'Reserved One', 'Sold One'])
+
+	def test_sold_listing_keeps_its_page(self):
+		response = self.client.get(reverse('live-animal-detail', args=[self.sold.id]))
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.data['status'], 'sold')
+
+	def test_seller_still_sees_sold_listings_in_mine(self):
+		self.client.force_authenticate(self.seller)
+		titles = [item['title'] for item in self.client.get(reverse('live-animal-mine')).data['results']]
+		self.assertIn('Sold One', titles)
+
+	def test_owner_can_mark_a_listing_sold_but_others_cannot(self):
+		url = reverse('live-animal-detail', args=[self.available.id])
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 403)
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.patch(url, {'status': 'nonsense'}, format='json').status_code, 400)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 200)
+		self.available.refresh_from_db()
+		self.assertEqual(self.available.status, 'sold')
+
+	def test_listing_with_a_running_auction_cannot_be_marked_reserved_or_sold(self):
+		from datetime import timedelta
+		from decimal import Decimal
+		from django.utils import timezone
+		from auction.models import Auction
+
+		auction = Auction.objects.create(
+			seller=self.seller, live_animal_post=self.available, starting_price=Decimal('1000'),
+			min_increment=Decimal('100'), deposit_amount=Decimal('100'), currency='TWD',
+			starts_at=timezone.now() - timedelta(minutes=1), ends_at=timezone.now() + timedelta(days=1),
+		)
+		url = reverse('live-animal-detail', args=[self.available.id])
+		self.client.force_authenticate(self.seller)
+		for status in ('reserved', 'sold'):
+			response = self.client.patch(url, {'status': status}, format='json')
+			self.assertEqual(response.status_code, 400)
+			self.assertIn('status', response.data)
+		self.assertEqual(self.client.patch(url, {'title': 'Renamed'}, format='json').status_code, 200)
+
+		Auction.objects.filter(pk=auction.pk).update(status=Auction.Status.ENDED)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 200)
+
+	def test_buyers_cannot_contact_about_a_sold_listing(self):
+		self.client.force_authenticate(self.buyer)
+		response = self.client.post(reverse('live-animal-contact', args=[self.sold.id]))
+		self.assertEqual(response.status_code, 400)
+		self.assertEqual(response.data['detail'], 'This listing has been sold.')
+		self.assertIn(self.client.post(reverse('live-animal-contact', args=[self.reserved.id])).status_code, (200, 201))
+
+	def test_equipment_list_hides_sold_too(self):
+		EquipmentPost.objects.create(account=self.seller, title='Sold Tank', description='d', contact_info='', status='sold')
+		EquipmentPost.objects.create(account=self.seller, title='Open Tank', description='d', contact_info='')
+		titles = [item['title'] for item in self.client.get(reverse('equipment-list')).data['results']]
+		self.assertIn('Open Tank', titles)
+		self.assertNotIn('Sold Tank', titles)
+
+
 class ReportModerationTests(APITestCase):
 	def setUp(self):
 		self.seller = Account.objects.create_user(username='mod-seller', email='seller@example.com', password='pass1234')
