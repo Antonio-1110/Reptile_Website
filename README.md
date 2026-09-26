@@ -25,8 +25,7 @@ This project is organized into two main app areas:
 reptile_website/
 ├── .github/
 │   ├── AGENTS.md               # guide for AI coding agents (source of truth)
-│   ├── copilot-instructions.md # Copilot summary, points to AGENTS.md
-│   └── TODO.md
+│   └── copilot-instructions.md # Copilot summary, points to AGENTS.md
 ├── AGENTS.md / CLAUDE.md       # pointers to .github/AGENTS.md for agents that look at the root
 ├── backend/
 │   ├── account/            # auth + seller profile
@@ -150,4 +149,5 @@ limits for immediate user feedback but is never the enforcement authority.
   API contracts.
 - Update [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md) when adding new fields, routes, permissions, or
   account rules.
-- See [.github/TODO.md](.github/TODO.md) for open work and planned features.
+- Open work and planned features are [GitHub Issues](https://github.com/Antonio-1110/Reptile_Website/issues); a PR that finishes one says
+  "Closes #n" in its description.

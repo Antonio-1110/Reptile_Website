@@ -1,0 +1,17 @@
+export default {
+  save: "Save this search",
+  savedNote: "Saved — we'll email you new matches.",
+  manage: "Manage saved searches",
+  title: "Saved searches",
+  subtitle: "We email you when new listings match one of these.",
+  loading: "Loading your saved searches…",
+  loadError: "Unable to load your saved searches.",
+  deleteError: "Unable to delete this saved search right now.",
+  empty: "No saved searches yet. Search or filter the marketplace, then choose “Save this search”.",
+  signedOutTitle: "Log in to see your saved searches",
+  filters_one: "{{count}} filter",
+  filters_other: "{{count}} filters",
+  noFilters: "No filters",
+  since: "saved {{date}}",
+  delete: "Delete",
+};

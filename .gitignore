@@ -36,6 +36,8 @@ backend/.e2e/
 Frontend/test-results/
 Frontend/playwright-report/
 backend/staticfiles/
+# Compiled translations: built from the .po files by compilemessages (start-dev.sh, tests, CI)
+backend/locale/*/LC_MESSAGES/*.mo
 .venv/
 
 # Vite dependency cache

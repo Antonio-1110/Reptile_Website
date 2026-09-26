@@ -61,7 +61,7 @@ cd backend
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
 ../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
-../.venv/bin/python manage.py compilemessages
+../.venv/bin/python manage.py compilemessages         # .mo isn't committed; start-dev.sh and tests run this
 ../.venv/bin/python manage.py check --deploy           # production settings audit
 
 # Frontend
@@ -121,12 +121,14 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
-  `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+  `Frontend/src/i18n/locales/en/<section>.js` and `zh/<section>.js` (Traditional Chinese, Taiwan
+  usage). `npm test` fails if a key is missing from either language.
 - Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
   English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
-  `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
+  `backend/locale/zh_Hant/LC_MESSAGES/django.po`. Commit only the `.po`: the compiled `django.mo` is
+  git-ignored and built by `compilemessages` (which `start-dev.sh`, `manage.py test` and CI run).
 
 ---
 
@@ -215,8 +217,8 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
    changed since you last looked.
 
 ### While changing
-- Keep diffs focused on the task. Note unrelated problems in your summary (or `TODO.md`) instead of
-  fixing them in passing.
+- Keep diffs focused on the task. Note unrelated problems in your summary (or as a GitHub issue) instead
+  of fixing them in passing.
 - Changing an API field? Update, in the same change: serializer → tests → `src/api/*` mapping →
   components → docs.
 - Adding a user-facing string? Add both translations (§3).
@@ -255,18 +257,18 @@ run, env vars to set, servers to restart). Never commit or push unless asked.
 
 ### Working in parallel with other agents
 Several agents often work on separate branches at once. Almost every conflict so far has been in the
-same few shared files: the locale files, `django.po`/`.mo`, `TODO.md`, the READMEs, `App.jsx`
-routes and `post/migrations/`. To keep merges cheap:
+same few shared files: the locale files, `django.po`, the old `TODO.md` (now GitHub Issues), the
+READMEs, `App.jsx` routes and `post/migrations/`. To keep merges cheap:
 - Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
   (don't rebase a pushed branch) right before asking for review.
-- Add new locale keys as a **new section** at the end of the object rather than editing a shared
-  one, and don't reorder or reformat existing keys. Same for new routes in `App.jsx`.
-- Leave the READMEs, `AGENTS.md` and `TODO.md` alone unless the change needs them; note doc
+- Put a new feature's strings in **its own section file** (`i18n/locales/en/<section>.js` plus the
+  `zh/` twin; it's loaded automatically) rather than adding to a shared one, and don't reorder or
+  reformat existing keys. Add new routes in `App.jsx` next to, not in the middle of, others.
+- Leave the READMEs and `AGENTS.md` alone unless the change needs them; note doc
   updates in the PR description, and they can be batched into a docs PR.
 - Resolving a conflict in a translation file means **keeping both sides' keys** (per key or msgid),
-  then running `makemessages`/`compilemessages` and `npm run lint` (which catches duplicate keys).
-  Never resolve these with a whole-file "accept incoming/current". Regenerate `django.mo` rather
-  than picking a side.
+  then running `makemessages` and `npm test` (which checks both languages match). Never resolve
+  these with a whole-file "accept incoming/current".
 - Two branches that both add a migration to the same app need a merge migration
   (`makemigrations --merge`, renamed descriptively) once the second one reaches `master`.
 
@@ -317,6 +319,8 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - Buy-now emails are sent with `transaction.on_commit`; in tests wrap the request in
   `self.captureOnCommitCallbacks(execute=True)` or `mail.outbox` stays empty.
 - `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
+  Without it the dev server and tests still run, but Chinese API messages fall back to English (a
+  warning says so) and the tests of Chinese responses fail.
   New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
   them and drop the flag, or the new text silently falls back to English.
 - A live-animal listing can have no `species`: a typed species that isn't in the list (or an alias)
@@ -333,4 +337,5 @@ Apply these whenever you build or review a feature — they're the common gaps i
 
 Update this guide in the same change when you add an app, a command, an invariant, or discover a
 gotcha that cost you time. Keep it scannable — link to READMEs for detail rather than duplicating
-them. Project backlog lives in [TODO.md](TODO.md).
+them. The project backlog is [GitHub Issues](https://github.com/Antonio-1110/Reptile_Website/issues) (labels: `high priority`, `needs decision`,
+`feature`, `deployment`, `tech debt`, `nice to have`); reference one with "Closes #n" in the PR.

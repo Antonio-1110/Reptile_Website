@@ -8,6 +8,7 @@ PYTHON="${PYTHON:-../.venv/bin/python}"
 export DJANGO_DEBUG=1 DJANGO_SQLITE_PATH=.e2e/db.sqlite3 DJANGO_MEDIA_ROOT=.e2e/media
 export DJANGO_CORS_ALLOWED_ORIGINS=http://127.0.0.1:5174
 rm -rf .e2e && mkdir -p .e2e
+"$PYTHON" manage.py compilemessages -v0 --ignore=".venv/*" --ignore=".e2e/*" || echo "Warning: translations not compiled (install GNU gettext)" >&2
 "$PYTHON" manage.py migrate -v0
 "$PYTHON" manage.py seed_demo >/dev/null
 exec "$PYTHON" manage.py runserver 127.0.0.1:8001 --noreload
