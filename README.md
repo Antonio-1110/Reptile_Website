@@ -103,13 +103,16 @@ Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINT
 ### Posts (`/api/posts/`)
 
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
-- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
+- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
+  (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`, `transport`, `other`) and a
+  `condition` (0–2); the list filters by both, plus price, location, shipping and posting date
 - `GET /species/`
 
 ### Auctions (`/api/auctions/`)
 
 - `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
-  species, genes) for cards
+  species, genes) for cards, and the anti-sniping rule (`extend_window_minutes`, `extend_by_minutes`):
+  a bid near the end extends `ends_at`
 - `POST /` — paid commercial accounts only
 - `POST /<id>/deposit/`, `GET`/`POST /<id>/bids/`, `POST /<id>/cancel/`, `POST /<id>/buy-now/`,
   `GET`/`POST /seller-bond/` (auth required)
