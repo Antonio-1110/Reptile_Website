@@ -53,6 +53,8 @@ function normalizeAuction(item) {
     pendingBuyNowCount: item.pending_buy_now_count || 0,
     soldVia: item.sold_via, // "bid", "buy_now" or null
     soldPrice: item.sold_price,
+    // It sold, but the sale then fell through (winner didn't pay, runner-up declined, …): unsold again.
+    saleFellThrough: Boolean(item.sale_fell_through),
     myDeposit: normalizeDeposit(item.my_deposit),
     myPurchase: normalizePurchase(item.my_purchase),
     // Anti-sniping: a bid this close to the end pushes the end time back (0 = off).
@@ -92,8 +94,9 @@ export async function getAuctionBids(id, page = 1) {
 
 // A live-animal listing's most recent auction that wasn't cancelled (running, upcoming or ended),
 // or null. A listing has at most one active auction, and it's always the newest.
-export async function getLatestAuctionForListing(listingId) {
-  const payload = await get(`/auctions/?live_animal_post=${listingId}&ordering=-created_at`);
+export async function getLatestAuctionForListing(listingId, category = "live_animal") {
+  const field = category === "equipment" ? "equipment_post" : "live_animal_post";
+  const payload = await get(`/auctions/?${field}=${listingId}&ordering=-created_at`);
   const latest = payload.results.find((item) => item.status !== "cancelled");
   return latest ? normalizeAuction(latest) : null;
 }
@@ -123,6 +126,9 @@ const toDate = (value) => (value ? new Date(value) : null);
 function normalizeOrder(item) {
   return {
     id: item.id,
+    auctionId: item.auction,
+    listing: item.listing, // { id, title, category }
+    createdAt: toDate(item.created_at),
     role: item.role, // "buyer" or "seller": which side the viewer is on
     source: item.source, // "bid", "buy_now" or "runner_up"
     status: item.status,
@@ -142,6 +148,14 @@ function normalizeOrder(item) {
     // The other side's contact details, once the order has got far enough (null before that).
     counterpart: item.counterpart,
   };
+}
+
+// One page of the viewer's orders, newest first. role: "buyer", "seller" or "" (both).
+export async function getMyOrdersPage({ role = "", page = 1 } = {}) {
+  const params = new URLSearchParams({ page });
+  if (role) params.set("role", role);
+  const payload = await get(`/auctions/orders/?${params}`);
+  return { results: payload.results.map(normalizeOrder), count: payload.count, hasMore: Boolean(payload.next) };
 }
 
 // The viewer's latest order for an auction (as buyer or seller), or null.

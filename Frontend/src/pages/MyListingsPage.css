@@ -53,6 +53,22 @@
   font-size: 14px;
 }
 
+.my-listings-header-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.my-listings-orders {
+  padding: 10px 18px;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  color: #e5ebf7;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .my-listings-new {
   padding: 10px 18px;
   border-radius: 999px;
@@ -172,5 +188,14 @@
   color: #1c1400;
   background: #fbbf24;
   font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.my-listings-hidden {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: #b91c1c;
+  font-size: 11px;
   font-weight: 700;
 }

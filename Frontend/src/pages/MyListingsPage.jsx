@@ -70,9 +70,12 @@ export default function MyListingsPage() {
             <h1>{t('navigation.myListings')}</h1>
             <p>{t('myListings.subtitle')}</p>
           </div>
-          <a href="/postinput" className="my-listings-new">
-            {t('myListings.newListing')}
-          </a>
+          <div className="my-listings-header-links">
+            <a href="/orders" className="my-listings-orders">{t('myListings.orders')}</a>
+            <a href="/postinput" className="my-listings-new">
+              {t('myListings.newListing')}
+            </a>
+          </div>
         </div>
 
         {error && <p role="alert" className="my-listings-error">{errorText(t, error)}</p>}
@@ -93,6 +96,7 @@ export default function MyListingsPage() {
                       {t(`myListings.categories.${listing.category}`, { defaultValue: listing.category })}
                     </span>
                     <h2>{listing.title}</h2>
+                    {listing.is_hidden && <span className="my-listings-hidden" title={t('myListings.hiddenHint')}>{t('myListings.hidden')}</span>}
                   </div>
                   <p className="my-listings-price">${listing.price ?? '—'}</p>
                 </div>

@@ -32,6 +32,8 @@ class BasePost(models.Model):
         OTH = 'OTH', '其他'
     
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='%(class)s_posts')
+    # Hidden by moderation (a staff action, or enough reports): only the owner and staff can see it.
+    is_hidden = models.BooleanField(default=False, help_text='Hidden from everyone but the owner and staff')
     title = models.CharField(max_length=200)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -120,9 +122,18 @@ class ContactRequest(models.Model):
 
 class Report(models.Model):
     """Records a user flagging a listing for manual moderation review."""
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending review'
+        RESOLVED = 'resolved', 'Resolved (action taken)'
+        DISMISSED = 'dismissed', 'Dismissed (nothing wrong)'
+
     reporter = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='reports_filed')
     live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
     equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reviewed_by = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='reports_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    staff_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
