@@ -415,6 +415,7 @@ const en = {
       leading: "You're the highest bidder.",
       outbid: "You've been outbid.",
       notOpenYet: "Your deposit is paid. You can bid as soon as the auction opens.",
+      extendHint: "A bid in the last {{window}} minutes extends the auction to {{by}} minutes after that bid, so everyone can answer it.",
     },
     seller: {
       yourAuction: "This is your auction. Buyers' bids will show up here as they come in.",
