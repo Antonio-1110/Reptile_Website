@@ -38,3 +38,13 @@
 @media (max-width: 767px) {
   .filter-sidebar { width: 100%; flex-basis: auto; position: static; max-height: none; overflow: visible; }
 }
+/* Matches the FilterSection headings. */
+.filter-category-label { margin: 0 0 8px; font-size: 14px; font-weight: 700; }
+
+/* The sidebar is narrower than the listing editor, so the switch's labels get less padding there. */
+.filter-category .category-switch-option {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.25rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}

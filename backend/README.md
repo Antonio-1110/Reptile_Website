@@ -127,8 +127,13 @@ python3 manage.py test
   The seller's own details are never returned, so accounts can't be used to harvest them. Only the
   first request per buyer/listing pair triggers an email.
 - `Report` records buyers flagging a listing for manual moderation review (`ReportListingMixin` /
-  `report` action in `post/views.py`); reviewed via the `Report` admin list. Only the first report per
-  reporter/listing pair is stored.
+  `report` action in `post/views.py`). Only the first report per reporter/listing pair is stored.
+  Moderation rules live in `post/moderation.py`. In the admin, Reports filtered by "Pending review" is
+  the queue: **Hide the reported listings and resolve**, **Resolve**, or **Dismiss** (which shows the
+  listing again); each records who reviewed it and when. Listing admin pages show pending report counts
+  and can hide/unhide. A hidden listing (`is_hidden`) is 404 to everyone but its owner (who sees a
+  notice) and staff. With `REPORT_AUTO_HIDE_THRESHOLD` > 0, a listing reported by that many different
+  accounts hides itself and staff are emailed; 0 (the default) only queues reports.
 - `OwnListingsMixin` adds a `/mine/` action (`post/views.py`) so sellers can list only their own
   listings; standard update/delete endpoints (already owner-restricted) power editing and removal.
 
@@ -141,6 +146,10 @@ python3 manage.py test
   a floor of `AUCTION_MIN_DEPOSIT`. Only a `held` deposit allows bidding.
 - Each bid must be at least the starting price, then the current price + `min_increment`. Bidders are
   anonymous to each other.
+- **Anti-sniping:** a bid within `AUCTION_EXTEND_WINDOW_MINUTES` of the end moves `ends_at` to
+  `AUCTION_EXTEND_BY_MINUTES` after that bid (never earlier than it was), so a last-second bid can
+  still be answered. A window of `0` turns it off. Both are env vars (default 5 / 5) and are echoed on
+  each auction as `extend_window_minutes` / `extend_by_minutes`.
 - `python manage.py close_auctions` (run it every minute from cron) settles auctions past their end
   time. It records the winning bid, opens an **order** for the winner, keeps the winner's deposit
   `held` and refunds everyone else's. It then emails the winner, the seller and the other bidders.
@@ -207,7 +216,9 @@ that never completes becomes `failed` (the bidder may retry) or `cancelled`.
 
 Order statuses: `offered` (runner-up) / `awaiting_payment` → `paid` → `handed_over` → `completed`,
 or `disputed` → `completed` / `refunded`; `buyer_defaulted`, `declined`, `seller_defaulted` when it
-falls through.
+falls through. Once the sale can't go ahead any more (and the seller has no runner-up offer left to
+make), the auction reports `sale_fell_through: true` (`orders.sale_fell_through`) and the listing page
+shows the listing as for sale again instead of the old winning bid.
 
 Buy-now purchase statuses: `pending` → `paid` (won; we hold the money) or `refunded` (paid after
 someone else, or after the auction closed); `failed` if the payment never goes through, `cancelled`
@@ -284,6 +295,21 @@ real login flows.
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
 - `GET /species/`
+- `POST /live-animals/<id>/photos/`, `POST /equipment/<id>/photos/` (owner, multipart) — set the
+  listing's photos. Either `photos` + `cover_index` (the uploads replace everything), or `order`: a JSON
+  list of the final photos, cover first, where each entry is one of the listing's current photo URLs
+  (kept) or `new:<n>` (the n-th file in `photos`). Current photos left out are removed, and uploaded
+  files among them are deleted. The account's image limit applies to the total.
+- Listings have a `status`: `available` (default), `reserved` or `sold`, set by the owner with `PATCH`.
+  List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
+  listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
+  listing sold.
+- `GET`/`POST /saved-searches/`, `PATCH`/`DELETE /saved-searches/<id>/` (signed in) — the user's saved
+  marketplace searches: `query` is the live-animals list query (e.g. `search=pied&sex=1.0`), checked
+  against the real filters and stored sorted; `name` defaults to the search text. Up to
+  `SAVED_SEARCH_LIMIT` per account. `python manage.py send_search_alerts` (schedule it, e.g. every few
+  hours) emails each user the listings posted since their last alert that match, with links built from
+  `DJANGO_FRONTEND_URL`.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).
@@ -296,17 +322,25 @@ and each `*_exclude` variant inverts its counterpart:
 - `diets` / `diets_exclude`, `shipping` / `shipping_exclude` (match any)
 - `price_min|max`, `size_min|max`, `weight_min|max`, `age_min|max`, `posted_days_min|max`
 
+`GET /equipment/` shares `location` / `location_exclude`, `price_min|max`, `posted_days_min|max`,
+`shipping` / `shipping_exclude` and `?search=` (title, description), and adds:
+
+- `category` / `category_exclude` (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`,
+  `transport`, `other`)
+- `condition` (`2` new, `1` used, `0` not functional; comma-separated)
+
 ### Auctions (`/api/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
 - `POST /` — paid commercial accounts only (`403` otherwise)
 - `GET /mine/` — the current user's auctions as a seller
 - `POST /<id>/deposit/` — start or look up the current user's deposit; safe to repeat
-- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`)
+- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`); a late bid can push
+  the auction's `ends_at` back (anti-sniping, see above)
 - `POST /<id>/cancel/` — seller only, only while there are no bids
 - `POST /<id>/buy-now/` — pay the buy-now price in full; safe to repeat
 - `GET`/`POST /seller-bond/` — the seller bond (only required when `SELLER_BOND_AMOUNT` > 0)
-- `GET /orders/` (`?auction=<id>`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
+- `GET /orders/` (`?auction=<id>`, `?role=buyer|seller`, `?status=`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
   side's contact details once allowed
 - `POST /orders/<id>/pay/`, `handed-over/` (seller, optional `note`), `confirm/`, `report-problem/`
   (`text`), `runner-up/` (seller, `{"offer": true|false}`), `decline/` (runner-up)

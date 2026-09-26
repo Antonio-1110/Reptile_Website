@@ -155,4 +155,4 @@ class ApiLanguageTests(APITestCase):
         chinese = self.client.post(reverse('live-animal-report', args=[post.id]), HTTP_ACCEPT_LANGUAGE='zh-Hant')
 
         self.assertEqual(english.data['detail'], "You can't report your own listing.")
-        self.assertEqual(chinese.data['detail'], '你不能檢舉自己的商品。')
+        self.assertEqual(chinese.data['detail'], '你不能檢舉自己的刊登。')
