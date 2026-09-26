@@ -25,7 +25,9 @@ function RedirectToSignIn() {
 
 function renderPage(pathname, search, clearSearch) {
   const detailMatch = pathname.match(/^\/posts\/(\d+)$/);
-  if (detailMatch) return <ListingDetailPage listingId={Number(detailMatch[1])} />;
+  if (detailMatch) return <ListingDetailPage key={`animal-${detailMatch[1]}`} listingId={Number(detailMatch[1])} />;
+  const equipmentMatch = pathname.match(/^\/equipment\/(\d+)$/);
+  if (equipmentMatch) return <ListingDetailPage key={`equipment-${equipmentMatch[1]}`} listingId={Number(equipmentMatch[1])} category="equipment" />;
   const auctionMatch = pathname.match(/^\/auctions\/(\d+)$/);
   if (auctionMatch) return <AuctionRedirectPage key={auctionMatch[1]} auctionId={Number(auctionMatch[1])} />;
   if (pathname === "/auctions") return <AuctionsPage />;

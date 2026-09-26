@@ -21,7 +21,7 @@
   transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
-.card-container:not(.card-container--static):hover {
+.card-container:hover {
   border-color: rgba(148, 163, 184, 0.45);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
   transform: translateY(-1px);

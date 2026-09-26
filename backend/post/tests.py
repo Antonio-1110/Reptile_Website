@@ -259,6 +259,15 @@ class ContactAndReportTests(APITestCase):
 			contact_info='{"phone": "0912345678", "email": "seller@example.com"}',
 		)
 
+	def test_equipment_contact_and_report_work_like_live_animals(self):
+		gear = EquipmentPost.objects.create(account=self.seller, title='Heat Mat', description='d', contact_info='{}')
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.get(reverse('equipment-contact', args=[gear.id])).status_code, 200)
+		self.assertIn(self.client.post(reverse('equipment-contact', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(ContactRequest.objects.filter(requester=self.buyer, equipment_post=gear).exists())
+		self.assertIn(self.client.post(reverse('equipment-report', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(Report.objects.filter(reporter=self.buyer, equipment_post=gear).exists())
+
 	def test_anonymous_user_cannot_request_contact(self):
 		response = self.client.post(reverse('live-animal-contact', args=[self.post.id]))
 		self.assertEqual(response.status_code, 401)
@@ -537,6 +546,15 @@ class EquipmentFilterTests(APITestCase):
 			'title': 'Heat Lamp', 'description': 'd', 'contact_info': {}, 'category': 'heating',
 		}, format='json')
 		self.assertEqual(response.status_code, 201, response.data)
+
+	def test_detail_has_public_seller_fields_but_no_contact_details(self):
+		post = EquipmentPost.objects.get(title='UVB Kit')
+		data = self.client.get(reverse('equipment-detail', args=[post.id])).data
+		self.assertEqual(data['seller_name'], post.account.get_display_name())
+		self.assertEqual(data['posted_days'], 1)
+		self.assertIn('seller_rating', data)
+		self.assertNotIn('contact_info', data)
+		self.assertNotIn('email', data['seller'])
 
 	def test_category_is_saved_and_returned(self):
 		seller = Account.objects.get(username='gear-seller')
