@@ -121,21 +121,24 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
               <h1 className="marketplace-heading">
                 {hasListings || reachedEnd ? t("listings.available", { count: feed.count }) : t("listings.heading")}
               </h1>
-              {/* Saved searches (and their email alerts) cover live animals only. */}
-              {isLoggedIn() && category === "live_animal" && (
-                <div className="marketplace-save-search">
-                  {saveState === "saved" ? (
-                    <p role="status">
-                      {t("savedSearches.savedNote")} <a href="/saved-searches">{t("savedSearches.manage")}</a>
-                    </p>
-                  ) : (
-                    <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
-                      🔔 {t("savedSearches.save")}
-                    </button>
-                  )}
-                  {saveState && !["saving", "saved"].includes(saveState) && <p role="alert">{saveState}</p>}
-                </div>
-              )}
+              <div className="marketplace-heading-actions">
+                {isLoggedIn() && <a href="/saved" className="marketplace-saved-link">♥ {t("favorites.title")}</a>}
+                {/* Saved searches (and their email alerts) cover live animals only. */}
+                {isLoggedIn() && category === "live_animal" && (
+                  <div className="marketplace-save-search">
+                    {saveState === "saved" ? (
+                      <p role="status">
+                        {t("savedSearches.savedNote")} <a href="/saved-searches">{t("savedSearches.manage")}</a>
+                      </p>
+                    ) : (
+                      <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
+                        🔔 {t("savedSearches.save")}
+                      </button>
+                    )}
+                    {saveState && !["saving", "saved"].includes(saveState) && <p role="alert">{saveState}</p>}
+                  </div>
+                )}
+              </div>
             </div>
             {isFirstLoad && (
               <>

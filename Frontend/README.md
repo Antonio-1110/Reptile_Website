@@ -54,6 +54,7 @@ Frontend/src/
     ├── MyListingsPage         # /my-listings
     ├── MyOrdersPage           # /orders — the user's orders as buyer and seller
     ├── SavedSearchesPage      # /saved-searches — searches the user is emailed about (saved from the marketplace)
+    ├── SavedListingsPage      # /saved — animals the user saved with ♡
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
     ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page

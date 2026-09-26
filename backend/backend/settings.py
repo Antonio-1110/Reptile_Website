@@ -219,6 +219,9 @@ REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
 SAVED_SEARCH_LIMIT = env_int('SAVED_SEARCH_LIMIT', 20)
 # Where the website lives, for links in emails (e.g. https://example.com). No trailing slash.
 FRONTEND_URL = os.environ.get('DJANGO_FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+# People who saved a listing get at most one price-drop email per listing in this many hours, so a
+# seller can't mass-email them by lowering the price a little at a time.
+PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)
 
 
 # Static files (CSS, JavaScript, Images)

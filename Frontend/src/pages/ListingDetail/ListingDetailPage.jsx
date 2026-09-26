@@ -12,6 +12,7 @@ import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
+import FavoriteButton from '../../components/listings/FavoriteButton';
 import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
@@ -199,6 +200,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </span>
               <div className="listing-detail-summary-actions">
                 <span className="listing-detail-rating">★ {listing.rating}</span>
+                <FavoriteButton listingId={listingId} category={category} initial={listing.isFavorite} />
                 <button
                   type="button"
                   onClick={handleReportListing}

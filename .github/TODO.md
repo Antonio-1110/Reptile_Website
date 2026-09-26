@@ -77,7 +77,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       shipping and posting-date filters
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
-- [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
+- [x] Add saved favorites or watchlist functionality (optional price-drop alerts)
 - [x] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation
