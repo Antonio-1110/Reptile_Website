@@ -59,9 +59,12 @@ export default function MyListingsPage() {
             <h1>{t('navigation.myListings')}</h1>
             <p>{t('myListings.subtitle')}</p>
           </div>
-          <a href="/postinput" className="my-listings-new">
-            {t('myListings.newListing')}
-          </a>
+          <div className="my-listings-header-links">
+            <a href="/orders" className="my-listings-orders">{t('myListings.orders')}</a>
+            <a href="/postinput" className="my-listings-new">
+              {t('myListings.newListing')}
+            </a>
+          </div>
         </div>
 
         {error && (

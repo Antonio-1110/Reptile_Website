@@ -8,6 +8,8 @@ import { getListingsPage } from "../api/listingsApi";
 import coverImage from "../assets/cover.jpg";
 import "./HomePage.css";
 
+const HOME_POINTS = ["privacy", "payments", "reports"];
+
 const pickFeaturedListings = (listings) => [...listings].sort(() => Math.random() - 0.5).slice(0, 6);
 
 export default function HomePage() {
@@ -105,6 +107,14 @@ export default function HomePage() {
           <p className="home-kicker">{t("home.storyKicker")}</p>
           <h2>{t("home.storyHeading")}</h2>
           <p>{t("home.storyBody")}</p>
+          <ul className="home-points">
+            {HOME_POINTS.map((point) => (
+              <li key={point}>
+                <h3>{t(`home.points.${point}.title`)}</h3>
+                <p>{t(`home.points.${point}.body`)}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </div>

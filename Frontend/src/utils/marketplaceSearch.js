@@ -1,5 +1,22 @@
-// The marketplace search (free text + header tags) lives in the URL so it survives reloads and
-// navigating from other pages: /marketplace?search=pied&species=Ball%20Pythons&genes=Pastel,Pied
+// The marketplace search (free text + header tags) and what's being browsed (animals or equipment)
+// live in the URL so they survive reloads and navigating from other pages:
+// /marketplace?search=pied&species=Ball%20Pythons&genes=Pastel,Pied, /marketplace?category=equipment
+
+export const MARKETPLACE_CATEGORIES = ["live_animal", "equipment"];
+
+export function readMarketplaceCategory(search = window.location.search) {
+  const category = new URLSearchParams(search).get("category");
+  return MARKETPLACE_CATEGORIES.includes(category) ? category : "live_animal";
+}
+
+// Same URL with only the category changed (live animals are the default, so they leave no param).
+export function withMarketplaceCategory(category, search = window.location.search) {
+  const params = new URLSearchParams(search);
+  if (category === "live_animal") params.delete("category");
+  else params.set("category", category);
+  const query = params.toString();
+  return query ? `/marketplace?${query}` : "/marketplace";
+}
 
 export function readMarketplaceSearch(search = window.location.search) {
   const params = new URLSearchParams(search);
@@ -14,8 +31,9 @@ export function readMarketplaceSearch(search = window.location.search) {
   };
 }
 
-export function buildMarketplaceUrl(term, tags) {
+export function buildMarketplaceUrl(term, tags, category = "live_animal") {
   const params = new URLSearchParams();
+  if (category !== "live_animal") params.set("category", category);
   if (term.trim()) params.set("search", term.trim());
   const species = tags.find((tag) => tag.type === "species");
   if (species) params.set("species", species.value);

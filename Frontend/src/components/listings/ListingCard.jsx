@@ -2,33 +2,47 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
-import { getSexKey } from '../../api/listingsApi';
+import { getSexKey, listingPagePath } from '../../api/listingsApi';
 
+// Draws a live animal or (animal.kind === "equipment") a piece of equipment.
 export default function ListingCard({ animal }) {
   const { t } = useTranslation();
   const locationName = getLocationLabel(t, animal.location);
+  const isEquipment = animal.kind === 'equipment';
+  const detailHref = listingPagePath(animal.id, isEquipment ? 'equipment' : 'live_animal');
+  const badges = isEquipment ? [t(`createListing.equipment.types.${animal.equipmentCategory}`)] : animal.genes;
 
   return (
-    <a href={`/posts/${animal.id}`} className="card-container">
-      <img
-        src={animal.image}
-        alt={animal.title}
-        className="card-image"
-        loading="lazy"
-        decoding="async"
-      />
-      
+    // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
+    // The title link stretches over the whole card instead (see .card-title-link::after).
+    <article className="card-container">
+      {animal.image ? (
+        <img
+          src={animal.image}
+          alt={animal.title}
+          className="card-image"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
+      )}
+
       <div className="card-content">
         <div className="card-header">
-          <h3 className="card-title">{animal.title}</h3>
+          <h3 className="card-title">
+            <a href={detailHref} className="card-title-link">{animal.title}</a>
+          </h3>
           <span className="card-sex">
-            {t(`createListing.sex.${getSexKey(animal.sex)}`)}
+            {isEquipment
+              ? t(`createListing.equipment.conditions.${animal.condition}`)
+              : t(`createListing.sex.${getSexKey(animal.sex)}`)}
           </span>
         </div>
 
-        {/* Genetic Badges */}
-        <div className="card-genes" title={animal.genes.join(' / ') || undefined}>
-          {animal.genes.map((gene, idx) => (
+        {/* Genes for animals, the type for equipment */}
+        <div className="card-genes" title={badges.join(' / ') || undefined}>
+          {badges.map((gene, idx) => (
             <span key={idx} className="card-gene-badge">
               {gene}
             </span>
@@ -42,14 +56,11 @@ export default function ListingCard({ animal }) {
 
         <div className="card-seller-row">
           <span>{t('listings.seller')}</span>
-          <a
-            href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}
-            onClick={(event) => event.stopPropagation()}
-          >
+          <a href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}>
             {animal.sellerTag || animal.seller}
           </a>
         </div>
       </div>
-    </a>
+    </article>
   );
 }

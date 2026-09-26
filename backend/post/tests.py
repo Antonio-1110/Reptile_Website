@@ -1,3 +1,4 @@
+import json
 import io
 import shutil
 import tempfile
@@ -259,6 +260,15 @@ class ContactAndReportTests(APITestCase):
 			contact_info='{"phone": "0912345678", "email": "seller@example.com"}',
 		)
 
+	def test_equipment_contact_and_report_work_like_live_animals(self):
+		gear = EquipmentPost.objects.create(account=self.seller, title='Heat Mat', description='d', contact_info='{}')
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.get(reverse('equipment-contact', args=[gear.id])).status_code, 200)
+		self.assertIn(self.client.post(reverse('equipment-contact', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(ContactRequest.objects.filter(requester=self.buyer, equipment_post=gear).exists())
+		self.assertIn(self.client.post(reverse('equipment-report', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(Report.objects.filter(reporter=self.buyer, equipment_post=gear).exists())
+
 	def test_anonymous_user_cannot_request_contact(self):
 		response = self.client.post(reverse('live-animal-contact', args=[self.post.id]))
 		self.assertEqual(response.status_code, 401)
@@ -482,6 +492,82 @@ class LiveAnimalFilterTests(APITestCase):
 		self.assertIsNone(response.data['next'])
 
 
+class EquipmentFilterTests(APITestCase):
+	def setUp(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		seller = Account.objects.create_user(
+			username='gear-seller', email='gear@example.com', password='pass12345',
+			account_type=Account.AccountType.COMMERCIAL, is_paid_account=True,
+		)
+
+		def make(title, **fields):
+			days_old = fields.pop('days_old', 0)
+			post = EquipmentPost.objects.create(account=seller, title=title, description='d', contact_info='{}', **fields)
+			EquipmentPost.objects.filter(pk=post.pk).update(created_at=timezone.now() - timedelta(days=days_old, hours=1))
+			return post
+
+		make('Glass Terrarium', category='enclosure', condition=2, location='TPE', price=4000,
+			shipping_methods=['localPickup'], days_old=20)
+		make('UVB Kit', category='lighting', condition=1, location='KHH', price=2500,
+			shipping_methods=['localPickup', 'shipping'], days_old=1)
+		make('Broken Heat Mat', category='heating', condition=0, location='TPE', price=100,
+			shipping_methods=['shipping'], days_old=5)
+
+	def titles(self, **params):
+		response = self.client.get(reverse('equipment-list'), params)
+		self.assertEqual(response.status_code, 200)
+		return sorted(item['title'] for item in response.data['results'])
+
+	def test_category_and_condition_filters(self):
+		self.assertEqual(self.titles(category='enclosure,lighting'), ['Glass Terrarium', 'UVB Kit'])
+		self.assertEqual(self.titles(category_exclude='enclosure'), ['Broken Heat Mat', 'UVB Kit'])
+		self.assertEqual(self.titles(condition='1,2'), ['Glass Terrarium', 'UVB Kit'])
+
+	def test_shared_listing_filters(self):
+		self.assertEqual(self.titles(price_min=1000, price_max=3000), ['UVB Kit'])
+		self.assertEqual(self.titles(location_exclude='TPE'), ['UVB Kit'])
+		self.assertEqual(self.titles(shipping='shipping'), ['Broken Heat Mat', 'UVB Kit'])
+		self.assertEqual(self.titles(posted_days_min=3), ['Broken Heat Mat', 'Glass Terrarium'])
+		self.assertEqual(self.titles(search='terrarium'), ['Glass Terrarium'])
+
+	def test_unknown_category_is_rejected_on_create(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Mystery', 'description': 'd', 'contact_info': '{}', 'category': 'spaceship',
+		}, format='json')
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('category', response.data)
+
+	def test_equipment_accepts_contact_info_object_like_the_editor_sends(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Heat Lamp', 'description': 'd', 'contact_info': {}, 'category': 'heating',
+		}, format='json')
+		self.assertEqual(response.status_code, 201, response.data)
+
+	def test_detail_has_public_seller_fields_but_no_contact_details(self):
+		post = EquipmentPost.objects.get(title='UVB Kit')
+		data = self.client.get(reverse('equipment-detail', args=[post.id])).data
+		self.assertEqual(data['seller_name'], post.account.get_display_name())
+		self.assertEqual(data['posted_days'], 1)
+		self.assertIn('seller_rating', data)
+		self.assertNotIn('contact_info', data)
+		self.assertNotIn('email', data['seller'])
+
+	def test_category_is_saved_and_returned(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Carrier', 'description': 'd', 'contact_info': '{}', 'category': 'transport', 'condition': 2,
+		}, format='json')
+		self.assertEqual(response.status_code, 201, response.data)
+		self.assertEqual(response.data['category'], 'transport')
+		self.assertEqual(EquipmentPost.objects.get(pk=response.data['id']).category, 'transport')
+
+
 class SellerInquiryEmailTests(APITestCase):
 	def test_inquiry_email_is_sent_in_every_supported_language(self):
 		seller = Account.objects.create_user(username='email-seller', email='seller@example.com', password='pass12345')
@@ -496,9 +582,9 @@ class SellerInquiryEmailTests(APITestCase):
 		self.assertEqual(len(mail.outbox), 1)
 		email = mail.outbox[0]
 		self.assertIn('New inquiry about your listing: Pied', email.subject)
-		self.assertIn('你的商品有新的詢問：Pied', email.subject)
+		self.assertIn('你的刊登有新的詢問：Pied', email.subject)
 		self.assertIn('is interested in your listing "Pied"', email.body)
-		self.assertIn('對你在爬蟲市集上的商品「Pied」有興趣', email.body)
+		self.assertIn('對你在爬蟲市集上的刊登「Pied」有興趣', email.body)
 
 
 class ContactPrivacyTests(APITestCase):
@@ -618,3 +704,86 @@ class ListingPhotoUploadTests(APITestCase):
 	def test_three_photos_with_cover_in_gallery_fit_hobbyist_limit(self):
 		self.client.force_authenticate(self.seller)
 		self.assertEqual(self.upload([make_image(f'{index}.png') for index in range(3)]).status_code, 200)
+
+	# --- `order`: keep, reorder and remove existing photos without re-uploading them -------------
+
+	def set_order(self, order, photos=(), listing_url=None):
+		return self.client.post(listing_url or self.url, {'photos': list(photos), 'order': json.dumps(order)}, format='multipart')
+
+	def upload_three(self):
+		self.client.force_authenticate(self.seller)
+		self.upload([make_image(f'{name}.png') for name in 'abc'])
+		self.post.refresh_from_db()
+		return list(self.post.gallery)
+
+	def test_order_reorders_and_removes_existing_photos(self):
+		first, second, third = self.upload_three()
+		response = self.set_order([third, first])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery, [third, first])
+		self.assertEqual(self.post.image, third)
+		self.assertEqual(len(self.stored_files()), 2)  # the removed upload is deleted from storage
+
+	def test_order_mixes_kept_and_new_photos(self):
+		first, _, _ = self.upload_three()
+		response = self.set_order(['new:0', first], photos=[make_image('d.png')])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(len(self.post.gallery), 2)
+		self.assertEqual(self.post.gallery[1], first)
+		self.assertNotIn(self.post.gallery[0], [first])
+		self.assertEqual(len(self.stored_files()), 2)
+
+	def test_order_keeps_seeded_external_photos(self):
+		self.client.force_authenticate(self.seller)
+		response = self.set_order(['new:0', 'https://example.com/seeded.jpg'], photos=[make_image()])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery[1], 'https://example.com/seeded.jpg')
+
+	def test_order_cannot_point_the_listing_at_someone_elses_url(self):
+		before = self.upload_three()
+		response = self.set_order(['https://evil.example.com/x.jpg'])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('order', response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery, before)
+
+	def test_order_must_use_each_upload_and_photo_exactly_once(self):
+		first, _, _ = self.upload_three()
+		self.assertEqual(self.set_order(['new:0'], photos=[make_image('d.png'), make_image('e.png')]).status_code, 400)
+		self.assertEqual(self.set_order(['new:1'], photos=[make_image('d.png')]).status_code, 400)
+		self.assertEqual(self.set_order([first, first]).status_code, 400)
+		self.assertEqual(self.set_order(['new:x'], photos=[make_image('d.png')]).status_code, 400)
+		self.assertEqual(len(self.stored_files()), 3)  # nothing new was stored
+
+	def test_order_total_counts_toward_the_photo_limit(self):
+		kept = self.upload_three()
+		response = self.set_order([*kept, 'new:0'], photos=[make_image('d.png')])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('Image limit exceeded', str(response.data))
+
+	def test_empty_order_removes_every_photo(self):
+		self.upload_three()
+		response = self.set_order([])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual((self.post.image, self.post.gallery), ('', []))
+		self.assertEqual(self.stored_files(), [])
+
+	def test_order_must_be_a_json_list(self):
+		self.client.force_authenticate(self.seller)
+		response = self.client.post(self.url, {'order': 'not json'}, format='multipart')
+		self.assertEqual(response.status_code, 400)
+
+	def test_non_owner_cannot_reorder(self):
+		kept = self.upload_three()
+		self.client.force_authenticate(self.other)
+		self.assertEqual(self.set_order(list(reversed(kept))).status_code, 403)

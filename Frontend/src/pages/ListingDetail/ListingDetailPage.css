@@ -128,6 +128,14 @@
   cursor: zoom-in;
 }
 
+/* Stands in for the photo on listings without one (same size as a photo). */
+.listing-detail-hero-empty {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  font-size: 5rem;
+}
+
 .listing-detail-hero-image {
   display: block;
   width: 100%;

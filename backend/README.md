@@ -141,6 +141,10 @@ python3 manage.py test
   a floor of `AUCTION_MIN_DEPOSIT`. Only a `held` deposit allows bidding.
 - Each bid must be at least the starting price, then the current price + `min_increment`. Bidders are
   anonymous to each other.
+- **Anti-sniping:** a bid within `AUCTION_EXTEND_WINDOW_MINUTES` of the end moves `ends_at` to
+  `AUCTION_EXTEND_BY_MINUTES` after that bid (never earlier than it was), so a last-second bid can
+  still be answered. A window of `0` turns it off. Both are env vars (default 5 / 5) and are echoed on
+  each auction as `extend_window_minutes` / `extend_by_minutes`.
 - `python manage.py close_auctions` (run it every minute from cron) settles auctions past their end
   time. It records the winning bid, opens an **order** for the winner, keeps the winner's deposit
   `held` and refunds everyone else's. It then emails the winner, the seller and the other bidders.
@@ -207,7 +211,9 @@ that never completes becomes `failed` (the bidder may retry) or `cancelled`.
 
 Order statuses: `offered` (runner-up) / `awaiting_payment` → `paid` → `handed_over` → `completed`,
 or `disputed` → `completed` / `refunded`; `buyer_defaulted`, `declined`, `seller_defaulted` when it
-falls through.
+falls through. Once the sale can't go ahead any more (and the seller has no runner-up offer left to
+make), the auction reports `sale_fell_through: true` (`orders.sale_fell_through`) and the listing page
+shows the listing as for sale again instead of the old winning bid.
 
 Buy-now purchase statuses: `pending` → `paid` (won; we hold the money) or `refunded` (paid after
 someone else, or after the auction closed); `failed` if the payment never goes through, `cancelled`
@@ -284,6 +290,11 @@ real login flows.
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
 - `GET /species/`
+- `POST /live-animals/<id>/photos/`, `POST /equipment/<id>/photos/` (owner, multipart) — set the
+  listing's photos. Either `photos` + `cover_index` (the uploads replace everything), or `order`: a JSON
+  list of the final photos, cover first, where each entry is one of the listing's current photo URLs
+  (kept) or `new:<n>` (the n-th file in `photos`). Current photos left out are removed, and uploaded
+  files among them are deleted. The account's image limit applies to the total.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).
@@ -296,17 +307,25 @@ and each `*_exclude` variant inverts its counterpart:
 - `diets` / `diets_exclude`, `shipping` / `shipping_exclude` (match any)
 - `price_min|max`, `size_min|max`, `weight_min|max`, `age_min|max`, `posted_days_min|max`
 
+`GET /equipment/` shares `location` / `location_exclude`, `price_min|max`, `posted_days_min|max`,
+`shipping` / `shipping_exclude` and `?search=` (title, description), and adds:
+
+- `category` / `category_exclude` (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`,
+  `transport`, `other`)
+- `condition` (`2` new, `1` used, `0` not functional; comma-separated)
+
 ### Auctions (`/api/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
 - `POST /` — paid commercial accounts only (`403` otherwise)
 - `GET /mine/` — the current user's auctions as a seller
 - `POST /<id>/deposit/` — start or look up the current user's deposit; safe to repeat
-- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`)
+- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`); a late bid can push
+  the auction's `ends_at` back (anti-sniping, see above)
 - `POST /<id>/cancel/` — seller only, only while there are no bids
 - `POST /<id>/buy-now/` — pay the buy-now price in full; safe to repeat
 - `GET`/`POST /seller-bond/` — the seller bond (only required when `SELLER_BOND_AMOUNT` > 0)
-- `GET /orders/` (`?auction=<id>`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
+- `GET /orders/` (`?auction=<id>`, `?role=buyer|seller`, `?status=`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
   side's contact details once allowed
 - `POST /orders/<id>/pay/`, `handed-over/` (seller, optional `note`), `confirm/`, `report-problem/`
   (`text`), `runner-up/` (seller, `{"offer": true|false}`), `decline/` (runner-up)

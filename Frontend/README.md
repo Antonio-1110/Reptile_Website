@@ -32,27 +32,29 @@ Frontend/src/
 ├── utils/
 │   ├── auctionFormat.js       # auction phase, countdowns, money and date formatting
 │   ├── cropImage.js           # canvas helper for cropping listing photos
-│   └── marketplaceSearch.js   # search term + tags <-> /marketplace URL
+│   └── marketplaceSearch.js   # search term + tags + category <-> /marketplace URL
 ├── assets/
 ├── components/                # shared across pages
 │   ├── layout/                # Header
 │   ├── listings/              # ListingCard, ListingGrid, EndOfResultsCard
 │   ├── auctions/              # AuctionCountdown (auction cards + listing page)
 │   ├── filters/               # FilterSidebar and its sections (FilterSection, RangeFilter, …)
-│   └── ui/                    # generic widgets: Toast, ImageCropModal, LanguageSwitcher
+│   └── ui/                    # generic widgets: Toast, ImageCropModal, LanguageSwitcher, CategorySwitch
 └── pages/                     # one file per route
     ├── HomePage               # /
     ├── MarketplacePage        # /marketplace
-    ├── ListingDetail/         # /posts/:id — the one page per animal, for sale or being auctioned
+    ├── ListingDetail/         # /posts/:id (animal) and /equipment/:id — one page per listing, for sale or being auctioned
     │   ├── ListingDetailPage.jsx
     │   ├── useListingAuction.js   # the listing's latest auction + bids, refreshed while it runs
+    │   ├── useListingTranslation.js  # t() that prefers `key_equipment` variants on equipment pages
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
+    ├── MyOrdersPage           # /orders — the user's orders as buyer and seller
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
-    ├── Auctions/              # /auctions (?tab=ended); cards link to the animal's /posts/:id page
+    ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page
     │   ├── AuctionsPage.jsx
-    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the animal's page
+    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the listing's page
     │   └── components/        # AuctionCard
     └── ListingEditor/         # /postinput (create) and /postinput?edit=<id>&category= (edit)
         ├── ListingEditorPage.jsx
@@ -85,6 +87,10 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
   (`getListingsPage()`), and `MarketplacePage` fetches the next 20 results when a sentinel below the grid
   comes within 800px of the viewport. Filter edits are debounced; responses for an outdated query are
   ignored. When the results run out, `EndOfResultsCard` closes the feed (or stands in for an empty one).
+- The Live Animals / Equipment switch at the top of the filter sidebar (the same `CategorySwitch` as the
+  listing editor) decides what the whole page shows: which endpoint `getListingsPage()` calls, which
+  filters the sidebar offers and are sent, and how `ListingCard` draws a card. It's kept in the URL
+  (`?category=equipment`).
 - Authenticated requests send `Authorization: Bearer <access token>` (JWT from `/api/v1/auth/`);
   `authFetch()` refreshes an expired access token once and retries.
 - `api/listingsApi.js` converts UI field names to backend serializer names before
