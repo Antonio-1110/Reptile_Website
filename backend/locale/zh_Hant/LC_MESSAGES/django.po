@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:52+0800\n"
+"POT-Creation-Date: 2026-09-26 15:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,10 +25,10 @@ msgstr "與賣家聯絡過某則刊登或向其購買後，才能評價這位賣
 
 #: auction/notifications.py:16
 msgid ""
-"Only ever pay through the Reptile Marketplace. Never send money directly to "
-"a seller: we can only protect payments made through us."
+"Only ever pay through Reptilian. Never send money directly to a seller: we "
+"can only protect payments made through us."
 msgstr ""
-"請只透過爬蟲市集付款，切勿直接匯款給賣家：我們只能保障透過本站完成的付款。"
+"請只透過 Reptilian 付款，切勿直接匯款給賣家：我們只能保障透過本站完成的付款。"
 
 #: auction/notifications.py:32
 #, python-format
@@ -215,11 +215,11 @@ msgstr "你已得標「%(title)s」"
 #, python-format
 msgid ""
 "You won \"%(title)s\" with a bid of %(price)s. Please pay the remaining "
-"%(balance)s through the Reptile Marketplace by %(payment_due)s (your deposit "
-"counts toward the price). If you don't pay in time, your deposit is kept and "
-"the sale is cancelled."
+"%(balance)s through Reptilian by %(payment_due)s (your deposit counts toward "
+"the price). If you don't pay in time, your deposit is kept and the sale is "
+"cancelled."
 msgstr ""
-"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過爬蟲市集支付剩餘"
+"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過 Reptilian 支付剩餘"
 "的 %(balance)s（保證金會抵扣價款）。若未在期限內付款，保證金將不予退還，交易"
 "也會取消。"
 
@@ -846,10 +846,10 @@ msgstr "你的刊登有新的詢問：%(title)s"
 #: post/views.py:49
 #, python-format
 msgid ""
-"%(name)s is interested in your listing \"%(title)s\" on the Reptile "
-"Marketplace and asked us to pass on their contact details:"
+"%(name)s is interested in your listing \"%(title)s\" on Reptilian and asked "
+"us to pass on their contact details:"
 msgstr ""
-"%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方"
+"%(name)s 對你在 Reptilian 上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方"
 "式："
 
 #: post/views.py:51

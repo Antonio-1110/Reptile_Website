@@ -46,7 +46,7 @@ def send_inquiry_to_seller(requester, post):
     def build():
         subject = _('New inquiry about your listing: %(title)s') % values
         body = (
-            _('%(name)s is interested in your listing "%(title)s" on the Reptile Marketplace and asked us to pass on their contact details:') % values
+            _('%(name)s is interested in your listing "%(title)s" on Reptilian and asked us to pass on their contact details:') % values
             + '\n\n' + contact_lines(requester.contact_details()) + '\n\n'
             + _('Please contact them directly. We never share your own contact details with buyers who ask.')
         )

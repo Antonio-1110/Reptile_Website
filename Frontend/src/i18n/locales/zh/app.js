@@ -1,3 +1,3 @@
 export default {
-  title: "MorphMarket — 爬蟲交易市集",
+  title: "Reptilian — 爬蟲交易市集",
 };

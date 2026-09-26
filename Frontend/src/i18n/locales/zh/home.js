@@ -13,9 +13,9 @@ export default {
   featuredHeading: "社群最新刊登",
   featuredIntro: "從最新刊登中隨機挑選幾則。",
   refresh: "換一組",
-  storyKicker: "為什麼選擇 MorphMarket",
+  storyKicker: "為什麼選擇 Reptilian",
   storyHeading: "為用心飼養而生，不為快速轉手。",
-  storyBody: "MorphMarket 屬於認真看待爬蟲飼養的人：在這裡從容地找到健康的個體、比較不同基因，並與同樣用心照顧動物的人交易。",
+  storyBody: "Reptilian 屬於認真看待爬蟲飼養的人：在這裡從容地找到健康的個體、比較不同基因，並與同樣用心照顧動物的人交易。",
   points: {
     privacy: {
       title: "你的聯絡資料不公開",
@@ -23,7 +23,7 @@ export default {
     },
     payments: {
       title: "安心參加競標",
-      body: "出價前先支付可退還的保證金，競標款項透過 MorphMarket 處理，交貨前雙方都有保障。",
+      body: "出價前先支付可退還的保證金，競標款項透過 Reptilian 處理，交貨前雙方都有保障。",
     },
     reports: {
       title: "刊登有人把關",

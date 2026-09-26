@@ -42,20 +42,20 @@
   margin-right: 10px;
 }
 
-.logoMorph,
-.logoMarket {
+.logoRepti,
+.logoLian {
   margin: 0;
   font-size: 1.5rem;
   white-space: nowrap;
 }
 
-.logoMorph {
+.logoRepti {
   color: var(--color-accent-bright);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
-.logoMarket {
+.logoLian {
   color: var(--color-text);
   font-weight: 300;
 }
@@ -195,7 +195,7 @@
   .headerMenuToggleLabel { display: none; }
   .headerMenuToggle { padding: 0.5rem 0.9rem; }
   .leftSection { gap: 0.75rem; }
-  .logoMorph, .logoMarket { font-size: 1.25rem; }
+  .logoRepti, .logoLian { font-size: 1.25rem; }
 }
 
 /* Room for the links next to the logo, with the search bar on its own row. */

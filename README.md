@@ -1,6 +1,6 @@
-# Reptile Marketplace
+# Reptilian
 
-A reptile marketplace app with a React + Vite frontend and a Django REST API backend.
+Reptilian is a reptile marketplace app with a React + Vite frontend and a Django REST API backend.
 
 ## Project overview
 

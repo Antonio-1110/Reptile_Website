@@ -4,7 +4,7 @@ export default {
   signInTitle: "歡迎回來",
   signInSubtitle: "登入即可發布並管理你的刊登。",
   signInToContinue: "請先登入，完成後會帶你回到剛才的頁面。",
-  registerTitle: "加入 MorphMarket",
+  registerTitle: "加入 Reptilian",
   registerSubtitle: "建立帳號即可開始販售。",
   username: "使用者名稱",
   email: "電子郵件",

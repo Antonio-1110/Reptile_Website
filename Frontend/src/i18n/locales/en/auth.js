@@ -4,7 +4,7 @@ export default {
   signInTitle: "Welcome back",
   signInSubtitle: "Sign in to post and manage your listings.",
   signInToContinue: "Sign in to continue — we'll take you back to the page you were on.",
-  registerTitle: "Join MorphMarket",
+  registerTitle: "Join Reptilian",
   registerSubtitle: "Create an account to start selling.",
   username: "Username",
   email: "Email",

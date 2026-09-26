@@ -13,7 +13,7 @@ from common.notifications import contact_lines, send_notification
 # Added to every email that tells a buyer about money, because "pay me directly instead" is the
 # classic scam on marketplaces like this one.
 def _pay_through_us_warning():
-    return _('Only ever pay through the Reptile Marketplace. Never send money directly to a seller: we can only protect payments made through us.')
+    return _('Only ever pay through Reptilian. Never send money directly to a seller: we can only protect payments made through us.')
 
 
 def _when(moment):
@@ -133,7 +133,7 @@ def auction_won(order, losing_deposits):
     seller, buyer = order.auction.seller, order.buyer
     send_notification([buyer.email], lambda: (
         _('You won "%(title)s"') % values,
-        _('You won "%(title)s" with a bid of %(price)s. Please pay the remaining %(balance)s through the Reptile Marketplace by %(payment_due)s (your deposit counts toward the price). If you don\'t pay in time, your deposit is kept and the sale is cancelled.') % values
+        _('You won "%(title)s" with a bid of %(price)s. Please pay the remaining %(balance)s through Reptilian by %(payment_due)s (your deposit counts toward the price). If you don\'t pay in time, your deposit is kept and the sale is cancelled.') % values
         + '\n\n' + _("The seller's contact details, to arrange the handover:") + '\n' + contact_lines(seller.contact_details())
         + '\n\n' + _pay_through_us_warning(),
     ))
