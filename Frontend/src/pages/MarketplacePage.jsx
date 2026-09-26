@@ -7,6 +7,7 @@ import ListingCard from "../components/listings/ListingCard";
 import ListingGrid from "../components/listings/ListingGrid";
 import { createSavedSearch, getListingsPage, isLoggedIn, listingQueryString } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import { readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
 
 const initialFilters = {
   minPrice: "", maxPrice: "", minSize: "", maxSize: "",
@@ -14,6 +15,7 @@ const initialFilters = {
   locations: [], includeLocations: true, lifeStages: [], includeLifeStages: true,
   minAgeYears: "", maxAgeYears: "", minWeight: "", maxWeight: "",
   diets: [], includeDiets: true, shippingMethods: [], includeShipping: true,
+  equipmentTypes: [], conditions: [],
 };
 
 // Start fetching the next page while the user is still this far above the end of the grid.
@@ -24,6 +26,8 @@ const emptyFeed = { listings: [], count: 0, nextPage: 1, loadingPage: 1, failedP
 
 export default function MarketplacePage({ searchTerm = "", searchTags = [], onClearSearch }) {
   const { t } = useTranslation();
+  // "live_animal" or "equipment": which kind of listing the whole page shows.
+  const [category, setCategory] = useState(readMarketplaceCategory);
   const [filters, setFilters] = useState(initialFilters);
   const debouncedFilters = useDebouncedValue(filters, 300);
   const [feed, setFeed] = useState(emptyFeed);
@@ -31,8 +35,8 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   const sentinelRef = useRef(null);
 
   const query = useMemo(
-    () => ({ search: searchTerm, tags: searchTags, filters: debouncedFilters }),
-    [searchTerm, searchTags, debouncedFilters],
+    () => ({ category, search: searchTerm, tags: searchTags, filters: debouncedFilters }),
+    [category, searchTerm, searchTags, debouncedFilters],
   );
 
   // Loads one page for the current query. Responses for an outdated query are dropped, so changing a
@@ -96,6 +100,10 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
     }
   };
 
+  const changeCategory = (value) => {
+    setCategory(value);
+    window.history.replaceState(null, "", withMarketplaceCategory(value));
+  };
   const clearFilters = () => {
     setFilters(initialFilters);
     if (searchTerm || searchTags.length) onClearSearch?.();
@@ -104,12 +112,13 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   return (
     <div className="marketplace-page">
       <div className="marketplace-layout">
-        <FilterSidebar filters={filters} setFilters={setFilters} />
+        <FilterSidebar category={category} onCategoryChange={changeCategory} filters={filters} setFilters={setFilters} />
         <main className="marketplace-main">
           <div className="marketplace-results" aria-busy={Boolean(feed.loadingPage)}>
             <div className="marketplace-heading-row">
               <h1 className="marketplace-heading">{t("listings.available", { count: feed.count })}</h1>
-              {isLoggedIn() && (
+              {/* Saved searches (and their email alerts) cover live animals only. */}
+              {isLoggedIn() && category === "live_animal" && (
                 <div className="marketplace-save-search">
                   {saveState === "saved" ? (
                     <p role="status">
@@ -129,7 +138,7 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
             {(hasListings || reachedEnd) && (
               <div className={`marketplace-feed${isRefreshing ? " is-refreshing" : ""}`}>
                 <ListingGrid>
-                  {feed.listings.map((animal) => <ListingCard key={animal.id} animal={animal} />)}
+                  {feed.listings.map((listing) => <ListingCard key={`${listing.kind || "animal"}-${listing.id}`} animal={listing} />)}
                   {reachedEnd && <EndOfResultsCard empty={feed.count === 0} onClearFilters={clearFilters} />}
                 </ListingGrid>
               </div>
