@@ -8,6 +8,7 @@ import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
 import { createListing, getCurrentProfile, getRawListing, getSexKey, updateListing, uploadListingPhotos } from "../../api/listingsApi";
 import { getLocationKey } from "../../constants/locations";
+import { DEFAULT_EQUIPMENT_CATEGORY, DEFAULT_EQUIPMENT_CONDITION } from "../../constants/equipment";
 import { errorText, toErrorState } from "../../utils/errorState";
 
 const initialFormData = {
@@ -23,6 +24,8 @@ const initialFormData = {
   weight: "",
   size: "",
   diets: [],
+  equipmentCategory: DEFAULT_EQUIPMENT_CATEGORY,
+  condition: String(DEFAULT_EQUIPMENT_CONDITION),
   location: "",
   shippingMethods: [],
   legalAgreed: false,
@@ -78,6 +81,8 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
           weight: raw.weight_grams != null ? String(raw.weight_grams) : "",
           size: raw.size_cm != null ? String(raw.size_cm) : "",
           diets: raw.diets || [],
+          equipmentCategory: raw.category || DEFAULT_EQUIPMENT_CATEGORY,
+          condition: String(raw.condition ?? DEFAULT_EQUIPMENT_CONDITION),
           location: getLocationKey(raw.location),
           shippingMethods: raw.shipping_methods || [],
           legalAgreed: true,

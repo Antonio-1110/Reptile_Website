@@ -57,6 +57,9 @@ function normalizeAuction(item) {
     saleFellThrough: Boolean(item.sale_fell_through),
     myDeposit: normalizeDeposit(item.my_deposit),
     myPurchase: normalizePurchase(item.my_purchase),
+    // Anti-sniping: a bid this close to the end pushes the end time back (0 = off).
+    extendWindowMinutes: item.extend_window_minutes || 0,
+    extendByMinutes: item.extend_by_minutes || 0,
   };
 }
 

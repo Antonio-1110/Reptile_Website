@@ -68,6 +68,9 @@ class AuctionSerializer(serializers.ModelSerializer):
     sale_fell_through = serializers.SerializerMethodField()
     my_deposit = serializers.SerializerMethodField()
     my_purchase = serializers.SerializerMethodField()
+    # Anti-sniping rule (settings, same for every auction), so the bid form can explain late bids.
+    extend_window_minutes = serializers.SerializerMethodField()
+    extend_by_minutes = serializers.SerializerMethodField()
 
     class Meta:
         model = Auction
@@ -76,13 +79,19 @@ class AuctionSerializer(serializers.ModelSerializer):
             'starting_price', 'min_increment', 'deposit_amount', 'currency', 'starts_at', 'ends_at',
             'status', 'is_open', 'bid_count', 'current_price', 'minimum_next_bid', 'winning_bid_amount',
             'buy_now_price', 'buy_now_available', 'pending_buy_now_count', 'sold_via', 'sold_price', 'sale_fell_through',
-            'my_deposit', 'my_purchase', 'created_at',
+            'my_deposit', 'my_purchase', 'extend_window_minutes', 'extend_by_minutes', 'created_at',
         ]
         read_only_fields = ['id', 'deposit_amount', 'currency', 'status', 'created_at']
         extra_kwargs = {
             'starting_price': {'min_value': Decimal('1')},
             'min_increment': {'min_value': Decimal('1')},
         }
+
+    def get_extend_window_minutes(self, obj):
+        return settings.AUCTION_EXTEND_WINDOW_MINUTES
+
+    def get_extend_by_minutes(self, obj):
+        return settings.AUCTION_EXTEND_BY_MINUTES
 
     def get_listing(self, obj):
         # Enough of the listing to draw an auction card; the full listing (description, care notes,
