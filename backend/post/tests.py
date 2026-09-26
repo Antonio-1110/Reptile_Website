@@ -1,3 +1,4 @@
+import json
 import io
 import shutil
 import tempfile
@@ -685,3 +686,86 @@ class ListingPhotoUploadTests(APITestCase):
 	def test_three_photos_with_cover_in_gallery_fit_hobbyist_limit(self):
 		self.client.force_authenticate(self.seller)
 		self.assertEqual(self.upload([make_image(f'{index}.png') for index in range(3)]).status_code, 200)
+
+	# --- `order`: keep, reorder and remove existing photos without re-uploading them -------------
+
+	def set_order(self, order, photos=(), listing_url=None):
+		return self.client.post(listing_url or self.url, {'photos': list(photos), 'order': json.dumps(order)}, format='multipart')
+
+	def upload_three(self):
+		self.client.force_authenticate(self.seller)
+		self.upload([make_image(f'{name}.png') for name in 'abc'])
+		self.post.refresh_from_db()
+		return list(self.post.gallery)
+
+	def test_order_reorders_and_removes_existing_photos(self):
+		first, second, third = self.upload_three()
+		response = self.set_order([third, first])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery, [third, first])
+		self.assertEqual(self.post.image, third)
+		self.assertEqual(len(self.stored_files()), 2)  # the removed upload is deleted from storage
+
+	def test_order_mixes_kept_and_new_photos(self):
+		first, _, _ = self.upload_three()
+		response = self.set_order(['new:0', first], photos=[make_image('d.png')])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(len(self.post.gallery), 2)
+		self.assertEqual(self.post.gallery[1], first)
+		self.assertNotIn(self.post.gallery[0], [first])
+		self.assertEqual(len(self.stored_files()), 2)
+
+	def test_order_keeps_seeded_external_photos(self):
+		self.client.force_authenticate(self.seller)
+		response = self.set_order(['new:0', 'https://example.com/seeded.jpg'], photos=[make_image()])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery[1], 'https://example.com/seeded.jpg')
+
+	def test_order_cannot_point_the_listing_at_someone_elses_url(self):
+		before = self.upload_three()
+		response = self.set_order(['https://evil.example.com/x.jpg'])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('order', response.data)
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.gallery, before)
+
+	def test_order_must_use_each_upload_and_photo_exactly_once(self):
+		first, _, _ = self.upload_three()
+		self.assertEqual(self.set_order(['new:0'], photos=[make_image('d.png'), make_image('e.png')]).status_code, 400)
+		self.assertEqual(self.set_order(['new:1'], photos=[make_image('d.png')]).status_code, 400)
+		self.assertEqual(self.set_order([first, first]).status_code, 400)
+		self.assertEqual(self.set_order(['new:x'], photos=[make_image('d.png')]).status_code, 400)
+		self.assertEqual(len(self.stored_files()), 3)  # nothing new was stored
+
+	def test_order_total_counts_toward_the_photo_limit(self):
+		kept = self.upload_three()
+		response = self.set_order([*kept, 'new:0'], photos=[make_image('d.png')])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('Image limit exceeded', str(response.data))
+
+	def test_empty_order_removes_every_photo(self):
+		self.upload_three()
+		response = self.set_order([])
+
+		self.assertEqual(response.status_code, 200, response.data)
+		self.post.refresh_from_db()
+		self.assertEqual((self.post.image, self.post.gallery), ('', []))
+		self.assertEqual(self.stored_files(), [])
+
+	def test_order_must_be_a_json_list(self):
+		self.client.force_authenticate(self.seller)
+		response = self.client.post(self.url, {'order': 'not json'}, format='multipart')
+		self.assertEqual(response.status_code, 400)
+
+	def test_non_owner_cannot_reorder(self):
+		kept = self.upload_three()
+		self.client.force_authenticate(self.other)
+		self.assertEqual(self.set_order(list(reversed(kept))).status_code, 403)

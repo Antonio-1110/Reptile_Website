@@ -312,8 +312,10 @@ const en = {
       selected: "{{count}} photos selected",
       guidance: "Up to {{count}} images, {{size}} each.",
       validation: "Please choose up to {{count}} image files, with each file no larger than {{size}}.",
-      replaceHint: "Choosing new photos replaces this listing's current photos. Leave this empty to keep them.",
       remove: "Remove",
+      removeNamed: "Remove {{name}}",
+      moveEarlier: "Move {{name}} earlier",
+      moveLater: "Move {{name}} later",
       cover: "Cover photo",
       crop: {
         title: "Crop cover photo",
