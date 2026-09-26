@@ -116,7 +116,7 @@
 }
 
 .authSubmit:hover:not(:disabled) {
-  background-color: var(--color-accent-bright);
+  background-color: var(--color-accent-strong);
 }
 
 .authSubmit:disabled {

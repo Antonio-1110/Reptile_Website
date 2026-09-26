@@ -267,7 +267,10 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - **UX states:** every async view has loading, empty, error and success states; disable buttons while
   submitting; errors say what to do next.
 - **Accessibility:** real `<button>`/`<label>` elements, `alt` text on images, `role="alert"` for
-  errors, visible focus, keyboard-reachable dialogs, colour contrast in the tokens.
+  errors, visible focus, keyboard-reachable dialogs (use `hooks/useDialogFocus`: focus in, Tab
+  trapped, Escape closes, focus returns), inputs named even when they only show a placeholder, colour
+  contrast in the tokens (light text goes on `--color-accent`/`--color-accent-strong`, never on
+  `--color-accent-bright`).
 - **i18n:** no string concatenation for sentences (use interpolation), dates and prices formatted
   per locale, layouts that tolerate longer or shorter translations.
 - **Responsiveness:** check narrow phones and wide desktops; no horizontal scrolling.

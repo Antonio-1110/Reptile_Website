@@ -5,6 +5,7 @@ import AuctionHistoryCard from './components/AuctionHistoryCard';
 import BidPanel from './components/BidPanel';
 import BuyNowPanel from './components/BuyNowPanel';
 import ContactSellerPanel from './components/ContactSellerPanel';
+import ImageLightbox from './components/ImageLightbox';
 import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
@@ -341,14 +342,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
         </div>
 
         {expandedImage && (
-          <div className="listing-detail-lightbox" onClick={() => setExpandedImage(null)}>
-            <div className="listing-detail-lightbox-frame">
-              <button type="button" className="listing-detail-lightbox-close" onClick={() => setExpandedImage(null)} aria-label={t('common.dismiss')}>
-                ×
-              </button>
-              <img className="listing-detail-lightbox-image" src={expandedImage} alt={listing.title} />
-            </div>
-          </div>
+          <ImageLightbox src={expandedImage} alt={listing.title} onClose={() => setExpandedImage(null)} />
         )}
       </div>
 

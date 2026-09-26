@@ -105,7 +105,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Improve empty states and loading states for listings and profile pages
 - [x] Add clearer success/error messages for posting and login flows
 - [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
-- [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
+- [x] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
 ## Technical backlog
 

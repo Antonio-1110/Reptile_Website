@@ -33,6 +33,8 @@ const zh = {
   },
   search: { placeholder: "搜尋物種、基因、特徵……", suggestions: "搜尋建議", submit: "搜尋", removeTag: "移除 {{value}}", types: { species: "物種", morph: "變異" } },
   filters: {
+    rangeMin: "{{label}}下限",
+    rangeMax: "{{label}}上限",
     title: "篩選刊登",
     species: "物種",
     allSpecies: "所有物種",
@@ -440,6 +442,8 @@ const zh = {
         error: "無法裁切這張圖片，請再試一次。",
         cropCover: "裁切封面照片",
         recrop: "重新裁切",
+        area: "裁切範圍",
+        keyboardHint: "拖曳或使用方向鍵移動照片（按住 Shift 可微調）；用 + 與 − 或滑桿縮放。按 Esc 取消。",
       },
     },
     basic: {
