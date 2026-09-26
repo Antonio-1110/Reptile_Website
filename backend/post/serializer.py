@@ -1,7 +1,9 @@
 import json
+from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
+from . import species as species_catalog
 from .models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
 from account.serializers import PublicSellerSerializer
 
@@ -110,9 +112,12 @@ class ListingPhotoUploadSerializer(serializers.Serializer):
 
 
 class SpeciesSerializer(serializers.ModelSerializer):
+    # Other names that pick this species, so the editor can suggest it for them too.
+    aliases = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+
     class Meta:
         model = Species
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'aliases']
 
 
 class ContactInfoField(serializers.Field):
@@ -171,17 +176,22 @@ class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Post
 
 class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
-    species_name = serializers.CharField(source='species.name', read_only=True)
+    # Null while the listing's species is under review (see species_review).
+    species_name = serializers.CharField(source='species.name', read_only=True, allow_null=True)
     
     # Nested seller info
     seller = PublicSellerSerializer(source='account', read_only=True)
     seller_id = serializers.IntegerField(source='account.id', read_only=True)
     
-    # For create/update, allow species ID
+    # Send `species` (an id from /posts/species/) or `requested_species` (a name as the seller typed
+    # it). A name that matches a species or one of its aliases picks it; any other name is saved for
+    # staff review and the listing stays unpublished until then (post/species.py).
     species = serializers.PrimaryKeyRelatedField(
         queryset=Species.objects.all(),
         required=False
     )
+    requested_species = serializers.CharField(write_only=True, required=False, max_length=100)
+    species_review = serializers.SerializerMethodField()
     
     # Convert genetics string to list on serialization
     genes = serializers.SerializerMethodField()
@@ -190,25 +200,88 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
         model = LiveAnimalPost
         fields = [
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
-            'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
+            'species', 'species_name', 'requested_species', 'species_review', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
             'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
-            'seller_rating', 'species_name', 'genes', 'posted_days', 'is_favorite'
+            'seller_rating', 'species_name', 'species_review', 'genes', 'posted_days', 'is_favorite'
         ]
     
+    def get_species_review(self, obj):
+        """The typed species waiting on staff ("pending") or turned down ("rejected", with the reason)."""
+        species_request = obj.species_request
+        if species_request is None:
+            return None
+        return {'name': species_request.name, 'status': species_request.status, 'note': species_request.staff_note}
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        requested = attrs.pop('requested_species', '').strip()
+        if requested and attrs.get('species'):
+            raise serializers.ValidationError({'species': _('Choose a species from the list or type one, not both.')})
+        if requested:
+            attrs['species'] = species_catalog.find_species(requested)
+            if attrs['species'] is None:
+                attrs['species_request'] = self._species_request_for(requested)
+        elif self.instance is None and not attrs.get('species'):
+            raise serializers.ValidationError({'species': _('Choose a species.')})
+        if attrs.get('species'):
+            attrs['species_request'] = None
+
+        # An unreviewed species unpublishes the listing, which would pull it out from under the bidders.
+        if self.instance is not None and self.instance.species_id and attrs.get('species_request', None) is not None:
+            from auction.models import Auction
+            if self.instance.auctions.filter(status=Auction.Status.ACTIVE).exists():
+                raise serializers.ValidationError({
+                    'species': _("This listing has a running auction, so its species can't be changed to one that still needs review."),
+                })
+        return attrs
+
+    def _species_request_for(self, name):
+        """The request this listing should wait on for `name`; a new one is only created on save."""
+        current = self.instance.species_request if self.instance is not None else None
+        # Saving other changes to a listing that's already waiting (or was turned down) keeps its request.
+        if current and species_catalog.normalize(current.name) == species_catalog.normalize(name):
+            return current
+        existing = species_catalog.find_open_request(name)
+        if existing and existing.status == existing.Status.REJECTED:
+            values = {'name': existing.name, 'note': existing.staff_note}
+            message = (
+                _('"%(name)s" isn\'t accepted as a species (%(note)s). Choose one from the list.') % values
+                if existing.staff_note else
+                _('"%(name)s" isn\'t accepted as a species. Choose one from the list.') % values
+            )
+            raise serializers.ValidationError({'species': message})
+        return existing or name
+
+    def _save_species_request(self, validated_data):
+        # A name (rather than a request) means nobody has asked for this species yet.
+        if isinstance(validated_data.get('species_request'), str):
+            validated_data['species_request'] = species_catalog.request_species(validated_data['species_request'])
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        previous_request = instance.species_request
+        self._save_species_request(validated_data)
+        post = super().update(instance, validated_data)
+        if previous_request and previous_request != post.species_request:
+            species_catalog.release(previous_request)
+        return post
+
     def get_genes(self, obj):
         """Convert genetics string to list"""
         if obj.genetics:
             return [gene.strip() for gene in obj.genetics.split('/') if gene.strip()]
         return []
     
+    @transaction.atomic
     def create(self, validated_data):
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
+        self._save_species_request(validated_data)
         return super().create(validated_data)
 
 

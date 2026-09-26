@@ -147,6 +147,14 @@ export default function MyListingsPage() {
                     </span>
                     <h2>{listing.title}</h2>
                     {listing.is_hidden && <span className="my-listings-hidden" title={t('myListings.hiddenHint')}>{t('myListings.hidden')}</span>}
+                    {listing.species_review && (
+                      <span
+                        className={`my-listings-species-review my-listings-species-review--${listing.species_review.status}`}
+                        title={t(`speciesReview.${listing.species_review.status}Hint`, { name: listing.species_review.name })}
+                      >
+                        {t(`speciesReview.${listing.species_review.status}Badge`)}
+                      </span>
+                    )}
                   </div>
                   <p className="my-listings-price">${listing.price ?? '—'}</p>
                 </div>

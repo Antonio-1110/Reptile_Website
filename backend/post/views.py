@@ -21,6 +21,7 @@ from .serializer import (
 from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
+from . import species as species_catalog
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
@@ -184,14 +185,18 @@ class ReportListingMixin:
 
 
 class HiddenListingsMixin:
-    """Listings hidden by moderation are invisible (404) to everyone but their owner and staff."""
+    """
+    Unpublished listings (hidden by moderation, or waiting on a species review) are invisible (404) to
+    everyone but their owner and staff.
+    """
+    published = Q(is_hidden=False)  # which listings the public sees; subclasses may narrow it
 
     def get_queryset(self):
         queryset = super().get_queryset()
         user = self.request.user
         if user.is_authenticated and user.is_staff:
             return queryset
-        visible = Q(is_hidden=False)
+        visible = self.published
         if user.is_authenticated:
             visible |= Q(account=user)
         return queryset.filter(visible)
@@ -270,14 +275,15 @@ class OwnListingsMixin:
 
 class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     """List all available species"""
-    queryset = Species.objects.all()
+    queryset = Species.objects.prefetch_related('aliases')
     serializer_class = SpeciesSerializer
     permission_classes = [permissions.AllowAny]
 
 
 class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
-    queryset = LiveAnimalPost.objects.select_related('account', 'species').all()
+    queryset = LiveAnimalPost.objects.select_related('account', 'species', 'species_request').all()
     serializer_class = LiveAnimalPostSerializer
+    published = LiveAnimalPost.PUBLISHED
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = LiveAnimalPostFilter
@@ -290,6 +296,11 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
     
     def perform_create(self, serializer):
         serializer.save(account=self.request.user)
+
+    def perform_destroy(self, instance):
+        species_request = instance.species_request
+        super().perform_destroy(instance)
+        species_catalog.release(species_request)
 
 
 class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):

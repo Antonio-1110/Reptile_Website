@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getListingsPage, getSexKey } from './listingsApi';
+import { createListing, getListingsPage, getSexKey } from './listingsApi';
 
 // A fetch stand-in that records the URL and answers with one page of API results.
 function mockFetch(results = [], { next = null, count = results.length } = {}) {
@@ -71,5 +71,32 @@ describe('getSexKey', () => {
     expect(getSexKey('0.1')).toBe('female');
     expect(getSexKey('unsexed')).toBe('unsexed');
     expect(getSexKey(undefined)).toBe('unsexed');
+  });
+});
+
+describe('createListing: species', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const form = {
+    title: ' Skink ', description: 'd', price: '100', category: 'live_animal', sex: 'unsexed', genetics: '',
+    lifeStage: 'adult', ageYears: '', weight: '', size: '', diets: [], location: 'taipei', shippingMethods: [],
+  };
+  const sentBody = async (fields) => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 1 }), { status: 201 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await createListing({ ...form, ...fields });
+    return JSON.parse(fetchMock.mock.calls[0][1].body);
+  };
+
+  it('sends a species picked from the list by id', async () => {
+    const body = await sentBody({ species: '球蟒', speciesId: 3 });
+    expect(body.species).toBe(3);
+    expect(body).not.toHaveProperty('requested_species');
+  });
+
+  it('sends a typed species as written, for the server to match or review', async () => {
+    const body = await sentBody({ species: ' Blue Tongue Skink ', speciesId: null });
+    expect(body.requested_species).toBe('Blue Tongue Skink');
+    expect(body).not.toHaveProperty('species');
   });
 });
