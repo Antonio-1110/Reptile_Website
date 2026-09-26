@@ -33,7 +33,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       threshold, anti-sniping window. All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
-- [ ] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
+- [x] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
       animal's page (and in emails)
 - [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it

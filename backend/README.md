@@ -323,7 +323,7 @@ and each `*_exclude` variant inverts its counterpart:
 - `POST /<id>/cancel/` — seller only, only while there are no bids
 - `POST /<id>/buy-now/` — pay the buy-now price in full; safe to repeat
 - `GET`/`POST /seller-bond/` — the seller bond (only required when `SELLER_BOND_AMOUNT` > 0)
-- `GET /orders/` (`?auction=<id>`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
+- `GET /orders/` (`?auction=<id>`, `?role=buyer|seller`, `?status=`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
   side's contact details once allowed
 - `POST /orders/<id>/pay/`, `handed-over/` (seller, optional `note`), `confirm/`, `report-problem/`
   (`text`), `runner-up/` (seller, `{"offer": true|false}`), `decline/` (runner-up)
