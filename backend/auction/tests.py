@@ -227,6 +227,38 @@ class BiddingTests(AuctionTestCase):
         self.assertNotIn('bidder', bid)
 
 
+class HiddenListingAuctionTests(AuctionTestCase):
+    def setUp(self):
+        super().setUp()
+        self.auction = self.create_auction()
+        self.pay_deposit(self.auction, self.buyer)
+        LiveAnimalPost.objects.filter(pk=self.listing.pk).update(is_hidden=True)
+
+    def test_hidden_listing_auction_takes_no_more_deposits_or_bids(self):
+        self.assertEqual(self.pay_deposit(self.auction, self.other_buyer).status_code, 404)
+        self.assertEqual(self.bid(self.auction, self.buyer, '5000.00').status_code, 404)
+        self.assertFalse(self.auction.bids.exists())
+
+    def test_hidden_listing_auction_is_left_out_of_the_list(self):
+        self.client.force_authenticate(None)
+        ids = [auction['id'] for auction in self.client.get(reverse('auction-list')).data['results']]
+        self.assertNotIn(self.auction.id, ids)
+        self.assertEqual(self.client.get(reverse('auction-detail', args=[self.auction.id])).status_code, 404)
+
+    def test_seller_and_staff_still_see_the_auction(self):
+        self.client.force_authenticate(self.seller)
+        self.assertEqual(self.client.get(reverse('auction-detail', args=[self.auction.id])).status_code, 200)
+        staff = make_account('staff', is_staff=True)
+        self.client.force_authenticate(staff)
+        self.assertEqual(self.client.get(reverse('auction-detail', args=[self.auction.id])).status_code, 200)
+
+    def test_equipment_auctions_are_unaffected_by_hidden_live_animal_listings(self):
+        equipment = EquipmentPost.objects.create(account=self.seller, title='Tank', description='Glass', contact_info='{}')
+        equipment_auction = self.create_auction(live_animal_post=None, equipment_post=equipment)
+        self.client.force_authenticate(None)
+        self.assertEqual(self.client.get(reverse('auction-detail', args=[equipment_auction.id])).status_code, 200)
+
+
 @override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT, AUCTION_EXTEND_WINDOW_MINUTES=5, AUCTION_EXTEND_BY_MINUTES=5)
 class AntiSnipingTests(AuctionTestCase):
     def bid_with_time_left(self, time_left):

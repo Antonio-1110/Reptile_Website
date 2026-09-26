@@ -128,6 +128,7 @@ const zh = {
     notFound: "找不到這則刊登",
     back: "← 返回市集",
     forSale: "出售中",
+    hiddenNotice: "這則刊登因收到檢舉，正在由我們的團隊審核，目前已暫時隱藏，只有你看得到。若你認為有誤，請聯絡客服。",
     report: "⚑ 檢舉",
     reported: "已檢舉",
     seller: "賣家",
@@ -241,6 +242,8 @@ const zh = {
   myListings: {
     signedOutTitle: "登入後即可管理你的刊登",
     subtitle: "更新或移除你已發布的刊登。",
+    hidden: "已隱藏",
+    hiddenHint: "因檢舉審核中而暫時隱藏",
     orders: "我的訂單",
     newListing: "+ 新增刊登",
     loading: "正在載入你的刊登…",
