@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next";
 import FilterSidebar from "../components/filters/FilterSidebar";
 import EndOfResultsCard from "../components/listings/EndOfResultsCard";
 import ListingCard from "../components/listings/ListingCard";
+import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
-import { getListingsPage } from "../api/listingsApi";
+import { createSavedSearch, getListingsPage, isLoggedIn, listingQueryString } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
 
@@ -87,6 +88,19 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   const isLoadingMore = feed.loadingPage > 1;
   const reachedEnd = !feed.loadingPage && !feed.failedPage && feed.nextPage === null;
   const errorMessage = feed.failedPage && t(feed.failedPage === 1 ? "listings.loadError" : "listings.loadMoreError");
+  // "Save this search": null, "saving", "saved" or an error message.
+  const [saveState, setSaveState] = useState(null);
+  useEffect(() => setSaveState(null), [query]);
+  const saveSearch = async () => {
+    setSaveState("saving");
+    try {
+      await createSavedSearch(listingQueryString(query), searchTerm.trim());
+      setSaveState("saved");
+    } catch (error) {
+      setSaveState(error.message);
+    }
+  };
+
   const changeCategory = (value) => {
     setCategory(value);
     window.history.replaceState(null, "", withMarketplaceCategory(value));
@@ -102,8 +116,35 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
         <FilterSidebar category={category} onCategoryChange={changeCategory} filters={filters} setFilters={setFilters} />
         <main className="marketplace-main">
           <div className="marketplace-results" aria-busy={Boolean(feed.loadingPage)}>
-            <h1 className="marketplace-heading">{t("listings.available", { count: feed.count })}</h1>
-            {isFirstLoad && <p className="marketplace-status">{t("listings.loading")}</p>}
+            <div className="marketplace-heading-row">
+              {/* The count is only known once a page has loaded; "(0)" while loading would read as "no results". */}
+              <h1 className="marketplace-heading">
+                {hasListings || reachedEnd ? t("listings.available", { count: feed.count }) : t("listings.heading")}
+              </h1>
+              {/* Saved searches (and their email alerts) cover live animals only. */}
+              {isLoggedIn() && category === "live_animal" && (
+                <div className="marketplace-save-search">
+                  {saveState === "saved" ? (
+                    <p role="status">
+                      {t("savedSearches.savedNote")} <a href="/saved-searches">{t("savedSearches.manage")}</a>
+                    </p>
+                  ) : (
+                    <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
+                      🔔 {t("savedSearches.save")}
+                    </button>
+                  )}
+                  {saveState && !["saving", "saved"].includes(saveState) && <p role="alert">{saveState}</p>}
+                </div>
+              )}
+            </div>
+            {isFirstLoad && (
+              <>
+                <p className="sr-only" role="status">{t("listings.loading")}</p>
+                <ListingGrid>
+                  {Array.from({ length: 6 }, (_, index) => <ListingCardSkeleton key={index} />)}
+                </ListingGrid>
+              </>
+            )}
 
             {(hasListings || reachedEnd) && (
               <div className={`marketplace-feed${isRefreshing ? " is-refreshing" : ""}`}>

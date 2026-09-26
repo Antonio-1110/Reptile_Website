@@ -145,6 +145,12 @@ class StartAuctionTests(AuctionTestCase):
         self.assertEqual(rules['deposit_rate'], str(settings.AUCTION_DEPOSIT_RATE))
         self.assertTrue(rules['bond_required'])
         self.assertEqual(rules['bond_amount'], '3000')
+    def test_sold_listing_cannot_be_auctioned(self):
+        LiveAnimalPost.objects.filter(pk=self.listing.pk).update(status='sold')
+        self.client.force_authenticate(self.seller)
+        response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('sold', str(response.data['detail']))
 
     def test_auction_list_query_count_does_not_grow_with_auctions(self):
         self.create_auction()
@@ -610,6 +616,8 @@ class OrderTests(AuctionTestCase):
         self.assertEqual(self.act(self.seller, 'confirm').status_code, 400)  # only the buyer can
         response = self.act(self.buyer, 'confirm')
         self.assertEqual(response.data['status'], 'completed')
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.status, 'sold')  # a completed sale marks the listing sold
 
     @override_settings(ORDER_FEE_RATE=Decimal('0.05'))
     def test_seller_payout_is_the_price_minus_the_fee(self):

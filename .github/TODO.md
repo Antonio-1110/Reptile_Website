@@ -22,7 +22,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       deleted: today it cascades and the deposit records disappear. Probably block deletion while an
       auction is active or deposits are held
 - [ ] Schedule `manage.py close_auctions` and `manage.py process_orders` (cron / worker, every few
-      minutes) wherever the backend is hosted
+      minutes) and `manage.py send_search_alerts` (every few hours) wherever the backend is hosted
 - [x] Buy now: optional seller price, paid in full up front, first payment wins and closes the
       auction, deposits refunded, everyone emailed; contact details only shared after a paid sale
 - [x] Orders: winner pays the rest within a deadline or loses the deposit; seller may then offer the
@@ -77,7 +77,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
-- [ ] Listing status: available / reserved / sold, so sold items aren't deleted
+- [x] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation
 - [x] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
@@ -87,7 +87,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Species care sheets (temperature, humidity, diet, enclosure) linked from listings
 - [ ] Permit / CITES field and warnings for protected species
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
-- [ ] Saved searches with email alerts (search state is already in the URL)
+- [x] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
 - [x] Let sellers reorder or remove individual photos without re-uploading all of them
 
@@ -102,8 +102,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 
 - [x] Improve the home page copy and layout polish
 - [x] Refine English and Chinese wording consistency across the app
-- [ ] Improve empty states and loading states for listings and profile pages
-- [ ] Add clearer success/error messages for posting and login flows
+- [x] Improve empty states and loading states for listings and profile pages
+- [x] Add clearer success/error messages for posting and login flows
 - [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
 - [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
@@ -113,7 +113,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add tests for account validation, posting rules, and serializer behavior
 - [x] Review and clean up duplicate or legacy documentation files
 - [x] Consider a clearer separation between public listing endpoints and seller-only actions
-- [ ] Document frontend component responsibilities and API integration patterns
+- [x] Document frontend component responsibilities and API integration patterns (`Frontend/README.md`)
 - [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
 - [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
 - [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR

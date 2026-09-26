@@ -25,6 +25,7 @@ function normalizeListing(item) {
     ageYears: item.age_years,
     size: item.size_cm,
     weight: item.weight_grams,
+    status: item.status || "available",
     shippingMethods: item.shipping_methods || [],
     isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
     postedDays: item.posted_days ?? 0,
@@ -49,7 +50,12 @@ export { isLoggedIn } from "./authApi";
 
 async function request(path) {
   const response = await apiFetch(`${API_BASE_URL}${path}`);
-  if (!response.ok) throw new Error(requestFailedMessage(response.status));
+  if (!response.ok) {
+    const error = new Error(requestFailedMessage(response.status));
+    // Lets pages tell "this doesn't exist" (404) apart from "couldn't load it right now".
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
 
@@ -177,6 +183,11 @@ export async function saveListingPhotos(id, category, items) {
   return requestWithAuth(`${listingEndpoint(category, id)}photos/`, { method: "POST", body });
 }
 
+// status: "available", "reserved" or "sold" (sold listings leave the marketplace but keep their page).
+export async function updateListingStatus(id, category, status) {
+  return requestWithAuth(listingEndpoint(category, id), { method: "PATCH", body: JSON.stringify({ status }) });
+}
+
 export async function deleteListing(id, category) {
   return requestWithAuth(listingEndpoint(category, id), { method: "DELETE" });
 }
@@ -236,6 +247,26 @@ function buildListingParams({ category = "live_animal", search = "", tags = [], 
     set(`${key}_max`, max);
   });
   return params;
+}
+
+// The listing API query for the marketplace's current search and filters (what a saved search stores).
+export function listingQueryString(query) {
+  return buildListingParams(query).toString();
+}
+
+// The signed-in user's saved searches ({ id, name, query, createdAt }), newest first.
+export async function getSavedSearches() {
+  const payload = await requestWithAuth("/posts/saved-searches/", { method: "GET" });
+  return payload.results.map((item) => ({ id: item.id, name: item.name, query: item.query, createdAt: new Date(item.created_at) }));
+}
+
+// Saves a search so the user is emailed about new matches; name defaults to the search text.
+export async function createSavedSearch(query, name = "") {
+  return requestWithAuth("/posts/saved-searches/", { method: "POST", body: JSON.stringify({ query, name }) });
+}
+
+export async function deleteSavedSearch(id) {
+  return requestWithAuth(`/posts/saved-searches/${id}/`, { method: "DELETE" });
 }
 
 // One page of listings (live animals or equipment, per query.category) matching the query, plus the
