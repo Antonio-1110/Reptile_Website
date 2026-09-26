@@ -198,16 +198,16 @@ DESCRIPTIONS = [
 ]
 
 EQUIPMENT = [
-    ('Exo Terra 60×45×60 Glass Terrarium', 'Front-opening glass terrarium, lockable doors, mesh top. No scratches.', (2500, 5500)),
-    ('Arcadia T5 HO 12% UVB Kit (54W)', 'Full kit with reflector and controller. Tube has ~4 months of use.', (1800, 3200)),
-    ('Inkbird ITC-308 Thermostat', 'Dual relay thermostat for heat mats and ceramic heaters. Works perfectly.', (600, 1200)),
-    ('Zoo Med ReptiTherm Heat Mat (Large)', 'Under-tank heater, only used for one season.', (400, 800)),
-    ('PVC Snake Rack — 6 tubs', 'Heat-taped rack with 6 × 32qt tubs, includes thermostat. Pickup only.', (5000, 9000)),
-    ('Ceramic Heat Emitter 100W + Dome', 'Includes guarded dome fixture. Great for night-time heat.', (350, 700)),
-    ('Crested Gecko Bioactive Starter Set', 'Substrate, springtails, isopods, cork bark and live pothos.', (900, 1800)),
-    ('Turtle Basking Platform + Filter Combo', 'Floating basking dock plus internal filter for 60-90cm tanks.', (700, 1500)),
-    ('Digital Thermometer / Hygrometer ×3', 'Three probes, new batteries.', (200, 450)),
-    ('Reptile Carrier Box (Ventilated)', 'Clear ventilated carrier, perfect for expos and vet visits.', (250, 500)),
+    ('Exo Terra 60×45×60 Glass Terrarium', 'Front-opening glass terrarium, lockable doors, mesh top. No scratches.', (2500, 5500), 'enclosure'),
+    ('Arcadia T5 HO 12% UVB Kit (54W)', 'Full kit with reflector and controller. Tube has ~4 months of use.', (1800, 3200), 'lighting'),
+    ('Inkbird ITC-308 Thermostat', 'Dual relay thermostat for heat mats and ceramic heaters. Works perfectly.', (600, 1200), 'climate'),
+    ('Zoo Med ReptiTherm Heat Mat (Large)', 'Under-tank heater, only used for one season.', (400, 800), 'heating'),
+    ('PVC Snake Rack — 6 tubs', 'Heat-taped rack with 6 × 32qt tubs, includes thermostat. Pickup only.', (5000, 9000), 'enclosure'),
+    ('Ceramic Heat Emitter 100W + Dome', 'Includes guarded dome fixture. Great for night-time heat.', (350, 700), 'heating'),
+    ('Crested Gecko Bioactive Starter Set', 'Substrate, springtails, isopods, cork bark and live pothos.', (900, 1800), 'substrateDecor'),
+    ('Turtle Basking Platform + Filter Combo', 'Floating basking dock plus internal filter for 60-90cm tanks.', (700, 1500), 'other'),
+    ('Digital Thermometer / Hygrometer ×3', 'Three probes, new batteries.', (200, 450), 'climate'),
+    ('Reptile Carrier Box (Ventilated)', 'Clear ventilated carrier, perfect for expos and vet visits.', (250, 500), 'transport'),
 ]
 
 # username, display name (first, last), account setup, home location, what they list.
@@ -403,7 +403,7 @@ class Command(BaseCommand):
         return post
 
     def create_equipment_post(self, seller, home):
-        title, description, (lo, hi) = self.rng.choice(EQUIPMENT)
+        title, description, (lo, hi), category = self.rng.choice(EQUIPMENT)
         condition = self.rng.choices([0, 1, 2], weights=[1, 6, 3])[0]
         post = EquipmentPost.objects.create(
             account=seller,
@@ -414,6 +414,7 @@ class Command(BaseCommand):
             contact_info=self.contact_info(seller),
             shipping_methods=self.rng.choice([['localPickup'], ['localPickup', 'shipping']]),
             condition=condition,
+            category=category,
         )
         self.backdate(post)
         return post

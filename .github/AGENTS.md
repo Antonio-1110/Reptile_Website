@@ -118,6 +118,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
   `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+- Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
+  English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
   `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
@@ -153,9 +155,10 @@ update that file **and** the API overview in the root README.
   the client requests one page at a time. Don't reintroduce "download everything and filter".
 - Async error state uses `utils/errorState.js` (`toErrorState` / `errorText`) so messages follow a
   language switch.
-- Photos: the editor saves the listing first, then `uploadListingPhotos()` posts multipart to
-  `<id>/photos/`, which replaces all photos; `image` is the cover and `gallery` lists every photo,
-  cover first.
+- Photos: the editor saves the listing first, then `saveListingPhotos()` posts multipart to
+  `<id>/photos/` with the final `order` (kept photo URLs and `new:<n>` for uploads, cover first), so
+  sellers can reorder or remove photos without re-uploading; `image` is the cover and `gallery` lists
+  every photo, cover first.
 
 ### Local dev auth bypass
 
@@ -218,6 +221,10 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
   (pinned) or `Frontend/package.json` and say why.
 
 ### Verify before declaring done
+CI (`.github/workflows/ci.yml`) runs on every PR: backend `check`, `makemigrations --check`, the test
+suite (with `DEBUG` off), and frontend `lint` + `build`. Run the same locally before pushing; CI green
+is the floor, not the bar.
+
 Tests passing is necessary, not sufficient, for web work. Pick what fits the change:
 
 | Change | Minimum verification |
@@ -239,6 +246,7 @@ Useful tricks:
   "no matches found".
 
 ### Report honestly
+Pull requests follow `.github/pull_request_template.md`.
 Say what you verified and how, what you didn't verify, and anything left for the user (migrations to
 run, env vars to set, servers to restart). Never commit or push unless asked.
 
@@ -285,6 +293,9 @@ Apply these whenever you build or review a feature — they're the common gaps i
   and require staff confirmation in the admin otherwise.
 - Buy-now emails are sent with `transaction.on_commit`; in tests wrap the request in
   `self.captureOnCommitCallbacks(execute=True)` or `mail.outbox` stays empty.
+- `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
+  New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
+  them and drop the flag, or the new text silently falls back to English.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.

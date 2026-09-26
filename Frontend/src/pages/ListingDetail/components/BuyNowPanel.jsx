@@ -1,6 +1,6 @@
 import './ActionPanels.css';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import useListingTranslation from '../useListingTranslation';
 import { isLoggedIn } from '../../../api/authApi';
 import { startBuyNow } from '../../../api/auctionsApi';
 import { formatMoney } from '../../../utils/auctionFormat';
@@ -8,8 +8,8 @@ import { formatMoney } from '../../../utils/auctionFormat';
 // Buy the animal outright at the seller's buy-now price, paid in full up front. Several buyers may be
 // paying at once; the first payment to arrive wins and closes the auction, and later payments are
 // refunded in full. The panel says so plainly, and warns when someone else is paying right now.
-export default function BuyNowPanel({ auction, onChanged, onToast }) {
-  const { t, i18n } = useTranslation();
+export default function BuyNowPanel({ auction, onChanged, onToast, category }) {
+  const { t, i18n } = useListingTranslation(category);
   const money = (amount) => formatMoney(amount, auction.currency, i18n.resolvedLanguage);
   const price = money(auction.buyNowPrice);
   const [confirming, setConfirming] = useState(false);

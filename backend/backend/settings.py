@@ -183,6 +183,10 @@ AUCTION_DEPOSIT_RATE = Decimal('0.10')
 AUCTION_MIN_DEPOSIT = Decimal('100.00')
 AUCTION_MIN_DURATION_HOURS = 1
 AUCTION_MAX_DURATION_DAYS = 30
+# Anti-sniping: a bid in the last AUCTION_EXTEND_WINDOW_MINUTES pushes the end time to at least
+# AUCTION_EXTEND_BY_MINUTES from that bid, so others get a chance to answer it. 0 turns it off.
+AUCTION_EXTEND_WINDOW_MINUTES = env_int('AUCTION_EXTEND_WINDOW_MINUTES', 5)
+AUCTION_EXTEND_BY_MINUTES = env_int('AUCTION_EXTEND_BY_MINUTES', 5)
 # Where deposits and buy-now payments go; see auction/payments.py. In DEBUG payments count as paid
 # instantly so the flows can be tried locally; otherwise staff confirm them in the admin until a
 # processor is wired up.
@@ -208,6 +212,9 @@ SELLER_BOND_AMOUNT = env_decimal('SELLER_BOND_AMOUNT', '0')
 # Accounts with at least this many incidents (unpaid buy-nows, defaults, no-shows) are highlighted
 # in the admin's "Accounts to review". Nothing is blocked automatically.
 INCIDENT_REVIEW_THRESHOLD = env_int('INCIDENT_REVIEW_THRESHOLD', 2)
+# A listing reported by this many different accounts (with the reports still pending) is hidden until
+# staff review it, and staff are emailed. 0 turns auto-hiding off: reports then only queue for review.
+REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
 
 
 # Static files (CSS, JavaScript, Images)
