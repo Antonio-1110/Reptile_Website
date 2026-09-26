@@ -30,7 +30,7 @@ Frontend/src/
 │   └── useNow.js              # ticking clock shared by a page's countdowns
 ├── i18n/
 │   ├── index.js               # i18next setup
-│   └── locales/               # en.js, zh.js — one translation object per language
+│   └── locales/               # en/, zh/ — one file per section (t("favorites.save") → favorites.js), loaded by index.js
 ├── utils/
 │   ├── auctionFormat.js       # auction phase, countdowns, money and date formatting
 │   ├── cropImage.js           # canvas helper for cropping listing photos
@@ -168,7 +168,8 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 - **An endpoint:** add a function to the matching `api/*.js` module that calls `request`/`authFetch`
   and maps the response with a `normalize*()`; update the backend README and `docs/API_ENDPOINTS.md`
   when the contract changes.
-- **A user-facing string:** add the key to both `i18n/locales/en.js` and `zh.js` (see Conventions).
+- **A user-facing string:** add the key to both `i18n/locales/en/<section>.js` and `zh/<section>.js`;
+  a new feature gets a new section file in each (see Conventions).
 - **A lookup table** (locations, species, limits): `constants/`, one source of truth each.
 
 ## Conventions for contributors
@@ -186,6 +187,6 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 - Keep UI-side validation (`constants/listingLimits.js`, form checks) in sync with backend
   model/serializer rules rather than as the only source of truth.
 - Every user-facing string goes through i18n — text, placeholders, `alt`/`aria-label`, confirm
-  dialogs and error fallbacks — with the same key added to both `i18n/locales/en.js` and
-  `i18n/locales/zh.js`. Backend messages arrive already translated (`api/http.js` sends
+  dialogs and error fallbacks — with the same key added to both `i18n/locales/en/` and
+  `i18n/locales/zh/` (`npm test` checks the two match). Backend messages arrive already translated (`api/http.js` sends
   `Accept-Language`), so show `error.message` from the API as-is. Chinese copy uses informal 你.

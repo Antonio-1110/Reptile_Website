@@ -1,0 +1,30 @@
+export default {
+  heading: "Marketplace listings",
+  available_one: "{{count}} listing matches your filters",
+  available_other: "{{count}} listings match your filters",
+  seller: "Seller",
+  loading: "Loading listings…",
+  loadingMore: "Loading more listings…",
+  loadError: "Unable to load listings. Please try again later.",
+  loadMoreError: "Couldn't load more listings.",
+  retry: "Try again",
+  endCard: {
+    sexHint: "0.0.1 is keeper shorthand for an unsexed animal",
+    location: "The bottom of the tank",
+    price: "Priceless",
+    backToTop: "Back to top ↑",
+    clearFilters: "Clear all filters",
+    end: {
+      title: "The End — Ultra Rare Morph",
+      caption: "You've seen every reptile that fits your search. This one's just here to nap.",
+      geneA: "Het Patience",
+      geneB: "Scroll Master",
+    },
+    empty: {
+      title: "No reptiles here… yet",
+      caption: "Nothing fits these filters. Try loosening one — this gecko is keeping the spot warm.",
+      geneA: "Hidden",
+      geneB: "Coming Soon",
+    },
+  },
+};
