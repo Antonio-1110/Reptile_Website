@@ -26,9 +26,22 @@ function normalizeListing(item) {
     size: item.size_cm,
     weight: item.weight_grams,
     shippingMethods: item.shipping_methods || [],
+    isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
     postedDays: item.posted_days ?? 0,
     guideNotes: item.guide_notes || "",
     gallery: item.gallery || [],
+  };
+}
+
+// Equipment has no species, sex or genes; `kind` tells the card which layout to use (the API's own
+// `category` field on equipment is its type, e.g. "heating").
+function normalizeEquipment(item) {
+  return {
+    ...normalizeListing(item),
+    kind: "equipment",
+    equipmentCategory: item.category,
+    condition: item.condition,
+    genes: [],
   };
 }
 
@@ -125,7 +138,7 @@ export async function createListing(formData) {
   });
 }
 
-// Partial update: omits gallery/image/contact_info (photos go through uploadListingPhotos, and the
+// Partial update: omits gallery/image/contact_info (photos go through saveListingPhotos, and the
 // form has no contact controls yet), so editing a listing can't wipe out existing media or contact details.
 export async function updateListing(id, formData) {
   const isLiveAnimal = formData.category === "live_animal";
@@ -149,11 +162,18 @@ export async function updateListing(id, formData) {
   });
 }
 
-// Replaces a listing's photos with `files` (File objects); the one at coverIndex becomes the cover.
-export async function uploadListingPhotos(id, category, files, coverIndex = 0) {
+// Sets a listing's photos to `items`, cover first: { url } keeps one of its current photos, { file }
+// uploads a new one. Current photos left out are removed (see ListingPhotoUploadSerializer).
+export async function saveListingPhotos(id, category, items) {
   const body = new FormData();
-  files.forEach((file) => body.append("photos", file));
-  body.append("cover_index", String(coverIndex));
+  let uploads = 0;
+  const order = items.map((item) => {
+    if (item.url) return item.url;
+    body.append("photos", item.file);
+    uploads += 1;
+    return `new:${uploads - 1}`;
+  });
+  body.append("order", JSON.stringify(order));
   return requestWithAuth(`${listingEndpoint(category, id)}photos/`, { method: "POST", body });
 }
 
@@ -175,8 +195,9 @@ export async function getMyListings() {
   return [...liveResults, ...equipmentResults].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 }
 
-// Marketplace sidebar state → query params understood by backend/post/filters.py.
-function buildListingParams({ search = "", tags = [], filters = {} }) {
+// Marketplace sidebar state → query params understood by backend/post/filters.py. Only the filters
+// that exist for the chosen category are sent; the others keep their values for switching back.
+function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {} }) {
   const params = new URLSearchParams();
   const set = (key, value) => {
     if (value !== "" && value != null) params.set(key, value);
@@ -186,54 +207,72 @@ function buildListingParams({ search = "", tags = [], filters = {} }) {
   };
   const setIncludeExclude = (key, values, include) => setList(include === false ? `${key}_exclude` : key, values);
 
-  set("search", search.trim());
-  set("species_name", tags.find((tag) => tag.type === "species")?.value);
-  setList("genes", tags.filter((tag) => tag.type === "morph").map((tag) => tag.value));
-
-  setList("sex", filters.sex);
-  setIncludeExclude("life_stage", filters.lifeStages, filters.includeLifeStages);
-  setIncludeExclude("location", filters.locations?.map(getLocationCode), filters.includeLocations);
-  setIncludeExclude("diets", filters.diets, filters.includeDiets);
-  setIncludeExclude("shipping", filters.shippingMethods, filters.includeShipping);
-  [
+  const ranges = [
     ["price", filters.minPrice, filters.maxPrice],
-    ["size", filters.minSize, filters.maxSize],
-    ["weight", filters.minWeight, filters.maxWeight],
-    ["age", filters.minAgeYears, filters.maxAgeYears],
     ["posted_days", filters.minPostedDays, filters.maxPostedDays],
-  ].forEach(([key, min, max]) => {
+  ];
+  set("search", search.trim());
+  setIncludeExclude("location", filters.locations?.map(getLocationCode), filters.includeLocations);
+  setIncludeExclude("shipping", filters.shippingMethods, filters.includeShipping);
+
+  if (category === "equipment") {
+    setList("category", filters.equipmentTypes);
+    setList("condition", filters.conditions);
+  } else {
+    // Species and morph tags from the header only mean something for animals.
+    set("species_name", tags.find((tag) => tag.type === "species")?.value);
+    setList("genes", tags.filter((tag) => tag.type === "morph").map((tag) => tag.value));
+    setList("sex", filters.sex);
+    setIncludeExclude("life_stage", filters.lifeStages, filters.includeLifeStages);
+    setIncludeExclude("diets", filters.diets, filters.includeDiets);
+    ranges.push(
+      ["size", filters.minSize, filters.maxSize],
+      ["weight", filters.minWeight, filters.maxWeight],
+      ["age", filters.minAgeYears, filters.maxAgeYears],
+    );
+  }
+  ranges.forEach(([key, min, max]) => {
     set(`${key}_min`, min);
     set(`${key}_max`, max);
   });
   return params;
 }
 
-// One page of live-animal listings matching the query, plus the total match count.
+// One page of listings (live animals or equipment, per query.category) matching the query, plus the
+// total match count.
 export async function getListingsPage({ page = 1, ...query } = {}) {
+  const isEquipment = query.category === "equipment";
   const params = buildListingParams(query);
   params.set("page", page);
-  const payload = await request(`/posts/live-animals/?${params}`);
+  const payload = await request(`${listingEndpoint(isEquipment ? "equipment" : "live_animal")}?${params}`);
   return {
-    results: payload.results.map(normalizeListing),
+    results: payload.results.map(isEquipment ? normalizeEquipment : normalizeListing),
     count: payload.count,
     hasMore: Boolean(payload.next),
   };
 }
 
-export async function getListing(id) {
-  return normalizeListing(await request(`/posts/live-animals/${id}/`));
+// `category` is "live_animal" (default) or "equipment" in the functions below.
+export async function getListing(id, category = "live_animal") {
+  const item = await request(listingEndpoint(category, id));
+  return category === "equipment" ? normalizeEquipment(item) : normalizeListing(item);
 }
 
 // What "Contact seller" would send: the signed-in user's own contact details ({contact, already_sent}).
 // The seller's details are never returned; the seller gets in touch with the buyer.
-export async function getContactPreview(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/contact/`, { method: "GET" });
+export async function getContactPreview(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}contact/`, { method: "GET" });
 }
 
-export async function requestSellerContact(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/contact/`, { method: "POST" });
+export async function requestSellerContact(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}contact/`, { method: "POST" });
 }
 
-export async function reportListing(id) {
-  return requestWithAuth(`/posts/live-animals/${id}/report/`, { method: "POST" });
+export async function reportListing(id, category = "live_animal") {
+  return requestWithAuth(`${listingEndpoint(category, id)}report/`, { method: "POST" });
+}
+
+// Where a listing's public page is: animals at /posts/:id, equipment at /equipment/:id.
+export function listingPagePath(id, category = "live_animal") {
+  return category === "equipment" ? `/equipment/${id}` : `/posts/${id}`;
 }
