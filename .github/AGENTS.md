@@ -118,6 +118,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
   `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+- Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
+  English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
   `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
@@ -217,6 +219,10 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
   (pinned) or `Frontend/package.json` and say why.
 
 ### Verify before declaring done
+CI (`.github/workflows/ci.yml`) runs on every PR: backend `check`, `makemigrations --check`, the test
+suite (with `DEBUG` off), and frontend `lint` + `build`. Run the same locally before pushing; CI green
+is the floor, not the bar.
+
 Tests passing is necessary, not sufficient, for web work. Pick what fits the change:
 
 | Change | Minimum verification |
@@ -238,6 +244,7 @@ Useful tricks:
   "no matches found".
 
 ### Report honestly
+Pull requests follow `.github/pull_request_template.md`.
 Say what you verified and how, what you didn't verify, and anything left for the user (migrations to
 run, env vars to set, servers to restart). Never commit or push unless asked.
 
