@@ -141,6 +141,10 @@ python3 manage.py test
   a floor of `AUCTION_MIN_DEPOSIT`. Only a `held` deposit allows bidding.
 - Each bid must be at least the starting price, then the current price + `min_increment`. Bidders are
   anonymous to each other.
+- **Anti-sniping:** a bid within `AUCTION_EXTEND_WINDOW_MINUTES` of the end moves `ends_at` to
+  `AUCTION_EXTEND_BY_MINUTES` after that bid (never earlier than it was), so a last-second bid can
+  still be answered. A window of `0` turns it off. Both are env vars (default 5 / 5) and are echoed on
+  each auction as `extend_window_minutes` / `extend_by_minutes`.
 - `python manage.py close_auctions` (run it every minute from cron) settles auctions past their end
   time. It records the winning bid, opens an **order** for the winner, keeps the winner's deposit
   `held` and refunds everyone else's. It then emails the winner, the seller and the other bidders.
@@ -296,13 +300,21 @@ and each `*_exclude` variant inverts its counterpart:
 - `diets` / `diets_exclude`, `shipping` / `shipping_exclude` (match any)
 - `price_min|max`, `size_min|max`, `weight_min|max`, `age_min|max`, `posted_days_min|max`
 
+`GET /equipment/` shares `location` / `location_exclude`, `price_min|max`, `posted_days_min|max`,
+`shipping` / `shipping_exclude` and `?search=` (title, description), and adds:
+
+- `category` / `category_exclude` (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`,
+  `transport`, `other`)
+- `condition` (`2` new, `1` used, `0` not functional; comma-separated)
+
 ### Auctions (`/api/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
 - `POST /` — paid commercial accounts only (`403` otherwise)
 - `GET /mine/` — the current user's auctions as a seller
 - `POST /<id>/deposit/` — start or look up the current user's deposit; safe to repeat
-- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`)
+- `GET`/`POST /<id>/bids/` — bid history / place a bid (`{"amount": "5100.00"}`); a late bid can push
+  the auction's `ends_at` back (anti-sniping, see above)
 - `POST /<id>/cancel/` — seller only, only while there are no bids
 - `POST /<id>/buy-now/` — pay the buy-now price in full; safe to repeat
 - `GET`/`POST /seller-bond/` — the seller bond (only required when `SELLER_BOND_AMOUNT` > 0)
