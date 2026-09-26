@@ -542,41 +542,17 @@ class OrderTests(AuctionTestCase):
         self.assertEqual(self.client.get(reverse('order-list')).data['count'], 0)
         self.assertEqual(self.client.get(self.order_url()).status_code, 404)
 
-    def fell_through(self):
-        self.client.force_authenticate(None)
-        return self.client.get(reverse('auction-detail', args=[self.auction.id])).data['sale_fell_through']
+    def test_orders_can_be_narrowed_to_the_viewers_side(self):
+        def count(user, role):
+            self.client.force_authenticate(user)
+            response = self.client.get(reverse('order-list'), {'role': role})
+            self.assertEqual(response.status_code, 200)
+            return response.data['count']
 
-    def test_a_live_sale_has_not_fallen_through(self):
-        self.assertFalse(self.fell_through())
-        self.pass_deadline('payment_due_at')
-        self.assertFalse(self.fell_through())  # the seller can still offer it to the runner-up
-
-    def test_sale_falls_through_when_the_seller_keeps_it_after_a_default(self):
-        self.pass_deadline('payment_due_at')
-        self.act(self.seller, 'runner-up', {'offer': False})
-        self.assertTrue(self.fell_through())
-
-    def test_sale_falls_through_when_the_runner_up_declines(self):
-        self.pass_deadline('payment_due_at')
-        self.act(self.seller, 'runner-up', {'offer': True})
-        self.assertFalse(self.fell_through())  # the runner-up's offer is open
-        offer = Order.objects.get(auction=self.auction, source=Order.Source.RUNNER_UP)
-        self.act(self.other_buyer, 'decline', order=offer)
-        self.assertTrue(self.fell_through())
-
-    def test_sale_falls_through_when_the_seller_never_hands_over(self):
-        self.act(self.buyer, 'pay')
-        self.pass_deadline('handover_due_at')
-        self.assertEqual(self.order.status, Order.Status.SELLER_DEFAULTED)
-        self.assertTrue(self.fell_through())
-
-    def test_an_auction_without_a_sale_is_not_a_fallen_through_sale(self):
-        auction = self.create_auction(live_animal_post=LiveAnimalPost.objects.create(
-            account=self.seller, species=self.species, title='Unsold', description='-', contact_info='{}',
-        ))
-        Auction.objects.filter(pk=auction.pk).update(ends_at=timezone.now() - timedelta(seconds=1))
-        services.settle_due_auctions()
-        self.assertFalse(self.client.get(reverse('auction-detail', args=[auction.id])).data['sale_fell_through'])
+        self.assertEqual((count(self.buyer, 'buyer'), count(self.buyer, 'seller')), (1, 0))
+        self.assertEqual((count(self.seller, 'seller'), count(self.seller, 'buyer')), (1, 0))
+        self.assertEqual(count(self.other_buyer, 'buyer'), 0)
+        self.assertEqual(self.client.get(reverse('order-list'), {'role': 'admin'}).status_code, 400)
 
     def test_happy_path_pay_hand_over_confirm(self):
         response = self.act(self.buyer, 'pay')

@@ -290,6 +290,11 @@ real login flows.
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
 - `GET /species/`
+- `POST /live-animals/<id>/photos/`, `POST /equipment/<id>/photos/` (owner, multipart) — set the
+  listing's photos. Either `photos` + `cover_index` (the uploads replace everything), or `order`: a JSON
+  list of the final photos, cover first, where each entry is one of the listing's current photo URLs
+  (kept) or `new:<n>` (the n-th file in `photos`). Current photos left out are removed, and uploaded
+  files among them are deleted. The account's image limit applies to the total.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).
@@ -320,7 +325,7 @@ and each `*_exclude` variant inverts its counterpart:
 - `POST /<id>/cancel/` — seller only, only while there are no bids
 - `POST /<id>/buy-now/` — pay the buy-now price in full; safe to repeat
 - `GET`/`POST /seller-bond/` — the seller bond (only required when `SELLER_BOND_AMOUNT` > 0)
-- `GET /orders/` (`?auction=<id>`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
+- `GET /orders/` (`?auction=<id>`, `?role=buyer|seller`, `?status=`), `GET /orders/<id>/` — your orders as buyer or seller, with the other
   side's contact details once allowed
 - `POST /orders/<id>/pay/`, `handed-over/` (seller, optional `note`), `confirm/`, `report-problem/`
   (`text`), `runner-up/` (seller, `{"offer": true|false}`), `decline/` (runner-up)
