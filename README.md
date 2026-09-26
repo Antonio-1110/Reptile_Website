@@ -95,21 +95,25 @@ Runs at `http://127.0.0.1:8000/`. Details in [backend/README.md](backend/README.
 
 Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md).
 
-### Authentication (`/api/auth/`)
+### Authentication (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
+- `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/`, `GET /me/`
 - `GET`/`PATCH /profile/` (auth required) — includes current post/image usage and remaining quota
+- `GET /plans/` — public plan comparison
 
 ### Posts (`/api/posts/`)
 
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
-- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
+- `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
+  (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`, `transport`, `other`) and a
+  `condition` (0–2); the list filters by both, plus price, location, shipping and posting date
 - `GET /species/`
 
 ### Auctions (`/api/auctions/`)
 
 - `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
-  species, genes) for cards
+  species, genes) for cards, and the anti-sniping rule (`extend_window_minutes`, `extend_by_minutes`):
+  a bid near the end extends `ends_at`
 - `POST /` — paid commercial accounts only
 - `POST /<id>/deposit/`, `GET`/`POST /<id>/bids/`, `POST /<id>/cancel/`, `POST /<id>/buy-now/`,
   `GET`/`POST /seller-bond/` (auth required)

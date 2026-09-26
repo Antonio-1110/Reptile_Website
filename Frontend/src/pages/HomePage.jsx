@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import ListingCard from "../components/listings/ListingCard";
+import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
+import EmptyState from "../components/ui/EmptyState";
 import { getListingsPage } from "../api/listingsApi";
 import coverImage from "../assets/cover.jpg";
 import "./HomePage.css";
+
+const HOME_POINTS = ["privacy", "payments", "reports"];
 
 const pickFeaturedListings = (listings) => [...listings].sort(() => Math.random() - 0.5).slice(0, 6);
 
@@ -13,15 +17,22 @@ export default function HomePage() {
   const [listings, setListings] = useState([]);
   const [featuredListings, setFeaturedListings] = useState([]);
   const [visibleCount, setVisibleCount] = useState(1);
+  const [status, setStatus] = useState("loading");
   const featuredGridRef = useRef(null);
 
-  useEffect(() => {
-    // Featured cards are drawn from the newest page only, so the home page stays a single small request.
-    getListingsPage().then(({ results: loadedListings }) => {
-      setListings(loadedListings);
-      setFeaturedListings(pickFeaturedListings(loadedListings));
-    });
-  }, []);
+  // Featured cards are drawn from the newest page only, so the home page stays a single small request.
+  const loadListings = () => {
+    setStatus("loading");
+    getListingsPage()
+      .then(({ results: loadedListings }) => {
+        setListings(loadedListings);
+        setFeaturedListings(pickFeaturedListings(loadedListings));
+        setStatus("ready");
+      })
+      .catch(() => setStatus("error"));
+  };
+
+  useEffect(loadListings, []);
 
   useEffect(() => {
     const updateVisibleCount = () => {
@@ -62,11 +73,33 @@ export default function HomePage() {
               <h2>{t("home.featuredHeading")}</h2>
               <p>{t("home.featuredIntro")}</p>
             </div>
-            <button type="button" className="home-refresh" onClick={refreshFeatured}>{t("home.refresh")}</button>
+            {listings.length > 1 && (
+              <button type="button" className="home-refresh" onClick={refreshFeatured}>{t("home.refresh")}</button>
+            )}
           </div>
+          {/* The grid stays mounted in every state: its width decides how many cards fit. */}
           <ListingGrid ref={featuredGridRef} variant="featured">
+            {status === "loading" && Array.from({ length: visibleCount }, (_, index) => <ListingCardSkeleton key={index} />)}
             {featuredListings.slice(0, visibleCount).map((animal) => <ListingCard key={animal.id} animal={animal} />)}
           </ListingGrid>
+          {status === "loading" && <p className="sr-only" role="status">{t("listings.loading")}</p>}
+          {status === "error" && (
+            <EmptyState
+              tone="error"
+              title={t("home.loadErrorTitle")}
+              actions={<button type="button" onClick={loadListings}>{t("listings.retry")}</button>}
+            >
+              {t("home.loadErrorBody")}
+            </EmptyState>
+          )}
+          {status === "ready" && listings.length === 0 && (
+            <EmptyState
+              title={t("home.emptyTitle")}
+              actions={<a href="/postinput" className="empty-state-primary">{t("home.emptyAction")}</a>}
+            >
+              {t("home.emptyBody")}
+            </EmptyState>
+          )}
         </div>
       </section>
       <section className="home-story">
@@ -74,6 +107,14 @@ export default function HomePage() {
           <p className="home-kicker">{t("home.storyKicker")}</p>
           <h2>{t("home.storyHeading")}</h2>
           <p>{t("home.storyBody")}</p>
+          <ul className="home-points">
+            {HOME_POINTS.map((point) => (
+              <li key={point}>
+                <h3>{t(`home.points.${point}.title`)}</h3>
+                <p>{t(`home.points.${point}.body`)}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </div>

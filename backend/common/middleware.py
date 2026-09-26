@@ -56,7 +56,7 @@ class DevAwareSessionAuthentication(SessionAuthentication):
 class DevAuthBypassAuthentication:
     """
     DRF authentication class mirroring DevAuthBypassMiddleware for API views. Only used as
-    the last entry in DEFAULT_AUTHENTICATION_CLASSES, so real JWT/Token/Session credentials
+    the last entry in DEFAULT_AUTHENTICATION_CLASSES, so real JWT/Session credentials
     always take priority; this only fires once every real authenticator has already failed.
     """
 

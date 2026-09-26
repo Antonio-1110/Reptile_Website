@@ -1,6 +1,6 @@
 import './ActionPanels.css';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import useListingTranslation from '../useListingTranslation';
 import ContactLines from './ContactLines';
 import {
   confirmReceived, decideRunnerUp, declineOffer, markHandedOver, payOrder, reportProblem,
@@ -12,8 +12,8 @@ const CLOSED = ['completed', 'buyer_defaulted', 'declined', 'seller_defaulted', 
 
 // Where a sale stands after the auction, for its buyer or seller: what happens next, by when, and the
 // one action (if any) that's theirs to take. Everything is enforced by the backend (auction/orders.py).
-export default function OrderPanel({ order, onChanged, onToast }) {
-  const { t, i18n } = useTranslation();
+export default function OrderPanel({ order, onChanged, onToast, category }) {
+  const { t, i18n } = useListingTranslation(category);
   const language = i18n.resolvedLanguage;
   const values = {
     price: formatMoney(order.price, order.currency, language),

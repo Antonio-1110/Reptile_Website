@@ -109,3 +109,43 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* The file input is visually hidden inside the label, so show its keyboard focus on the dropzone. */
+.media-dropzone:focus-within {
+  outline: 2px solid oklch(72.3% 0.219 149.579);
+  outline-offset: 2px;
+}
+
+/* Move a photo one place earlier or later (the order is the gallery order on the listing page). */
+.media-move {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.media-move button {
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: 0.25rem;
+  color: #fff;
+  background-color: color-mix(in oklab, oklch(21% 0.034 264.665) 80%, transparent);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.media-move button:hover:not(:disabled) {
+  background-color: oklch(52.7% 0.154 150.069);
+}
+
+.media-move button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.media-move button:focus-visible,
+.media-remove:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+}
