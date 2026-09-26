@@ -162,6 +162,7 @@ const zh = {
       sentToast: "已傳送，賣家會與你聯繫。",
     },
     auctionEndedNoBids: "這隻個體的競標已結束，沒有任何人出價。",
+    saleFellThrough: "這隻個體曾在競標中成交，但交易未完成，因此重新開放購買。",
     auctionEndedNoBids_equipment: "這件商品的競標已結束，沒有任何人出價。",
     toasts: {
       contactError: "目前無法聯絡賣家。",
@@ -468,7 +469,7 @@ const zh = {
     equipment: "器材",
     card: { buyNow: "直接購買 {{amount}}" },
     bidCount_other: "{{count}} 次出價",
-    price: { currentBid: "目前出價", startingBid: "起標價", winningBid: "得標價", boughtNow: "直接購買價" },
+    price: { currentBid: "目前出價", startingBid: "起標價", winningBid: "得標價", boughtNow: "直接購買價", saleFellThrough: "交易未完成" },
     duration: { days: "{{d}} 天 {{h}} 小時", hours: "{{h}} 小時 {{m}} 分", minutes: "{{m}} 分 {{s}} 秒" },
     countdown: { left: "剩餘 {{time}}", startsIn: "{{time}} 後開始" },
     phase: { ended: "已結束", cancelled: "已取消" },

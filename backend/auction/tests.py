@@ -146,7 +146,8 @@ class StartAuctionTests(AuctionTestCase):
             )
             self.create_auction(live_animal_post=listing)
         self.client.force_authenticate(self.buyer)
-        with self.assertNumQueries(4):  # page count, auctions with their listings, the viewer's deposits and purchases
+        # page count, auctions with their listings, their orders (sale_fell_through), the viewer's deposits and purchases
+        with self.assertNumQueries(5):
             self.client.get(reverse('auction-list'))
 
 

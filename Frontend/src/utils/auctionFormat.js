@@ -58,6 +58,7 @@ export function formatDuration(t, ms) {
 
 // The headline price for an auction and which label goes with it.
 export function getHeadlinePrice(auction, phase) {
+  if (auction.saleFellThrough) return { labelKey: "auctions.price.saleFellThrough", amount: auction.soldPrice };
   if (auction.soldVia === "buy_now") return { labelKey: "auctions.price.boughtNow", amount: auction.soldPrice };
   // Before close_auctions runs, an auction past its end has no winning_bid yet; its top bid is the winner.
   const topBid = phase === "ended" ? auction.winningBidAmount || auction.currentPrice : auction.currentPrice;

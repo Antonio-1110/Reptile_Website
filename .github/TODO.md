@@ -35,7 +35,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       "Mark the seller as paid out"); automate with the payment processor
 - [x] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
       animal's page (and in emails)
-- [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
+- [x] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
 - [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
       seller, or the auction with bids, buy now and the order), with equipment facts and wording
