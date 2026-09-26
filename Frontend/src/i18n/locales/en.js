@@ -103,7 +103,6 @@ const en = {
   },
   listings: {
     heading: "Marketplace listings",
-    available: "Post that fit your criteria ({{count}})",
     available_one: "{{count}} listing matches your filters",
     available_other: "{{count}} listings match your filters",
     seller: "Seller",

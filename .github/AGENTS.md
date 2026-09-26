@@ -253,6 +253,23 @@ Pull requests follow `.github/pull_request_template.md`.
 Say what you verified and how, what you didn't verify, and anything left for the user (migrations to
 run, env vars to set, servers to restart). Never commit or push unless asked.
 
+### Working in parallel with other agents
+Several agents often work on separate branches at once. Almost every conflict so far has been in the
+same few shared files: the locale files, `django.po`/`.mo`, `TODO.md`, the READMEs, `App.jsx`
+routes and `post/migrations/`. To keep merges cheap:
+- Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
+  (don't rebase a pushed branch) right before asking for review.
+- Add new locale keys as a **new section** at the end of the object rather than editing a shared
+  one, and don't reorder or reformat existing keys. Same for new routes in `App.jsx`.
+- Leave the READMEs, `AGENTS.md` and `TODO.md` alone unless the change needs them; note doc
+  updates in the PR description, and they can be batched into a docs PR.
+- Resolving a conflict in a translation file means **keeping both sides' keys** (per key or msgid),
+  then running `makemessages`/`compilemessages` and `npm run lint` (which catches duplicate keys).
+  Never resolve these with a whole-file "accept incoming/current". Regenerate `django.mo` rather
+  than picking a side.
+- Two branches that both add a migration to the same app need a merge migration
+  (`makemigrations --merge`, renamed descriptively) once the second one reaches `master`.
+
 ---
 
 ## 7. Web development checklist
