@@ -292,6 +292,9 @@ Apply these whenever you build or review a feature — they're the common gaps i
   and require staff confirmation in the admin otherwise.
 - Buy-now emails are sent with `transaction.on_commit`; in tests wrap the request in
   `self.captureOnCommitCallbacks(execute=True)` or `mail.outbox` stays empty.
+- `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
+  New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
+  them and drop the flag, or the new text silently falls back to English.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.

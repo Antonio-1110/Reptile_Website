@@ -53,6 +53,8 @@ function normalizeAuction(item) {
     pendingBuyNowCount: item.pending_buy_now_count || 0,
     soldVia: item.sold_via, // "bid", "buy_now" or null
     soldPrice: item.sold_price,
+    // It sold, but the sale then fell through (winner didn't pay, runner-up declined, …): unsold again.
+    saleFellThrough: Boolean(item.sale_fell_through),
     myDeposit: normalizeDeposit(item.my_deposit),
     myPurchase: normalizePurchase(item.my_purchase),
     // Anti-sniping: a bid this close to the end pushes the end time back (0 = off).

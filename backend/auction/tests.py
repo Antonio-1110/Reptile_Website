@@ -153,7 +153,8 @@ class StartAuctionTests(AuctionTestCase):
             )
             self.create_auction(live_animal_post=listing)
         self.client.force_authenticate(self.buyer)
-        with self.assertNumQueries(4):  # page count, auctions with their listings, the viewer's deposits and purchases
+        # page count, auctions with their listings, their orders (sale_fell_through), the viewer's deposits and purchases
+        with self.assertNumQueries(5):
             self.client.get(reverse('auction-list'))
 
 
@@ -670,6 +671,46 @@ class OrderTests(AuctionTestCase):
         call_command('process_orders', stdout=open('/dev/null', 'w'))
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, Order.Status.BUYER_DEFAULTED)
+
+
+@override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)
+class EquipmentSaleWordingTests(AuctionTestCase):
+    """Equipment can be auctioned too; its emails and errors mustn't talk about an animal."""
+
+    def setUp(self):
+        super().setUp()
+        self.gear = EquipmentPost.objects.create(account=self.seller, title='Heat Lamp', description='d', contact_info='{}')
+
+    def buy_now(self, auction, user):
+        self.client.force_authenticate(user)
+        with self.captureOnCommitCallbacks(execute=True):
+            return self.client.post(reverse('auction-buy-now', args=[auction.id]))
+
+    def test_equipment_sale_emails_do_not_mention_an_animal(self):
+        auction = self.create_auction(live_animal_post=None, equipment_post=self.gear, buy_now_price=Decimal('9000.00'))
+        mail.outbox.clear()
+        self.assertEqual(self.buy_now(auction, self.buyer).status_code, 200)
+        order = Order.objects.get(auction=auction)
+        with self.captureOnCommitCallbacks(execute=True):
+            orders.mark_handed_over(order, self.seller, note='')
+        bodies = [message.body for message in mail.outbox]
+        self.assertGreaterEqual(len(bodies), 3)
+        for body in bodies:
+            self.assertNotIn('animal', body)
+            self.assertNotIn('個體', body)
+        self.assertTrue(any('the item is yours' in body for body in bodies))
+
+    def test_animal_sale_emails_keep_their_wording(self):
+        auction = self.create_auction(buy_now_price=Decimal('9000.00'))
+        mail.outbox.clear()
+        self.buy_now(auction, self.buyer)
+        self.assertTrue(any('the animal is yours' in message.body for message in mail.outbox))
+
+    def test_seller_cannot_buy_own_equipment(self):
+        auction = self.create_auction(live_animal_post=None, equipment_post=self.gear, buy_now_price=Decimal('9000.00'))
+        response = self.buy_now(auction, self.seller)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'], "You can't buy your own item.")
 
 
 @override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)

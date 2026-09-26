@@ -198,6 +198,27 @@ def mark_paid_out(order):
 
 # --- When the winner doesn't pay: the runner-up -----------------------------------------------------
 
+# An order in one of these ended without a sale. BUYER_DEFAULTED only counts once the seller can no
+# longer offer the listing to the runner-up (see sale_fell_through).
+_FELL_THROUGH = {
+    Order.Status.DECLINED, Order.Status.SELLER_DEFAULTED, Order.Status.REFUNDED, Order.Status.BUYER_DEFAULTED,
+}
+
+
+def sale_fell_through(auction):
+    """
+    Whether the auction sold but its sale then fell through, so the listing is simply for sale again:
+    the latest order ended without a sale and the seller has no runner-up offer left to make.
+    Uses auction.orders.all(), so a list view can prefetch it.
+    """
+    latest = max(auction.orders.all(), key=lambda order: (order.created_at, order.pk), default=None)
+    if latest is None or latest.status not in _FELL_THROUGH:
+        return False
+    if latest.status == Order.Status.BUYER_DEFAULTED and not latest.runner_up_decision:
+        return runner_up_bid(latest) is None
+    return True
+
+
 def runner_up_bid(order):
     """The best bid from someone other than the defaulted winner (and the seller), or None."""
     return (
