@@ -115,7 +115,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Review and clean up duplicate or legacy documentation files
 - [x] Consider a clearer separation between public listing endpoints and seller-only actions
 - [x] Document frontend component responsibilities and API integration patterns (`Frontend/README.md`)
-- [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
+- [x] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
 - [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
 - [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
       (`.github/workflows/ci.yml`; also fails on a model change without its migration)

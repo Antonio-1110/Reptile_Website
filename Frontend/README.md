@@ -82,6 +82,9 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 - `npm run build` — production build
 - `npm run preview` — preview the production build
 - `npm run lint` — run ESLint
+- `npm test` — run the tests once (Vitest + React Testing Library, jsdom); `npm run test:watch` re-runs on save.
+  Tests sit next to the code they cover (`*.test.js` / `*.test.jsx`); `src/test/setup.js` loads the
+  English translations and DOM matchers
 
 ## Talking to the backend
 

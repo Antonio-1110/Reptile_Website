@@ -8,4 +8,10 @@ export default defineConfig({
     react(),
     tailwindcss()
   ],
+  // `npm test`: Vitest with a browser-like DOM; component CSS isn't needed to test behaviour.
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.js',
+    css: false,
+  },
 })
