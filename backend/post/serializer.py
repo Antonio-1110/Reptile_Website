@@ -2,7 +2,7 @@ import json
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
-from .models import EquipmentPost, LiveAnimalPost, Species
+from .models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
 from account.serializers import PublicSellerSerializer
 
 
@@ -25,6 +25,16 @@ class PostLimitSerializerMixin:
             raise serializers.ValidationError({
                 'gallery': _('Image limit exceeded. This account allows %(count)s images per post.') % {'count': account.max_images_per_post}
             })
+
+        # Bidders are paying deposits on a running auction, so the listing can't be marked reserved or
+        # sold under them; the auction decides who gets it.
+        new_status = attrs.get('status')
+        if self.instance is not None and new_status and new_status != self.instance.Status.AVAILABLE:
+            from auction.models import Auction
+            if self.instance.auctions.filter(status=Auction.Status.ACTIVE).exists():
+                raise serializers.ValidationError({
+                    'status': _("This listing has a running auction. It can't be marked reserved or sold until the auction ends.")
+                })
 
         return attrs
 
@@ -119,7 +129,17 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class PublicListingFieldsMixin(serializers.Serializer):
+    """Read-only fields the listing detail page shows for both listing types."""
+    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
+    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
+    posted_days = serializers.SerializerMethodField()
+
+    def get_posted_days(self, obj):
+        return max(0, (timezone.now() - obj.created_at).days)
+
+
+class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
     # Nested seller info
@@ -129,11 +149,11 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
     class Meta:
         model = EquipmentPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -141,7 +161,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -157,21 +177,18 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     
     # Convert genetics string to list on serialization
     genes = serializers.SerializerMethodField()
-    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
-    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
-    posted_days = serializers.SerializerMethodField()
     
     class Meta:
         model = LiveAnimalPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
             'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
         read_only_fields = [
-            'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name',
+            'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
             'seller_rating', 'species_name', 'genes', 'posted_days'
         ]
     
@@ -180,11 +197,40 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
         if obj.genetics:
             return [gene.strip() for gene in obj.genetics.split('/') if gene.strip()]
         return []
-
-    def get_posted_days(self, obj):
-        return max(0, (timezone.now() - obj.created_at).days)
     
     def create(self, validated_data):
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class SavedSearchSerializer(serializers.ModelSerializer):
+    """A saved marketplace search. `query` is checked against the real listing filters and stored in a
+    stable form; `name` defaults to the search text."""
+    name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    class Meta:
+        model = SavedSearch
+        fields = ['id', 'name', 'query', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_query(self, value):
+        from .search_alerts import normalize_query
+        try:
+            return normalize_query(value)
+        except ValueError as error:
+            raise serializers.ValidationError(
+                _('This search has filters that can\'t be saved: %(names)s.') % {'names': ', '.join(error.args[0])}
+            )
+
+    def validate(self, attrs):
+        from django.conf import settings
+        from django.http import QueryDict
+        account = self.context['request'].user
+        if self.instance is None and SavedSearch.objects.filter(account=account).count() >= settings.SAVED_SEARCH_LIMIT:
+            raise serializers.ValidationError({
+                'detail': _('You can keep up to %(count)s saved searches. Delete one to save another.') % {'count': settings.SAVED_SEARCH_LIMIT},
+            })
+        if not attrs.get('name'):
+            attrs['name'] = QueryDict(attrs['query']).get('search') or _('Marketplace search')
+        return attrs

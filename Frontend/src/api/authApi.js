@@ -1,3 +1,4 @@
+import i18n from "../i18n";
 import { apiFetch, requestFailedMessage } from "./http";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -104,11 +105,19 @@ export async function authFetch(path, options = {}) {
     });
   };
 
+  const hadToken = Boolean(getAccessToken());
   let response = await send();
-  if (response.status === 401 && getAccessToken() && await refreshAccessToken()) {
+  if (response.status === 401 && hadToken && await refreshAccessToken()) {
     response = await send();
   }
-  if (!response.ok) throw await parseError(response);
+  if (!response.ok) {
+    const error = await parseError(response);
+    // DRF's own 401 text ("Given token not valid for any token type") means nothing to users.
+    if (response.status === 401) {
+      error.message = i18n.t(hadToken ? "errors.sessionExpired" : "errors.signInRequired");
+    }
+    throw error;
+  }
   if (response.status === 204) return null;
   return response.json();
 }
@@ -119,7 +128,12 @@ export async function login(username, password) {
 
 export async function register({ username, email, password }) {
   await postJson("/register/", { username, email, password });
-  await login(username, password);
+  try {
+    await login(username, password);
+  } catch (error) {
+    error.accountCreated = true;
+    throw error;
+  }
 }
 
 export function logout() {

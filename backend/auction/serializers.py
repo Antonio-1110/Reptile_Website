@@ -64,6 +64,8 @@ class AuctionSerializer(serializers.ModelSerializer):
     pending_buy_now_count = serializers.SerializerMethodField()
     sold_via = serializers.SerializerMethodField()
     sold_price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    # The auction sold but the sale fell through (see orders.sale_fell_through): show it as unsold.
+    sale_fell_through = serializers.SerializerMethodField()
     my_deposit = serializers.SerializerMethodField()
     my_purchase = serializers.SerializerMethodField()
     # Anti-sniping rule (settings, same for every auction), so the bid form can explain late bids.
@@ -76,7 +78,7 @@ class AuctionSerializer(serializers.ModelSerializer):
             'id', 'seller_id', 'seller_name', 'is_seller', 'live_animal_post', 'equipment_post', 'listing',
             'starting_price', 'min_increment', 'deposit_amount', 'currency', 'starts_at', 'ends_at',
             'status', 'is_open', 'bid_count', 'current_price', 'minimum_next_bid', 'winning_bid_amount',
-            'buy_now_price', 'buy_now_available', 'pending_buy_now_count', 'sold_via', 'sold_price',
+            'buy_now_price', 'buy_now_available', 'pending_buy_now_count', 'sold_via', 'sold_price', 'sale_fell_through',
             'my_deposit', 'my_purchase', 'extend_window_minutes', 'extend_by_minutes', 'created_at',
         ]
         read_only_fields = ['id', 'deposit_amount', 'currency', 'status', 'created_at']
@@ -142,6 +144,11 @@ class AuctionSerializer(serializers.ModelSerializer):
             return obj.pending_buy_now
         return obj.purchases.filter(status=BuyNowPurchase.Status.PENDING).count()
 
+    def get_sale_fell_through(self, obj):
+        if obj.status != Auction.Status.ENDED or not (obj.winning_bid_id or obj.winning_purchase_id):
+            return False
+        return orders.sale_fell_through(obj)
+
     def get_sold_via(self, obj):
         if obj.winning_purchase_id:
             return 'buy_now'
@@ -181,6 +188,8 @@ class AuctionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'detail': _('You can only auction your own listings.'),
             })
+        if post.status == post.Status.SOLD:
+            raise serializers.ValidationError({'detail': _("A sold listing can't be auctioned.")})
         listing_filter = {'live_animal_post': post} if live_animal_post else {'equipment_post': post}
         if Auction.objects.filter(status=Auction.Status.ACTIVE, **listing_filter).exists():
             raise serializers.ValidationError({

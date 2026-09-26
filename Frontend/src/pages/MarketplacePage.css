@@ -66,3 +66,30 @@
   color: oklch(87.1% 0.15 154.449);
   cursor: pointer;
 }
+
+.marketplace-heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.marketplace-save-search { display: grid; gap: 0.25rem; justify-items: end; }
+.marketplace-save-search p { margin: 0; font-size: 0.9rem; }
+.marketplace-save-search [role="status"] { color: #4ade80; }
+.marketplace-save-search [role="status"] a { color: #93c5fd; }
+.marketplace-save-search [role="alert"] { color: #f87171; }
+
+.marketplace-save-search button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #334155;
+  border-radius: 999px;
+  color: inherit;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.marketplace-save-search button:hover:not(:disabled) { border-color: #22c55e; }
+.marketplace-save-search button:focus-visible { outline: 2px solid #22c55e; outline-offset: 2px; }
