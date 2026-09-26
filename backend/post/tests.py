@@ -664,6 +664,28 @@ class ListingStatusTests(APITestCase):
 		self.available.refresh_from_db()
 		self.assertEqual(self.available.status, 'sold')
 
+	def test_listing_with_a_running_auction_cannot_be_marked_reserved_or_sold(self):
+		from datetime import timedelta
+		from decimal import Decimal
+		from django.utils import timezone
+		from auction.models import Auction
+
+		auction = Auction.objects.create(
+			seller=self.seller, live_animal_post=self.available, starting_price=Decimal('1000'),
+			min_increment=Decimal('100'), deposit_amount=Decimal('100'), currency='TWD',
+			starts_at=timezone.now() - timedelta(minutes=1), ends_at=timezone.now() + timedelta(days=1),
+		)
+		url = reverse('live-animal-detail', args=[self.available.id])
+		self.client.force_authenticate(self.seller)
+		for status in ('reserved', 'sold'):
+			response = self.client.patch(url, {'status': status}, format='json')
+			self.assertEqual(response.status_code, 400)
+			self.assertIn('status', response.data)
+		self.assertEqual(self.client.patch(url, {'title': 'Renamed'}, format='json').status_code, 200)
+
+		Auction.objects.filter(pk=auction.pk).update(status=Auction.Status.ENDED)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 200)
+
 	def test_buyers_cannot_contact_about_a_sold_listing(self):
 		self.client.force_authenticate(self.buyer)
 		response = self.client.post(reverse('live-animal-contact', args=[self.sold.id]))
