@@ -6,6 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
+import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 
 from . import orders, services
@@ -43,7 +44,14 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
             top_bid=Max('bids__amount'),
             pending_buy_now=Count('purchases', filter=Q(purchases__status=BuyNowPurchase.Status.PENDING), distinct=True),
         )
+        queryset = queryset.prefetch_related('orders')  # for sale_fell_through
         user = self.request.user
+        # A listing hidden by moderation takes its auction with it, so nobody can keep paying deposits
+        # or bidding on it; only the seller and staff still see it. Every auction action looks the
+        # auction up through here.
+        if not (user.is_authenticated and user.is_staff):
+            hidden = Q(live_animal_post__is_hidden=True) | Q(equipment_post__is_hidden=True)
+            queryset = queryset.exclude(hidden & ~Q(seller=user)) if user.is_authenticated else queryset.exclude(hidden)
         if user.is_authenticated:
             queryset = queryset.prefetch_related(
                 Prefetch('deposits', queryset=Deposit.objects.filter(account=user), to_attr='my_deposits'),
@@ -152,15 +160,29 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         })
 
 
+class OrderFilter(django_filters.FilterSet):
+    # `role=buyer|seller`: which side of the sale the viewer is on (the "My orders" tabs).
+    role = django_filters.ChoiceFilter(choices=[('buyer', 'buyer'), ('seller', 'seller')], method='filter_role')
+
+    class Meta:
+        model = Order
+        fields = ['auction', 'status']
+
+    def filter_role(self, queryset, name, value):
+        user = self.request.user
+        return queryset.filter(buyer=user) if value == 'buyer' else queryset.filter(auction__seller=user)
+
+
 class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     Orders after a sale, visible only to their buyer and seller. `?auction=<id>` narrows the list to
-    one auction (the listing page uses it). Every action goes through auction.orders.
+    one auction (the listing page uses it); `?role=buyer|seller` to one side (the "My orders" page).
+    Every action goes through auction.orders.
     """
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['auction', 'status']
+    filterset_class = OrderFilter
     throttle_scope = None  # set per action
 
     def get_queryset(self):
