@@ -1,5 +1,11 @@
-from django.test import TestCase
+import io
+import shutil
+import tempfile
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 from rest_framework.test import APITestCase
 
 from .models import Account
@@ -173,6 +179,77 @@ class AccountPlansTests(APITestCase):
         self.assertFalse(plans['commercial']['can_start_auction'])
         self.assertTrue(plans['commercial_paid']['can_start_auction'])
 
+
+
+class PlanWorkflowTests(APITestCase):
+    """
+    Each plan end to end through the API, as a seller would hit it: how many listings, how many photos
+    per listing, whether they may start auctions, and that nobody can switch plans themselves. The
+    limits come from the Account model, so this checks every place that enforces them agrees.
+    """
+    PLANS = {
+        # name: (account fields, max posts, max photos, may auction)
+        'hobbyist': ({}, 5, 3, False),
+        'commercial': ({'account_type': 'commercial'}, 20, 6, False),
+        'commercial_paid': ({'account_type': 'commercial', 'is_paid_account': True}, 200, 12, True),
+    }
+
+    def setUp(self):
+        from post.models import LiveAnimalPost, Species
+        media_root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media_root, ignore_errors=True)
+        override = override_settings(MEDIA_ROOT=media_root)
+        override.enable()
+        self.addCleanup(override.disable)
+        self.species = Species.objects.create(name='Plan Pythons')
+        LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+
+    def photo(self, name):
+        buffer = io.BytesIO()
+        Image.new('RGB', (4, 4)).save(buffer, format='PNG')
+        return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
+
+    def create_listing(self):
+        return self.client.post(reverse('live-animal-list'), {
+            'title': 'Plan check', 'description': 'd', 'contact_info': {}, 'species': self.species.id,
+        }, format='json')
+
+    def test_each_plan_gets_exactly_its_limits(self):
+        from post.models import LiveAnimalPost
+
+        for name, (fields, max_posts, max_photos, may_auction) in self.PLANS.items():
+            with self.subTest(plan=name):
+                seller = Account.objects.create_user(username=f'{name}_seller', email=f'{name}@example.com', password='pass1234', **fields)
+                self.client.force_authenticate(seller)
+
+                profile = self.client.get(reverse('profile')).data
+                self.assertEqual((profile['max_post_count'], profile['max_images_per_post']), (max_posts, max_photos))
+                self.assertEqual(profile['can_start_auction'], may_auction)
+
+                # Fill the plan up to one below its cap directly, then the last post over the API.
+                LiveAnimalPost.objects.bulk_create([
+                    LiveAnimalPost(account=seller, species=self.species, title=f'{index}', description='d', contact_info='{}')
+                    for index in range(max_posts - 1)
+                ])
+                last = self.create_listing()
+                self.assertEqual(last.status_code, 201, last.data)
+                self.assertEqual(self.client.get(reverse('profile')).data['remaining_post_count'], 0)
+                over = self.create_listing()
+                self.assertEqual(over.status_code, 400)
+                self.assertIn(str(max_posts), str(over.data))
+
+                photos_url = reverse('live-animal-photos', args=[last.data['id']])
+                too_many = [self.photo(f'{index}.png') for index in range(max_photos + 1)]
+                self.assertEqual(self.client.post(photos_url, {'photos': too_many}, format='multipart').status_code, 400)
+                just_right = [self.photo(f'{index}.png') for index in range(max_photos)]
+                self.assertEqual(self.client.post(photos_url, {'photos': just_right}, format='multipart').status_code, 200)
+
+                auction = self.client.post(reverse('auction-list'), {}, format='json')
+                self.assertEqual(auction.status_code, 400 if may_auction else 403)  # 400: past the paywall, then validated
+
+                self.client.patch(reverse('profile'), {'account_type': 'commercial', 'is_paid_account': True}, format='json')
+                seller.refresh_from_db()
+                self.assertEqual((seller.account_type, seller.is_paid_account), (fields.get('account_type', 'hobbyist'), fields.get('is_paid_account', False)))
 
 
 class LegacyTokenAuthRetiredTests(APITestCase):
