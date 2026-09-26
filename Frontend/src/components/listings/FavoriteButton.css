@@ -1,0 +1,19 @@
+.favorite-button {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 50%;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.75);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.favorite-button:hover:not(:disabled) { transform: scale(1.08); }
+.favorite-button:focus-visible { outline: 2px solid #f8fafc; outline-offset: 2px; }
+.favorite-button.is-saved { color: #fb7185; border-color: #fb7185; }
+.favorite-button:disabled { cursor: progress; }

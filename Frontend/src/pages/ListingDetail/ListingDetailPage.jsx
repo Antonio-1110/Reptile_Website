@@ -5,12 +5,14 @@ import AuctionHistoryCard from './components/AuctionHistoryCard';
 import BidPanel from './components/BidPanel';
 import BuyNowPanel from './components/BuyNowPanel';
 import ContactSellerPanel from './components/ContactSellerPanel';
+import ImageLightbox from './components/ImageLightbox';
 import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
+import FavoriteButton from '../../components/listings/FavoriteButton';
 import { getListing, getSexKey, isLoggedIn, reportListing, sellerPagePath } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
@@ -198,6 +200,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </span>
               <div className="listing-detail-summary-actions">
                 <span className="listing-detail-rating">★ {listing.rating}</span>
+                <FavoriteButton listingId={listingId} category={category} initial={listing.isFavorite} />
                 <button
                   type="button"
                   onClick={handleReportListing}
@@ -341,14 +344,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
         </div>
 
         {expandedImage && (
-          <div className="listing-detail-lightbox" onClick={() => setExpandedImage(null)}>
-            <div className="listing-detail-lightbox-frame">
-              <button type="button" className="listing-detail-lightbox-close" onClick={() => setExpandedImage(null)} aria-label={t('common.dismiss')}>
-                ×
-              </button>
-              <img className="listing-detail-lightbox-image" src={expandedImage} alt={listing.title} />
-            </div>
-          </div>
+          <ImageLightbox src={expandedImage} alt={listing.title} onClose={() => setExpandedImage(null)} />
         )}
       </div>
 

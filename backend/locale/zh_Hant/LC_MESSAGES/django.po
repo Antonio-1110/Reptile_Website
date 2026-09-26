@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 16:16+0800\n"
+"POT-Creation-Date: 2026-09-26 17:09+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,30 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
-#: account/serializers.py:96
-msgid "Passwords must match."
-msgstr "兩次輸入的密碼必須相同。"
-
-#: account/serializers.py:101 authentication/serializers.py:20
-msgid "Username already exists."
-msgstr "此使用者名稱已被使用。"
-
-#: account/serializers.py:106 authentication/serializers.py:25
-msgid "Email already registered."
-msgstr "此電子郵件已經註冊過。"
-
-#: account/serializers.py:129
-msgid "Must provide both username and password."
-msgstr "請輸入使用者名稱與密碼。"
-
-#: account/serializers.py:133
-msgid "Invalid credentials."
-msgstr "使用者名稱或密碼錯誤。"
-
-#: account/views.py:61
-msgid "Logged out successfully"
-msgstr "已成功登出"
 
 #: auction/notifications.py:16
 msgid ""
@@ -659,9 +635,17 @@ msgstr "這場競標已無法直接購買。"
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
 
-#: auction/views.py:99
+#: auction/views.py:105
 msgid "Only the seller can cancel this auction."
 msgstr "只有賣家可以取消此競標。"
+
+#: authentication/serializers.py:20
+msgid "Username already exists."
+msgstr "此使用者名稱已被使用。"
+
+#: authentication/serializers.py:25
+msgid "Email already registered."
+msgstr "此電子郵件已經註冊過。"
 
 #: common/notifications.py:12
 msgid "Name"
@@ -674,6 +658,27 @@ msgstr "電子信箱"
 #: common/notifications.py:14
 msgid "Phone"
 msgstr "電話"
+
+#: post/search_alerts.py:80
+#, python-format
+msgid "New listings match your saved search \"%(name)s\":"
+msgstr "有新刊登符合你儲存的搜尋「%(name)s」："
+
+#: post/search_alerts.py:81
+#, python-format
+msgid "…and %(more)s more."
+msgstr "……還有另外 %(more)s 則。"
+
+#: post/search_alerts.py:82
+#, python-format
+msgid "Manage your saved searches: %(url)s"
+msgstr "管理你儲存的搜尋：%(url)s"
+
+#: post/search_alerts.py:84
+#, python-format
+msgid "%(count)s new listing for \"%(name)s\""
+msgid_plural "%(count)s new listings for \"%(name)s\""
+msgstr[0] "「%(name)s」有 %(count)s 則新刊登"
 
 #: post/serializer.py:17
 #, python-format
@@ -716,50 +721,88 @@ msgstr "照片順序中包含這則刊登沒有的照片。"
 msgid "Each photo must appear in the order exactly once."
 msgstr "每張照片在順序中只能出現一次。"
 
-#: post/views.py:37
+#: post/serializer.py:231
+#, python-format
+msgid "This search has filters that can't be saved: %(names)s."
+msgstr "這個搜尋包含無法儲存的篩選條件：%(names)s。"
+
+#: post/serializer.py:240
+#, python-format
+msgid ""
+"You can keep up to %(count)s saved searches. Delete one to save another."
+msgstr "你最多可儲存 %(count)s 個搜尋。請先刪除一個再儲存新的。"
+
+#: post/serializer.py:243
+msgid "Marketplace search"
+msgstr "市集搜尋"
+
+#: post/views.py:46
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
 msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:39
+#: post/views.py:48
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on the Reptile "
 "Marketplace and asked us to pass on their contact details:"
 msgstr "%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方式："
 
-#: post/views.py:41
+#: post/views.py:50
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:66
+#: post/views.py:67
+#, python-format
+#| msgid "Sale completed: \"%(title)s\""
+msgid "Price drop: %(title)s"
+msgstr "降價通知：%(title)s"
+
+#: post/views.py:68
+#, python-format
+msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
+msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
+
+#: post/views.py:134
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:71
+#: post/views.py:139
 msgid "This listing has been sold."
 msgstr "這則刊登已售出。"
 
-#: post/views.py:83
+#: post/views.py:151
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with "
 "you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:101
+#: post/views.py:169
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:113
+#: post/views.py:182
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:132
+#: post/views.py:215
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
+
+#~ msgid "Passwords must match."
+#~ msgstr "兩次輸入的密碼必須相同。"
+
+#~ msgid "Must provide both username and password."
+#~ msgstr "請輸入使用者名稱與密碼。"
+
+#~ msgid "Invalid credentials."
+#~ msgstr "使用者名稱或密碼錯誤。"
+
+#~ msgid "Logged out successfully"
+#~ msgstr "已成功登出"
 
 #~ msgid ""
 #~ "Only the buyer and the seller can see the contact details for this sale."

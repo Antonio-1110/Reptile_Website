@@ -9,9 +9,12 @@
   --color-border-muted: #374151;
   --color-text: #f3f4f6;
   --color-text-muted: #d1d5db;
-  --color-text-subtle: #9ca3af;
-  --color-text-faint: #6b7280;
-  --color-accent: #16a34a;
+  /* Contrast (WCAG AA): subtle ≥ 4.5:1 on surface-muted, faint ≥ 4.5:1 on surface, and light text on
+     accent / accent-strong ≥ 4.5:1. accent-bright is for borders, icons and dark text, not light text. */
+  --color-text-subtle: #a8afba;
+  --color-text-faint: #8f98a6;
+  --color-accent: #15803d;
+  --color-accent-strong: #166534;
   --color-accent-bright: #22c55e;
   --color-accent-hover: #4ade80;
   --color-focus-ring: rgb(34 197 94 / 20%);

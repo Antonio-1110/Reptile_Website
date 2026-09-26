@@ -2,7 +2,7 @@ import json
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
-from .models import EquipmentPost, LiveAnimalPost, Species
+from .models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
 from account.serializers import PublicSellerSerializer
 
 
@@ -129,6 +129,14 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
+class FavoriteFlagMixin(serializers.Serializer):
+    # Whether the viewer saved the listing; the viewsets annotate it (FavoritesMixin), else False.
+    is_favorite = serializers.SerializerMethodField()
+
+    def get_is_favorite(self, obj):
+        return bool(getattr(obj, 'is_favorite', False))
+
+
 class PublicListingFieldsMixin(serializers.Serializer):
     """Read-only fields the listing detail page shows for both listing types."""
     seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
@@ -139,7 +147,7 @@ class PublicListingFieldsMixin(serializers.Serializer):
         return max(0, (timezone.now() - obj.created_at).days)
 
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
     # Nested seller info
@@ -151,9 +159,9 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         fields = [
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden', 'is_favorite']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -161,7 +169,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -185,11 +193,11 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
-            'seller_rating', 'species_name', 'genes', 'posted_days'
+            'seller_rating', 'species_name', 'genes', 'posted_days', 'is_favorite'
         ]
     
     def get_genes(self, obj):
@@ -202,3 +210,35 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class SavedSearchSerializer(serializers.ModelSerializer):
+    """A saved marketplace search. `query` is checked against the real listing filters and stored in a
+    stable form; `name` defaults to the search text."""
+    name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+
+    class Meta:
+        model = SavedSearch
+        fields = ['id', 'name', 'query', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_query(self, value):
+        from .search_alerts import normalize_query
+        try:
+            return normalize_query(value)
+        except ValueError as error:
+            raise serializers.ValidationError(
+                _('This search has filters that can\'t be saved: %(names)s.') % {'names': ', '.join(error.args[0])}
+            )
+
+    def validate(self, attrs):
+        from django.conf import settings
+        from django.http import QueryDict
+        account = self.context['request'].user
+        if self.instance is None and SavedSearch.objects.filter(account=account).count() >= settings.SAVED_SEARCH_LIMIT:
+            raise serializers.ValidationError({
+                'detail': _('You can keep up to %(count)s saved searches. Delete one to save another.') % {'count': settings.SAVED_SEARCH_LIMIT},
+            })
+        if not attrs.get('name'):
+            attrs['name'] = QueryDict(attrs['query']).get('search') or _('Marketplace search')
+        return attrs

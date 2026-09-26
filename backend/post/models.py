@@ -151,3 +151,51 @@ class Report(models.Model):
     @property
     def post(self):
         return self.live_animal_post or self.equipment_post
+
+class Favorite(models.Model):
+    """A listing a user saved to come back to; they're emailed if its price drops."""
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='favorites')
+    live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='favorites')
+    equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='favorites')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Favorite'
+        verbose_name_plural = 'Favorites'
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(live_animal_post__isnull=False, equipment_post__isnull=True)
+                    | models.Q(live_animal_post__isnull=True, equipment_post__isnull=False)
+                ),
+                name='favorite_has_exactly_one_listing',
+            ),
+            models.UniqueConstraint(fields=['account', 'live_animal_post'], name='one_favorite_per_live_animal_post'),
+            models.UniqueConstraint(fields=['account', 'equipment_post'], name='one_favorite_per_equipment_post'),
+        ]
+
+    @property
+    def post(self):
+        return self.live_animal_post or self.equipment_post
+
+
+class SavedSearch(models.Model):
+    """
+    A marketplace search a user asked to be emailed about. `query` is the listing API's query string
+    (the sidebar filters and search, e.g. "search=pied&sex=1.0"); `manage.py send_search_alerts` emails
+    new matches since `last_alerted_at`.
+    """
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='saved_searches')
+    name = models.CharField(max_length=100)
+    query = models.CharField(max_length=1000)
+    last_alerted_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Saved search'
+        verbose_name_plural = 'Saved searches'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'{self.account}: {self.name}'

@@ -31,6 +31,10 @@ __pycache__/
 superuser.txt
 backend/db.sqlite3
 backend/media/
+# End-to-end test run: throwaway database, uploads and Playwright reports
+backend/.e2e/
+Frontend/test-results/
+Frontend/playwright-report/
 backend/staticfiles/
 .venv/
 

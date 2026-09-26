@@ -220,7 +220,7 @@
 .listing-detail-report {
   padding: 0;
   border: none;
-  color: #64748b;
+  color: #94a3b8; /* #64748b was 3.1:1 on the panel; this is 6.4:1 */
   background: transparent;
   font-size: 12px;
   text-decoration: underline;
