@@ -106,7 +106,9 @@ Full request/response examples live in [docs/API_ENDPOINTS.md](docs/API_ENDPOINT
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
   (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`, `transport`, `other`) and a
   `condition` (0–2); the list filters by both, plus price, location, shipping and posting date
-- `GET /species/`
+- `GET /species/` — each with its `aliases`. A live-animal listing takes `species` (an id) or
+  `requested_species` (a typed name): a name that isn't a species or alias is held for staff review,
+  and the listing stays unpublished (`species_review`) until staff map or add the species
 
 ### Auctions (`/api/auctions/`)
 

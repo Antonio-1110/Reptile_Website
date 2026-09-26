@@ -58,9 +58,63 @@ class BasePost(models.Model):
 
 class Species(models.Model):
     name = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
-    
+
+
+class SpeciesAlias(models.Model):
+    """
+    Another name sellers use for a species (a common name, a spelling, the Chinese name). Typing it in
+    the listing editor picks the species directly, so the listing needs no review. Mapping a requested
+    species to an existing one adds one of these (see post/species.py).
+    """
+    species = models.ForeignKey(Species, on_delete=models.CASCADE, related_name='aliases')
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = 'Species alias'
+        verbose_name_plural = 'Species aliases'
+
+    def __str__(self):
+        return self.name
+
+
+class SpeciesRequest(models.Model):
+    """
+    A species a seller typed that isn't in the species list. Listings waiting on it stay off the
+    marketplace until staff map it to an existing species or add it as a new one; that way every
+    published listing has a real species for the filters and search to use. Listings that ask for the
+    same name share one request, so staff review each name once.
+    """
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending review'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+
+    name = models.CharField(max_length=100, help_text='As the seller typed it')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    species = models.ForeignKey(
+        Species, on_delete=models.SET_NULL, null=True, blank=True, related_name='requests',
+        help_text='The species it was approved as',
+    )
+    # Shown to the seller when the request is rejected.
+    staff_note = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='species_requests_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Species request'
+        verbose_name_plural = 'Species requests'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return self.name
+
 
 class EquipmentPost(BasePost):
     class ConditionChoices(models.IntegerChoices):
@@ -97,7 +151,12 @@ class LiveAnimalPost(BasePost):
         SUB_ADULT = 'subAdult', 'Sub-Adult'
         ADULT = 'adult', 'Adult'
     
-    species = models.ForeignKey(Species, on_delete=models.CASCADE, related_name='live_posts')
+    # Exactly one of these is set: a listing whose species is still under review (or was rejected)
+    # has no species yet and stays unpublished; approving the request moves it to `species`.
+    species = models.ForeignKey(Species, on_delete=models.CASCADE, null=True, blank=True, related_name='live_posts')
+    species_request = models.ForeignKey(
+        SpeciesRequest, on_delete=models.PROTECT, null=True, blank=True, related_name='listings',
+    )
     sex = models.CharField(max_length=20, choices=SexChoices.choices, default=SexChoices.UNSEXED)
     genetics = models.TextField(blank=True, help_text="Genetic traits separated by '/', e.g. 'Pastel/Pied'")
     life_stage = models.CharField(max_length=20, choices=LifeStageChoices.choices, default=LifeStageChoices.ADULT)
@@ -107,9 +166,22 @@ class LiveAnimalPost(BasePost):
     diets = models.JSONField(default=list, help_text="List of diets: ['live', 'frozenThawed', 'pellets']")
     guide_notes = models.TextField(blank=True)
     
+    # Listings the public may see: not hidden by moderation, and with a reviewed species. The
+    # marketplace, search alerts and auctions all go by this.
+    PUBLISHED = models.Q(is_hidden=False, species__isnull=False)
+
     class Meta:
         verbose_name = 'Live Animal Post'
         verbose_name_plural = 'Live Animal Posts'
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(species__isnull=False, species_request__isnull=True)
+                    | models.Q(species__isnull=True, species_request__isnull=False)
+                ),
+                name='live_animal_post_has_species_or_request',
+            ),
+        ]
 
 
 class ContactRequest(models.Model):

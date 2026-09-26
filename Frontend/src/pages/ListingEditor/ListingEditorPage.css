@@ -165,3 +165,7 @@
   padding-bottom: 1.5rem;
   border-bottom: 1px solid oklch(37.3% 0.034 259.733);
 }
+
+.listing-editor-species-review {
+  color: #fbbf24;
+}

@@ -6,8 +6,9 @@ import BiologicalDataSection from "./components/BiologicalDataSection";
 import CategorySwitch from "../../components/ui/CategorySwitch";
 import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
-import { createListing, getCurrentProfile, getRawListing, getSexKey, listingPagePath, saveListingPhotos, updateListing } from "../../api/listingsApi";
+import { createListing, getCurrentProfile, getRawListing, getSexKey, getSpecies, listingPagePath, saveListingPhotos, updateListing } from "../../api/listingsApi";
 import { getLocationKey } from "../../constants/locations";
+import { matchSpecies } from "../../constants/species";
 import { DEFAULT_EQUIPMENT_CATEGORY, DEFAULT_EQUIPMENT_CONDITION } from "../../constants/equipment";
 import { errorText, toErrorState } from "../../utils/errorState";
 import { existingPhoto, isBlobUrl } from "./mediaItems";
@@ -20,7 +21,8 @@ const initialFormData = {
   description: "",
   price: "",
   category: "live_animal",
-  species: "",
+  species: "", // the name shown or typed
+  speciesId: null, // set when a species is picked from the list
   sex: "unsexed",
   genetics: "",
   lifeStage: "adult",
@@ -42,6 +44,7 @@ const FIELD_LABEL_KEYS = {
   description: "createListing.basic.description",
   price: "createListing.basic.price",
   species: "createListing.basic.species",
+  requested_species: "createListing.basic.species",
   sex: "createListing.biological.sex",
   genetics: "createListing.biological.genetics",
   life_stage: "createListing.biological.lifeStage",
@@ -80,12 +83,20 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
   const [coverIndex, setCoverIndex] = useState(0);
   const [listingLoading, setListingLoading] = useState(isEditing);
   const [listingLoadError, setListingLoadError] = useState(null);
+  const [speciesList, setSpeciesList] = useState(null);
+  // The listing's species review (API `species_review`), when it's waiting on one or was turned down.
+  const [speciesReview, setSpeciesReview] = useState(null);
   const mediaRef = useRef(formData.media);
   // The listing's photos as loaded (cover first), to skip saving photos when nothing changed.
   const savedPhotosRef = useRef([]);
 
   mediaRef.current = formData.media;
   useEffect(() => () => revokePreviews(mediaRef.current), []);
+
+  // Only feeds the species suggestions; without it the server still matches typed names.
+  useEffect(() => {
+    getSpecies().then(setSpeciesList).catch(() => setSpeciesList(null));
+  }, []);
 
   useEffect(() => {
     getCurrentProfile()
@@ -113,13 +124,15 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
         const photos = raw.gallery?.length ? raw.gallery : [raw.image].filter(Boolean);
         savedPhotosRef.current = photos;
         setCoverIndex(0);
+        setSpeciesReview(raw.species_review || null);
         setFormData((current) => ({
           ...current,
           title: raw.title || "",
           description: raw.description || "",
           price: raw.price != null ? String(raw.price) : "",
           category: editCategory === "equipment" ? "enclosure" : "live_animal",
-          species: raw.species_name || "",
+          species: raw.species_name || raw.species_review?.name || "",
+          speciesId: raw.species ?? null,
           sex: getSexKey(raw.sex),
           genetics: raw.genetics || "",
           lifeStage: raw.life_stage || "adult",
@@ -154,7 +167,7 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     setFormData((current) => ({
       ...current,
       category: value,
-      ...(value !== "live_animal" ? { species: "" } : {}),
+      ...(value !== "live_animal" ? { species: "", speciesId: null } : {}),
     }));
     setSubmitted(false);
   };
@@ -204,6 +217,14 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     }
   };
 
+  // A typed name that is exactly a listed species (say its label in the UI language, which the server
+  // doesn't know) is sent as that species rather than held for review.
+  const withResolvedSpecies = (data) => {
+    if (data.category !== "live_animal" || data.speciesId) return data;
+    const exact = matchSpecies(t, speciesList || [], data.species).exact;
+    return exact ? { ...data, speciesId: exact.id } : data;
+  };
+
   const startAnotherListing = () => {
     revokePreviews(formData.media);
     setFormData({ ...initialFormData, category: formData.category });
@@ -220,7 +241,8 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     if (isEditing) {
       setSubmitting(true);
       try {
-        await updateListing(editId, formData);
+        const saved = await updateListing(editId, withResolvedSpecies(formData));
+        setSpeciesReview(saved?.species_review || null);
         const photoError = await uploadPhotos(editId);
         if (photoError) {
           setSubmitError([t("createListing.errors.photosOnEdit", { reason: photoError })]);
@@ -241,11 +263,11 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     }
     setSubmitting(true);
     try {
-      const listing = await createListing(formData);
+      const listing = await createListing(withResolvedSpecies(formData));
       const photoError = await uploadPhotos(listing.id);
       // The API's category ("equipment"), not the form's "enclosure", so the links below reach the right page.
       const category = formData.category === "live_animal" ? "live_animal" : "equipment";
-      setCreated({ id: listing.id, category, title: listing.title, photoError });
+      setCreated({ id: listing.id, category, title: listing.title, photoError, speciesReview: listing.species_review });
       window.scrollTo(0, 0);
       // The quota only feeds the notice for the next listing; failing to refresh it isn't worth an error.
       getCurrentProfile().then(setQuota).catch(() => {});
@@ -266,13 +288,23 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
         <h1 className="listing-editor-title">{isEditing ? t("createListing.edit.heading") : t("createListing.heading")}</h1>
         <p className="listing-editor-subtitle">{isEditing ? t("createListing.edit.subtitle") : t("createListing.subtitle")}</p>
         {listingLoadError && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{errorText(t, listingLoadError)}</p>}
+        {isEditing && speciesReview && (
+          <p className="listing-editor-notice listing-editor-species-review" role="status">
+            {speciesReview.status === "rejected"
+              ? t("speciesReview.rejectedNotice", { name: speciesReview.name })
+              : t("speciesReview.pendingNotice", { name: speciesReview.name })}
+            {speciesReview.status === "rejected" && speciesReview.note && <> {t("speciesReview.reason", { note: speciesReview.note })}</>}
+          </p>
+        )}
         {!isEditing && quota && <p className="listing-editor-notice">{t("createListing.quota", { remaining: quota.remaining_post_count, max: quota.max_post_count })}</p>}
         {!isEditing && quotaError && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{errorText(t, quotaError)}</p>}
         {!isEditing && quota && quota.remaining_post_count === 0 && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{t("createListing.quotaReached")}</p>}
         {created ? (
           <section className="listing-editor-created" role="status">
-            <h2>{t("createListing.created.heading")}</h2>
-            <p>{t("createListing.created.body", { title: created.title })}</p>
+            <h2>{created.speciesReview ? t("speciesReview.createdHeading") : t("createListing.created.heading")}</h2>
+            {created.speciesReview
+              ? <p className="listing-editor-species-review">{t("speciesReview.createdPending", { name: created.speciesReview.name })}</p>
+              : <p>{t("createListing.created.body", { title: created.title })}</p>}
             {created.photoError && (
               <p className="listing-editor-result--error">
                 {t("createListing.errors.photos", { reason: created.photoError })}{" "}
@@ -308,7 +340,15 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
             onChange={(files) => updateField("media", files)}
             onCoverChange={setCoverIndex}
           />
-          <BasicDetailsSection formData={formData} onChange={updateFormData} onSpeciesChange={(species) => updateField("species", species)} />
+          <BasicDetailsSection
+            formData={formData}
+            onChange={updateFormData}
+            speciesList={speciesList}
+            onSpeciesChange={(species, speciesId) => {
+              setFormData((current) => ({ ...current, species, speciesId }));
+              setSubmitted(false);
+            }}
+          />
           {formData.category === "live_animal" && (
             <BiologicalDataSection
               formData={formData}

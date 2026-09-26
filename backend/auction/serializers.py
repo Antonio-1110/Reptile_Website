@@ -106,7 +106,7 @@ class AuctionSerializer(serializers.ModelSerializer):
         }
         if obj.live_animal_post_id:
             summary.update({
-                'species_name': post.species.name,
+                'species_name': post.species.name if post.species else None,
                 'sex': post.sex,
                 'life_stage': post.life_stage,
                 'genes': LiveAnimalPostSerializer().get_genes(post),
@@ -190,6 +190,10 @@ class AuctionSerializer(serializers.ModelSerializer):
             })
         if post.status == post.Status.SOLD:
             raise serializers.ValidationError({'detail': _("A sold listing can't be auctioned.")})
+        if live_animal_post and live_animal_post.species_id is None:
+            raise serializers.ValidationError({
+                'detail': _("This listing's species is still being reviewed. It can be auctioned once it's published."),
+            })
         listing_filter = {'live_animal_post': post} if live_animal_post else {'equipment_post': post}
         if Auction.objects.filter(status=Auction.Status.ACTIVE, **listing_filter).exists():
             raise serializers.ValidationError({

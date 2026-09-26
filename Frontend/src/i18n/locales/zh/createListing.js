@@ -28,7 +28,6 @@ export default {
     loadForEdit: "無法載入要編輯的刊登。",
     update: "無法更新刊登。",
     publish: "無法發布刊登。",
-    unknownSpecies: "請從現有的物種清單中選擇物種。",
     photos: "刊登內容已儲存，但照片上傳失敗：{{reason}}",
     photosOnEdit: "變更已儲存，但照片上傳失敗：{{reason}} 請重新選擇照片並儲存以再試一次。",
     field: "{{field}}：{{message}}",
@@ -70,7 +69,6 @@ export default {
     species: "物種",
     speciesPlaceholder: "輸入物種名稱",
     speciesOptions: "選擇已儲存的物種",
-    other: "其他",
   },
   categories: { live_animal: "活體動物", enclosure: "飼養設備", heating: "加熱設備", food: "食物", accessories: "配件" },
   equipment: {

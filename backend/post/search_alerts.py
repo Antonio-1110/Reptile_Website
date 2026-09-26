@@ -19,7 +19,7 @@ from .models import LiveAnimalPost, SavedSearch
 
 # Same fields as the marketplace's ?search= (LiveAnimalViewSet.search_fields), so an alert matches
 # exactly what the user would see.
-SEARCH_FIELDS = ['title', 'description', 'genetics', 'species__name']
+SEARCH_FIELDS = ['title', 'description', 'genetics', 'species__name', 'species__aliases__name']
 ALLOWED_KEYS = set(LiveAnimalPostFilter.base_filters) | {'search'}
 # How many new listings one email lists (the rest are counted).
 LISTINGS_PER_EMAIL = 10
@@ -48,14 +48,16 @@ def _stable_urlencode(params):
 def matching_listings(saved_search, since):
     """Listings created after `since` that match the saved search, other than the user's own."""
     params = QueryDict(saved_search.query)
-    # Hidden (moderated) and sold listings are left out, as they are from the marketplace itself.
-    queryset = LiveAnimalPost.objects.filter(created_at__gt=since, is_hidden=False).exclude(
+    # Unpublished (hidden, or species under review) and sold listings are left out, as they are from
+    # the marketplace itself.
+    queryset = LiveAnimalPost.objects.filter(LiveAnimalPost.PUBLISHED, created_at__gt=since).exclude(
         status=LiveAnimalPost.Status.SOLD,
     ).exclude(account=saved_search.account)
     queryset = LiveAnimalPostFilter(data=params, queryset=queryset).qs
     for term in params.get('search', '').split():
         queryset = queryset.filter(reduce(operator.or_, (Q(**{f'{field}__icontains': term}) for field in SEARCH_FIELDS)))
-    return queryset.select_related('species').order_by('-created_at', '-id')
+    # distinct: an alias match joins the species' aliases, one row per alias.
+    return queryset.select_related('species').distinct().order_by('-created_at', '-id')
 
 
 def send_alert(saved_search, now=None):

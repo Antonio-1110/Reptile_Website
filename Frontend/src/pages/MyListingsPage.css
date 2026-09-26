@@ -203,6 +203,23 @@
   font-weight: 700;
 }
 
+.my-listings-species-review {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.my-listings-species-review--pending {
+  color: #1c1400;
+  background: #fbbf24;
+}
+
+.my-listings-species-review--rejected {
+  color: #fff;
+  background: #b91c1c;
+}
+
 .my-listings-skeleton-text {
   display: grid;
   flex: 1;

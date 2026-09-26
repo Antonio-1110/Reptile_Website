@@ -28,7 +28,6 @@ export default {
     loadForEdit: "Unable to load this listing for editing.",
     update: "Unable to update listing.",
     publish: "Unable to publish listing.",
-    unknownSpecies: "Choose a species from the stored species list.",
     photos: "Your listing was saved, but the photos couldn't be uploaded: {{reason}}",
     photosOnEdit: "Your changes were saved, but the photos couldn't be uploaded: {{reason}} Choose the photos again and save to retry.",
     field: "{{field}}: {{message}}",
@@ -70,7 +69,6 @@ export default {
     species: "Species",
     speciesPlaceholder: "Type a species name",
     speciesOptions: "Choose a stored species",
-    other: "Other",
   },
   categories: {
     live_animal: "Live Animal",
