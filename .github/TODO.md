@@ -108,7 +108,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Document frontend component responsibilities and API integration patterns
 - [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
 - [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
-- [ ] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+- [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+      (`.github/workflows/ci.yml`; also fails on a model change without its migration)
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
 - [ ] Remove the empty `.github/appmod/` folder if it's no longer used

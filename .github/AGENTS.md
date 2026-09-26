@@ -217,6 +217,10 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
   (pinned) or `Frontend/package.json` and say why.
 
 ### Verify before declaring done
+CI (`.github/workflows/ci.yml`) runs on every PR: backend `check`, `makemigrations --check`, the test
+suite (with `DEBUG` off), and frontend `lint` + `build`. Run the same locally before pushing; CI green
+is the floor, not the bar.
+
 Tests passing is necessary, not sufficient, for web work. Pick what fits the change:
 
 | Change | Minimum verification |
