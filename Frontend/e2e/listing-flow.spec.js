@@ -21,8 +21,9 @@ test('seller lists an animal with a photo; a buyer views it and contacts the sel
   await page.getByRole('option', { name: 'Ball Pythons' }).click();
   await page.getByLabel('Location').selectOption({ label: 'Taipei City' });
   await page.getByRole('checkbox').last().check();
-  await page.getByRole('button', { name: 'Publish Listing' }).click();
-  await expect(page.locator('.listing-editor-result--success')).toBeVisible();
+  await page.getByRole('button', { name: 'Publish listing' }).click();
+  // The form gives way to a "your listing is live" panel, so it can't be published twice by accident.
+  await expect(page.getByRole('heading', { name: 'Your listing is live' })).toBeVisible();
 
   // The listing exists, with the uploaded photo as its cover.
   const search = await (await request.get(`${API}/posts/live-animals/?search=${encodeURIComponent(title)}`)).json();
