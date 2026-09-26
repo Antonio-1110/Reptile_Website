@@ -15,6 +15,7 @@ vi.mock('./pages/ListingDetail/ListingDetailPage', () => ({
 vi.mock('./pages/SellerProfilePage', () => ({ default: ({ sellerId }) => <p>seller {sellerId}</p> }));
 vi.mock('./pages/AccountSettingsPage', () => ({ default: () => <p>settings page</p> }));
 vi.mock('./pages/SignInPage', () => ({ default: () => <p>sign-in page</p> }));
+vi.mock('./pages/Auctions/AuctionsPage', () => ({ default: () => <p>auctions page</p> }));
 vi.mock('./pages/ListingEditor/ListingEditorPage', () => ({
   default: ({ editId, editCategory }) => <p>editor {editId} {editCategory}</p>,
 }));
@@ -90,5 +91,6 @@ describe('App routing', () => {
     renderAt('/');
     fireEvent.click(screen.getByRole('link', { name: 'Auctions' }));
     expect(screen.getByLabelText('url')).toHaveTextContent('/auctions');
+    expect(screen.getByText('auctions page')).toBeInTheDocument();
   });
 });
