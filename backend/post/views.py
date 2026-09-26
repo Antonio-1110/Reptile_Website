@@ -3,6 +3,7 @@ import uuid
 
 from django.shortcuts import render
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Exists, OuterRef
@@ -49,6 +50,9 @@ def send_inquiry_to_seller(requester, post):
 
 def notify_price_drop(post, old_price, favorite_field):
     """Email everyone who saved the listing (except its owner) that its price went down."""
+    # The marker lives in the cache: several backend workers need a shared cache for this to be exact.
+    if not cache.add(f'price-drop:{favorite_field}:{post.pk}', True, timeout=settings.PRICE_DROP_EMAIL_HOURS * 3600):
+        return
     values = {'title': post.title, 'old': format_money(old_price), 'new': format_money(post.price)}
     savers = Favorite.objects.filter(**{favorite_field: post}).exclude(account=post.account)
     # One email each: a shared To: line would show every saver's address to the others.

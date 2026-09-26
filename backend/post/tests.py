@@ -675,6 +675,16 @@ class FavoritesTests(APITestCase):
 		self.assertIn('8,000', mail.outbox[0].body)
 		self.assertIn('10,000', mail.outbox[0].body)
 
+	@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
+	def test_repeated_price_drops_email_savers_once_a_day(self):
+		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)
+		self.client.force_authenticate(self.seller)
+		url = reverse('live-animal-detail', args=[self.post.id])
+		with self.captureOnCommitCallbacks(execute=True):
+			for price in (9000, 8000, 7000):
+				self.client.patch(url, {'price': price}, format='json')
+		self.assertEqual(len(mail.outbox), 1)
+
 	def test_price_rise_or_other_edits_send_nothing(self):
 		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)
 		self.client.force_authenticate(self.seller)
