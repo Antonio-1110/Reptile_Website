@@ -29,6 +29,9 @@ export default function ListingCard({ animal }) {
         ) : (
           <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
         )}
+        {animal.status && animal.status !== 'available' && (
+          <span className={`card-status card-status--${animal.status}`}>{t(`listingStatus.${animal.status}`)}</span>
+        )}
         <FavoriteButton
           listingId={animal.id}
           category={isEquipment ? 'equipment' : 'live_animal'}

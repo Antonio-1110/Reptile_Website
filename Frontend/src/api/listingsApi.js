@@ -25,6 +25,7 @@ function normalizeListing(item) {
     ageYears: item.age_years,
     size: item.size_cm,
     weight: item.weight_grams,
+    status: item.status || "available",
     shippingMethods: item.shipping_methods || [],
     isFavorite: Boolean(item.is_favorite), // saved by the signed-in viewer
     isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
@@ -192,6 +193,11 @@ export async function saveListingPhotos(id, category, items) {
   });
   body.append("order", JSON.stringify(order));
   return requestWithAuth(`${listingEndpoint(category, id)}photos/`, { method: "POST", body });
+}
+
+// status: "available", "reserved" or "sold" (sold listings leave the marketplace but keep their page).
+export async function updateListingStatus(id, category, status) {
+  return requestWithAuth(listingEndpoint(category, id), { method: "PATCH", body: JSON.stringify({ status }) });
 }
 
 export async function deleteListing(id, category) {

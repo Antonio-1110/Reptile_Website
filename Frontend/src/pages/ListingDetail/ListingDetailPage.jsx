@@ -194,8 +194,8 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
 
           <aside className="listing-detail-card listing-detail-summary">
             <div className="listing-detail-summary-top">
-              <span className={`listing-detail-kicker${showAuction ? ' listing-detail-kicker--auction' : ''}`}>
-                {showAuction ? t('auctions.detail.kicker') : t('listingDetail.forSale')}
+              <span className={`listing-detail-kicker${showAuction ? ' listing-detail-kicker--auction' : ` listing-detail-kicker--${listing.status}`}`}>
+                {showAuction ? t('auctions.detail.kicker') : t(listing.status === 'available' ? 'listingDetail.forSale' : `listingStatus.${listing.status}`)}
               </span>
               <div className="listing-detail-summary-actions">
                 <span className="listing-detail-rating">★ {listing.rating}</span>
@@ -291,7 +291,10 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
                     {t(auction.saleFellThrough ? 'listingDetail.saleFellThrough' : 'listingDetail.auctionEndedNoBids')}
                   </p>
                 )}
-                <ContactSellerPanel listingId={listingId} category={category} onToast={showToast} />
+                {listing.status === 'reserved' && <p className="listing-detail-note">{t('listingDetail.reservedNote')}</p>}
+                {listing.status === 'sold'
+                  ? <p className="listing-detail-note">{t('listingDetail.soldNote')}</p>
+                  : <ContactSellerPanel listingId={listingId} category={category} onToast={showToast} />}
               </>
             )}
 

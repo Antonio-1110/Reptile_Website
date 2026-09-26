@@ -300,6 +300,10 @@ real login flows.
   list of the final photos, cover first, where each entry is one of the listing's current photo URLs
   (kept) or `new:<n>` (the n-th file in `photos`). Current photos left out are removed, and uploaded
   files among them are deleted. The account's image limit applies to the total.
+- Listings have a `status`: `available` (default), `reserved` or `sold`, set by the owner with `PATCH`.
+  List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
+  listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
+  listing sold.
 - `POST`/`DELETE /live-animals/<id>/favorite/` (and `equipment/…`) — save or unsave a listing (signed in);
   `GET /live-animals/favorites/` lists the user's saved listings, newest first. Listing responses carry
   `is_favorite` for the viewer. Lowering a listing's price emails everyone who saved it (one email each).
