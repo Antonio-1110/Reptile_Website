@@ -95,7 +95,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
   limits) are settings read from environment variables; never hard-code them.
 - Users can never grant themselves a plan or reputation. `account_type`, `is_paid_account`,
   `verified_seller`, `seller_rating` and `total_reviews` are read-only on the profile and registration
-  endpoints. Commercial is a paid upgrade that only a payment-confirmed upgrade flow may set.
+  endpoints. Commercial is a paid upgrade that only a payment-confirmed upgrade flow may set; the rating
+  and review count are only ever recomputed from `Review` rows (`account/reviews.py`).
 
 **Privacy.**
 - Public listing responses must not contain `contact_info`, the seller's `email`, `phone_number`,

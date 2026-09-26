@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import ListingCard from '../components/listings/ListingCard';
 import ListingGrid from '../components/listings/ListingGrid';
 import { getListingsPage, getSellerProfile } from '../api/listingsApi';
+import SellerReviews from './SellerReviews';
 import { intlLocale } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
 
@@ -27,12 +28,16 @@ export default function SellerProfilePage({ sellerId }) {
       .catch((error) => setFeed((current) => ({ ...current, loading: false, error: toErrorState(error, 'listings.loadError') })));
   }, [sellerId]);
 
-  useEffect(() => {
+  const loadProfile = useCallback(() => {
     getSellerProfile(sellerId)
       .then(setProfile)
       .catch((error) => (error.status === 404 ? setProfile(false) : setProfileError(toErrorState(error, 'sellerProfile.loadError'))));
+  }, [sellerId]);
+
+  useEffect(() => {
+    loadProfile();
     loadListings(1);
-  }, [sellerId, loadListings]);
+  }, [loadProfile, loadListings]);
 
   if (profileError) {
     return <div className="seller-page"><p role="alert" className="seller-page-error">{errorText(t, profileError)}</p></div>;
@@ -71,6 +76,9 @@ export default function SellerProfilePage({ sellerId }) {
             {profile.bio && <p className="seller-bio">{profile.bio}</p>}
           </div>
         </section>
+
+        {/* Refreshing the profile after a review updates the rating badge above. */}
+        <SellerReviews profile={profile} onRatingChanged={loadProfile} />
 
         <h2 className="seller-listings-heading">{t('sellerProfile.listings', { count: profile.liveAnimalCount })}</h2>
         {profile.equipmentCount > 0 && <p className="seller-page-status">{t('sellerProfile.equipmentCount', { count: profile.equipmentCount })}</p>}

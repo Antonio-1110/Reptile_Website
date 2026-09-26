@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 17:09+0800\n"
+"POT-Creation-Date: 2026-09-26 21:11+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: account/views.py:109
+msgid ""
+"You can review a seller after contacting them about a listing or buying from"
+" them."
+msgstr "與賣家聯絡過某則刊登或向其購買後，才能評價這位賣家。"
 
 #: auction/notifications.py:16
 msgid ""
@@ -756,7 +762,6 @@ msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢
 
 #: post/views.py:67
 #, python-format
-#| msgid "Sale completed: \"%(title)s\""
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 

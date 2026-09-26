@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from django.db.models import Count, Q
-from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import GenericAPIView, RetrieveAPIView, RetrieveUpdateAPIView, get_object_or_404
 from rest_framework.views import APIView
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework.response import Response
-from .serializers import AccountSerializer, ProfileAccountSerializer, SellerProfileSerializer
-from .models import Account
+from rest_framework.throttling import ScopedRateThrottle
+from django.utils.translation import gettext as _
+from . import reviews
+from .serializers import AccountSerializer, ProfileAccountSerializer, ReviewSerializer, SellerProfileSerializer
+from .models import Account, Review
 
 # Create your views here.
 
@@ -55,6 +58,14 @@ class AccountPlans(APIView):
 
 
 
+def public_sellers():
+    """Accounts with a public profile: active, and they've listed something (see SellerProfile)."""
+    return Account.objects.filter(is_active=True).annotate(
+        live_animal_count=Count('liveanimalpost_posts', distinct=True),
+        equipment_count=Count('equipmentpost_posts', distinct=True),
+    ).filter(Q(live_animal_count__gt=0) | Q(equipment_count__gt=0))
+
+
 class SellerProfile(RetrieveAPIView):
     """
     A seller's public profile. Only accounts that have listed something have one: otherwise any
@@ -64,7 +75,48 @@ class SellerProfile(RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return Account.objects.filter(is_active=True).annotate(
-            live_animal_count=Count('liveanimalpost_posts', distinct=True),
-            equipment_count=Count('equipmentpost_posts', distinct=True),
-        ).filter(Q(live_animal_count__gt=0) | Q(equipment_count__gt=0))
+        return public_sellers()
+
+
+class SellerReviews(GenericAPIView):
+    """
+    GET: a seller's reviews, newest first (public). POST: write or update your review
+    ({rating: 1-5, comment}); only if you contacted the seller about a listing or bought from them at
+    auction. DELETE: remove your review. The seller's rating is recomputed each time.
+    """
+    serializer_class = ReviewSerializer
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'report'  # same abuse profile as reports: a few per hour is plenty
+
+    def get_permissions(self):
+        return [permissions.AllowAny()] if self.request.method == 'GET' else [permissions.IsAuthenticated()]
+
+    def get_throttles(self):
+        return [] if self.request.method == 'GET' else super().get_throttles()
+
+    def seller(self):
+        return get_object_or_404(public_sellers(), pk=self.kwargs['pk'])
+
+    def get(self, request, pk):
+        queryset = Review.objects.filter(seller=self.seller()).select_related('reviewer')
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+    def post(self, request, pk):
+        seller = self.seller()
+        if not reviews.can_review(request.user, seller):
+            return Response(
+                {'detail': _('You can review a seller after contacting them about a listing or buying from them.')},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        review, created = reviews.save_review(
+            request.user, seller, serializer.validated_data['rating'], serializer.validated_data.get('comment', ''),
+        )
+        return Response(self.get_serializer(review).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        if not reviews.delete_review(request.user, self.seller()):
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)

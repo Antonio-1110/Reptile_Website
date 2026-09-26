@@ -224,6 +224,105 @@ class SellerProfileTests(APITestCase):
         self.assertEqual(self.client.get(reverse('equipment-list'), {'seller': self.buyer.id}).data['count'], 0)
 
 
+class SellerReviewTests(APITestCase):
+    def setUp(self):
+        from post.models import LiveAnimalPost, Species
+
+        self.seller = Account.objects.create_user(username='gecko_shop', email='shop@example.com', password='pass1234')
+        self.buyer = Account.objects.create_user(
+            username='happy_buyer', email='buyer@example.com', password='pass1234', first_name='Private', last_name='Person',
+        )
+        self.other = Account.objects.create_user(username='second_buyer', email='other@example.com', password='pass1234')
+        self.stranger = Account.objects.create_user(username='stranger', email='stranger@example.com', password='pass1234')
+        LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+        self.listing = LiveAnimalPost.objects.create(
+            account=self.seller, species=Species.objects.create(name='Review Geckos'), title='Gecko', description='d', contact_info='{}',
+        )
+        self.url = reverse('seller-reviews', args=[self.seller.id])
+
+    def contacted(self, user):
+        from post.models import ContactRequest
+        ContactRequest.objects.create(requester=user, live_animal_post=self.listing)
+
+    def review(self, user, rating, comment=''):
+        self.client.force_authenticate(user)
+        return self.client.post(self.url, {'rating': rating, 'comment': comment}, format='json')
+
+    def rating(self):
+        self.seller.refresh_from_db()
+        return self.seller.seller_rating, self.seller.total_reviews
+
+    def test_only_buyers_who_contacted_the_seller_can_review(self):
+        response = self.review(self.stranger, 5)
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('contacting', response.data['detail'])
+        self.contacted(self.buyer)
+        self.assertEqual(self.review(self.buyer, 5).status_code, 201)
+
+    def test_sellers_cannot_review_themselves(self):
+        self.assertEqual(self.review(self.seller, 5).status_code, 403)
+
+    def test_rating_is_recomputed_on_every_change(self):
+        self.contacted(self.buyer)
+        self.contacted(self.other)
+        self.review(self.buyer, 5, 'Healthy gecko, great packing.')
+        self.assertEqual(self.rating(), (5.0, 1))
+        self.review(self.other, 2)
+        self.assertEqual(self.rating(), (3.5, 2))
+
+        response = self.review(self.buyer, 4, 'Updated')  # a second POST edits the same review
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.rating(), (3.0, 2))
+
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.delete(self.url).status_code, 204)
+        self.assertEqual(self.rating(), (4.0, 1))
+        self.assertEqual(self.client.delete(self.url).status_code, 404)
+
+    def test_rating_must_be_one_to_five(self):
+        self.contacted(self.buyer)
+        self.assertEqual(self.review(self.buyer, 0).status_code, 400)
+        self.assertEqual(self.review(self.buyer, 6).status_code, 400)
+        self.assertEqual(self.rating(), (0.0, 0))
+
+    def test_reviews_are_public_and_show_only_the_reviewers_username(self):
+        self.contacted(self.buyer)
+        self.review(self.buyer, 5, 'Great')
+        self.client.force_authenticate(None)
+        results = self.client.get(self.url).data['results']
+        self.assertEqual(results[0]['reviewer'], 'happy_buyer')
+        self.assertNotIn('Private', str(results))
+        self.assertFalse(results[0]['is_mine'])
+
+    def test_profile_tells_the_viewer_whether_they_can_review(self):
+        profile_url = reverse('seller-profile', args=[self.seller.id])
+        self.assertFalse(self.client.get(profile_url).data['can_review'])  # anonymous
+        self.contacted(self.buyer)
+        self.client.force_authenticate(self.buyer)
+        self.assertTrue(self.client.get(profile_url).data['can_review'])
+        self.review(self.buyer, 4, 'Nice')
+        self.assertEqual(self.client.get(profile_url).data['my_review']['rating'], 4)
+
+    def test_auction_buyers_with_a_completed_order_can_review(self):
+        from datetime import timedelta
+        from decimal import Decimal
+        from django.utils import timezone
+        from auction.models import Auction, Order
+
+        auction = Auction.objects.create(
+            seller=self.seller, live_animal_post=self.listing, starting_price=Decimal('100'), min_increment=Decimal('10'),
+            deposit_amount=Decimal('100'), currency='TWD', starts_at=timezone.now() - timedelta(days=2),
+            ends_at=timezone.now() - timedelta(days=1), status=Auction.Status.ENDED,
+        )
+        order = Order.objects.create(
+            auction=auction, buyer=self.other, source=Order.Source.BID, status=Order.Status.PAID,
+            price=Decimal('100'), currency='TWD',
+        )
+        self.assertEqual(self.review(self.other, 5).status_code, 403)  # not completed yet
+        Order.objects.filter(pk=order.pk).update(status=Order.Status.COMPLETED)
+        self.assertEqual(self.review(self.other, 5).status_code, 201)
+
+
 class PlanWorkflowTests(APITestCase):
     """
     Each plan end to end through the API, as a seller would hit it: how many listings, how many photos

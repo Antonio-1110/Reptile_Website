@@ -1,4 +1,4 @@
-import { authFetch } from "./authApi";
+import { authFetch, isLoggedIn } from "./authApi";
 import { getLocationCode, getLocationKey } from "../constants/locations";
 import i18n from "../i18n";
 import { apiFetch, requestFailedMessage } from "./http";
@@ -299,7 +299,8 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
 
 // A seller's public profile (/api/sellers/<id>/): name, badges, rating, bio, listing counts.
 export async function getSellerProfile(id) {
-  const profile = await request(`/sellers/${id}/`);
+  // Sent with the viewer's token when signed in, so can_review / my_review are theirs.
+  const profile = isLoggedIn() ? await requestWithAuth(`/sellers/${id}/`, { method: "GET" }) : await request(`/sellers/${id}/`);
   return {
     id: profile.id,
     username: profile.username,
@@ -312,7 +313,39 @@ export async function getSellerProfile(id) {
     memberSince: new Date(profile.member_since),
     liveAnimalCount: profile.live_animal_count,
     equipmentCount: profile.equipment_count,
+    canReview: Boolean(profile.can_review),
+    myReview: profile.my_review ? normalizeReview(profile.my_review) : null,
   };
+}
+
+function normalizeReview(review) {
+  return {
+    id: review.id,
+    reviewer: review.reviewer,
+    rating: review.rating,
+    comment: review.comment || "",
+    createdAt: new Date(review.created_at),
+    isMine: Boolean(review.is_mine),
+  };
+}
+
+// One page of a seller's reviews, newest first.
+export async function getSellerReviews(sellerId, page = 1) {
+  const path = `/sellers/${sellerId}/reviews/?page=${page}`;
+  const payload = isLoggedIn() ? await requestWithAuth(path, { method: "GET" }) : await request(path);
+  return { results: payload.results.map(normalizeReview), count: payload.count, hasMore: Boolean(payload.next) };
+}
+
+// Write or update the signed-in user's review of a seller.
+export async function saveSellerReview(sellerId, rating, comment) {
+  return normalizeReview(await requestWithAuth(`/sellers/${sellerId}/reviews/`, {
+    method: "POST",
+    body: JSON.stringify({ rating, comment }),
+  }));
+}
+
+export async function deleteSellerReview(sellerId) {
+  return requestWithAuth(`/sellers/${sellerId}/reviews/`, { method: "DELETE" });
 }
 
 // Where a seller's name links to.

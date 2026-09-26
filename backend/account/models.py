@@ -100,3 +100,28 @@ class Account(AbstractUser):
             'facebook': self.facebook,
         }
         return {key: value for key, value in details.items() if value}
+
+
+class Review(models.Model):
+    """
+    A buyer's rating of a seller. One per buyer and seller (the buyer can edit it). Only someone who
+    contacted the seller about a listing, or bought from them at auction, may leave one; the seller's
+    seller_rating and total_reviews are recomputed from these (see account/reviews.py).
+    """
+    seller = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='reviews_received')
+    reviewer = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='reviews_written')
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(blank=True, max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['seller', 'reviewer'], name='one_review_per_buyer_per_seller'),
+            models.CheckConstraint(condition=models.Q(rating__gte=1, rating__lte=5), name='review_rating_1_to_5'),
+            models.CheckConstraint(condition=~models.Q(seller=models.F('reviewer')), name='no_reviewing_yourself'),
+        ]
+
+    def __str__(self):
+        return f'{self.reviewer} → {self.seller}: {self.rating}★'
