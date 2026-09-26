@@ -2,8 +2,9 @@ import './AuctionRedirectPage.css';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getAuction } from '../../api/auctionsApi';
+import { listingPagePath } from '../../api/listingsApi';
 
-// Old /auctions/:id links: an auction lives on its animal's page, so send the visitor there.
+// Old /auctions/:id links: an auction lives on its listing's page, so send the visitor there.
 export default function AuctionRedirectPage({ auctionId }) {
   const { t } = useTranslation();
   const [failed, setFailed] = useState(false);
@@ -11,9 +12,7 @@ export default function AuctionRedirectPage({ auctionId }) {
   useEffect(() => {
     getAuction(auctionId)
       .then((auction) => {
-        // Equipment has no detail page yet, so only live-animal auctions have somewhere to go.
-        if (auction.listing.category === 'live_animal') window.location.replace(`/posts/${auction.listing.id}`);
-        else setFailed(true);
+        window.location.replace(listingPagePath(auction.listing.id, auction.listing.category));
       })
       .catch(() => setFailed(true));
   }, [auctionId]);

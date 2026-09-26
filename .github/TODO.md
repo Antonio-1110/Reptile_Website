@@ -37,7 +37,10 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       animal's page (and in emails)
 - [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
-- [ ] Equipment has no public detail page, so equipment auctions have nowhere to be shown
+- [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
+      seller, or the auction with bids, buy now and the order), with equipment facts and wording
+- [ ] Auction/order emails (`auction/notifications.py`) and the "can't buy your own animal" error say
+      "animal" even for equipment; they need equipment wording (plus `zh_Hant` translations)
 - [x] Add Traditional Chinese translations for the new photo-upload errors ("Cover index is out of
       range.", "\"%(name)s\" is larger than 5 MB.") via `makemessages` / `compilemessages`
 
@@ -68,8 +71,9 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add richer filtering for location, price and species (live animals)
 - [x] Add richer filtering for equipment (price range, search tags, equipment category): new
       `category` field (set in the editor with `condition`) and `EquipmentPostFilter`
-- [ ] Equipment browse page: the equipment filters exist on the API, but the marketplace only lists
-      live animals
+- [x] Browse equipment: the marketplace filter sidebar has the same Live Animals / Equipment switch as
+      the post page (`?category=equipment`), with equipment type, condition, price, location,
+      shipping and posting-date filters
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)

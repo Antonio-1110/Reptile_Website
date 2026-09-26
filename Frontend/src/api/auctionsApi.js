@@ -92,8 +92,9 @@ export async function getAuctionBids(id, page = 1) {
 
 // A live-animal listing's most recent auction that wasn't cancelled (running, upcoming or ended),
 // or null. A listing has at most one active auction, and it's always the newest.
-export async function getLatestAuctionForListing(listingId) {
-  const payload = await get(`/auctions/?live_animal_post=${listingId}&ordering=-created_at`);
+export async function getLatestAuctionForListing(listingId, category = "live_animal") {
+  const field = category === "equipment" ? "equipment_post" : "live_animal_post";
+  const payload = await get(`/auctions/?${field}=${listingId}&ordering=-created_at`);
   const latest = payload.results.find((item) => item.status !== "cancelled");
   return latest ? normalizeAuction(latest) : null;
 }
