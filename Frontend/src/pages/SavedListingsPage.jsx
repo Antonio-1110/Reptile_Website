@@ -5,6 +5,7 @@ import ListingCard from '../components/listings/ListingCard';
 import ListingGrid from '../components/listings/ListingGrid';
 import { getFavoritesPage, isLoggedIn } from '../api/listingsApi';
 import { errorText, toErrorState } from '../utils/errorState';
+import { Link } from 'react-router';
 
 // The animals the user saved with the heart, most recently saved first. Unsaving one here leaves it
 // on the page (with an empty heart) until the next visit, so it can be saved again straight away.
@@ -33,7 +34,7 @@ export default function SavedListingsPage() {
     return (
       <div className="saved-page saved-page--center">
         <h1>{t('favorites.signedOutTitle')}</h1>
-        <a href="/signin?next=/saved">{t('auth.signIn')}</a>
+        <Link to="/signin?next=/saved">{t('auth.signIn')}</Link>
       </div>
     );
   }
@@ -54,7 +55,7 @@ export default function SavedListingsPage() {
         {listings && listings.length === 0 && (
           <div className="saved-page-empty">
             <p>{t('favorites.empty')}</p>
-            <a href="/marketplace">{t('navigation.browseMarketplace')}</a>
+            <Link to="/marketplace">{t('navigation.browseMarketplace')}</Link>
           </div>
         )}
         {listings && listings.length > 0 && (

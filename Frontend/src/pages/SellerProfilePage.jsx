@@ -7,6 +7,7 @@ import { getListingsPage, getSellerProfile } from '../api/listingsApi';
 import SellerReviews from './SellerReviews';
 import { intlLocale } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
+import { Link } from 'react-router';
 
 // A seller's public page: who they are, their badges and rating, and their listings. No contact
 // details: buyers reach a seller through a listing's "Contact seller".
@@ -48,7 +49,7 @@ export default function SellerProfilePage({ sellerId }) {
       <div className="seller-page">
         <div className="seller-page-missing">
           <h1>{t('sellerProfile.notFound')}</h1>
-          <a href="/marketplace">{t('navigation.backToMarketplace')}</a>
+          <Link to="/marketplace">{t('navigation.backToMarketplace')}</Link>
         </div>
       </div>
     );

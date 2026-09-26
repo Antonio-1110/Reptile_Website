@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { deleteSellerReview, getSellerReviews, isLoggedIn, saveSellerReview } from '../api/listingsApi';
 import { formatDateTime } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
+import { Link } from 'react-router';
 
 const STARS = [1, 2, 3, 4, 5];
 
@@ -120,7 +121,7 @@ export default function SellerReviews({ profile, onRatingChanged }) {
     );
   } else if (!isLoggedIn()) {
     const next = encodeURIComponent(window.location.pathname);
-    formArea = <p className="review-hint"><a href={`/signin?next=${next}`}>{t('reviews.signIn')}</a></p>;
+    formArea = <p className="review-hint"><Link to={`/signin?next=${next}`}>{t('reviews.signIn')}</Link></p>;
   } else {
     formArea = <p className="review-hint">{t('reviews.notEligible')}</p>;
   }

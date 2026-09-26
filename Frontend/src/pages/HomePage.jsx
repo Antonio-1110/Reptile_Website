@@ -7,6 +7,7 @@ import EmptyState from "../components/ui/EmptyState";
 import { getListingsPage } from "../api/listingsApi";
 import coverImage from "../assets/cover.jpg";
 import "./HomePage.css";
+import { Link } from "react-router";
 
 const HOME_POINTS = ["privacy", "payments", "reports"];
 
@@ -59,8 +60,8 @@ export default function HomePage() {
             <h1>{t("home.heading")}</h1>
             <p>{t("home.intro")}</p>
             <div className="home-hero-actions">
-              <a href="/marketplace" className="home-primary-action">{t("home.browse")}</a>
-              <a href="/postinput" className="home-secondary-action">{t("home.sell")}</a>
+              <Link to="/marketplace" className="home-primary-action">{t("home.browse")}</Link>
+              <Link to="/postinput" className="home-secondary-action">{t("home.sell")}</Link>
             </div>
           </div>
           <img className="home-hero-mark" src={coverImage} alt={t("home.coverAlt")} />
@@ -95,7 +96,7 @@ export default function HomePage() {
           {status === "ready" && listings.length === 0 && (
             <EmptyState
               title={t("home.emptyTitle")}
-              actions={<a href="/postinput" className="empty-state-primary">{t("home.emptyAction")}</a>}
+              actions={<Link to="/postinput" className="empty-state-primary">{t("home.emptyAction")}</Link>}
             >
               {t("home.emptyBody")}
             </EmptyState>

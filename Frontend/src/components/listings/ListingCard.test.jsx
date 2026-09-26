@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import ListingCard from './ListingCard';
 
@@ -9,7 +10,7 @@ const animal = {
 
 describe('ListingCard', () => {
   it('shows what a buyer scans for and links to the listing', () => {
-    render(<ListingCard animal={animal} />);
+    render(<ListingCard animal={animal} />, { wrapper: MemoryRouter });
     expect(screen.getByRole('img', { name: animal.title })).toHaveAttribute('src', animal.image);
     expect(screen.getByText('Pastel')).toBeInTheDocument();
     expect(screen.getByText('Pied')).toBeInTheDocument();

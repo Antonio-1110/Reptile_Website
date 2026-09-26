@@ -20,6 +20,7 @@ import useNow from '../../hooks/useNow';
 import { formatMoney, getHeadlinePrice } from '../../utils/auctionFormat';
 import { errorText } from '../../utils/errorState';
 import { buildMarketplaceUrl } from '../../utils/marketplaceSearch';
+import { Link } from 'react-router';
 
 // The one page for a listing (an animal at /posts/:id, equipment at /equipment/:id), whether it's for
 // sale at a fixed price or being auctioned. While an auction runs (or has ended in a sale) the summary
@@ -75,7 +76,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             actions={(
               <>
                 {!notFound && <button type="button" className="empty-state-primary" onClick={retryLoad}>{t('listings.retry')}</button>}
-                <a href="/marketplace">{t('navigation.backToMarketplace')}</a>
+                <Link to="/marketplace">{t('navigation.backToMarketplace')}</Link>
               </>
             )}
           >
@@ -159,10 +160,10 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
     <div className="listing-detail-page">
       <div className="listing-detail-inner">
         <div className="listing-detail-topbar">
-          <a href={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)} className="listing-detail-back">
+          <Link to={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)} className="listing-detail-back">
             {showAuction ? t('auctions.detail.back') : t('listingDetail.back')}
-          </a>
-          <a href={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</a>
+          </Link>
+          <Link to={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</Link>
         </div>
 
         <div className="listing-detail-layout">
@@ -299,12 +300,12 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </>
             )}
 
-            <a
-              href={sellerPagePath(listing.sellerId)}
+            <Link
+              to={sellerPagePath(listing.sellerId)}
               className="listing-detail-more-link"
             >
               {t('listingDetail.moreFromSeller')}
-            </a>
+            </Link>
           </aside>
 
           <div className="listing-detail-content">

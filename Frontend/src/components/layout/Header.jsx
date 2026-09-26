@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { isLoggedIn, logout } from '../../api/authApi';
 import { getSpeciesLabel } from '../../constants/species';
+import { Link, useLocation } from 'react-router';
 
 const SEARCH_OPTIONS = [
   { type: 'species', value: 'Ball Pythons' },
@@ -20,6 +21,7 @@ const SEARCH_OPTIONS = [
 
 function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSelectedSearchTags = () => {}, onSearch = null }) {
   const { t } = useTranslation();
+  const location = useLocation();
   const [draftTerm, setDraftTerm] = useState(searchTerm);
   const [draftTags, setDraftTags] = useState(selectedSearchTags);
   // On narrow screens the links live in a drop-down menu (see Header.css); wide screens ignore this.
@@ -58,8 +60,9 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
       setSelectedSearchTags(draftTags);
     }
   };
-  const currentPath = `${window.location.pathname}${window.location.search}`;
-  const signInHref = window.location.pathname === '/signin' ? currentPath : `/signin?next=${encodeURIComponent(currentPath)}`;
+  const currentPath = `${location.pathname}${location.search}`;
+  const signInHref = location.pathname === '/signin' ? currentPath : `/signin?next=${encodeURIComponent(currentPath)}`;
+  // Signing out reloads the app rather than navigating, so nothing from the old session lingers.
   const handleSignOut = () => {
     logout();
     window.location.href = '/marketplace';
@@ -72,10 +75,10 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   return (
     <header className="header">
       <div className="leftSection">
-        <a href="/" className="logo">
+        <Link to="/" className="logo">
           <span className="logoMorph">MORPH</span>
           <span className="logoMarket">MARKET</span>
-        </a>
+        </Link>
         <LanguageSwitcher />
       </div>
 
@@ -118,20 +121,23 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
         </form>
       </div>
 
-      <nav id="header-menu" ref={menuRef} className={`rightSection${menuOpen ? ' is-open' : ''}`}>
-        <a href="/auctions" className="headerLink">{t('navigation.auctions')}</a>
+      <nav id="header-menu" ref={menuRef} className={`rightSection${menuOpen ? ' is-open' : ''}`}
+        // Links navigate without a page load, so the open menu has to be closed by hand.
+        onClick={(event) => event.target.closest('a') && setMenuOpen(false)}
+      >
+        <Link to="/auctions" className="headerLink">{t('navigation.auctions')}</Link>
         <button type="button" className="headerLink">{t('navigation.community')}</button>
         {isLoggedIn() ? (
           <>
-            <a href="/my-listings" className="headerLink">{t('navigation.myListings')}</a>
-            <a href="/postinput" className="headerLink headerPostLink">{t('navigation.postListing')}</a>
-            <a href="/settings" className="headerButton">{t('navigation.account')}</a>
+            <Link to="/my-listings" className="headerLink">{t('navigation.myListings')}</Link>
+            <Link to="/postinput" className="headerLink headerPostLink">{t('navigation.postListing')}</Link>
+            <Link to="/settings" className="headerButton">{t('navigation.account')}</Link>
             <button type="button" className="headerLink" onClick={handleSignOut}>{t('navigation.signOut')}</button>
           </>
         ) : (
           <>
-            <a href="/postinput" className="headerLink headerPostLink">{t('navigation.postListing')}</a>
-            <a href={signInHref} className="headerButton">{t('navigation.signIn')}</a>
+            <Link to="/postinput" className="headerLink headerPostLink">{t('navigation.postListing')}</Link>
+            <Link to={signInHref} className="headerButton">{t('navigation.signIn')}</Link>
           </>
         )}
       </nav>

@@ -1,20 +1,22 @@
 import './FavoriteButton.css';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router';
 import { isLoggedIn, setFavorite } from '../../api/listingsApi';
 
 // The heart that saves a listing. Signed-out visitors are sent to sign in and come back. The change
 // shows at once and is undone if the request fails.
 export default function FavoriteButton({ listingId, category = 'live_animal', initial = false, className = '', onChange }) {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [saved, setSaved] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   const toggle = async () => {
     if (!isLoggedIn()) {
-      const next = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
-      window.location.href = `/signin?next=${next}`;
+      navigate(`/signin?next=${encodeURIComponent(location.pathname + location.search)}`);
       return;
     }
     const want = !saved;

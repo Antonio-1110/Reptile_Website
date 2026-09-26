@@ -150,8 +150,9 @@ update that file **and** the API overview in the root README.
 
 ### Frontend data flow
 
-- Routing is hand-rolled in `App.jsx` (`renderPage` matches `window.location.pathname`). No router
-  library yet — add routes there.
+- Routing uses React Router (`react-router`, declarative `<Routes>` in `App.jsx`); add routes there.
+  Internal links are `<Link to>` and code navigates with `useNavigate()`, not `window.location`
+  (sign-in and sign-out are the exceptions: they reload so nothing from the old session lingers).
 - **All network calls go through `src/api/`.** `http.js` → `apiFetch` (adds `Accept-Language`,
   translates network errors); `authApi.js` → `authFetch` (adds JWT, refreshes once on 401, sets JSON
   `Content-Type` unless the body is `FormData`); `listingsApi.js` → listing calls and the mapping
