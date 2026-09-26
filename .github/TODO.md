@@ -88,7 +88,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 
 - [ ] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
-- [ ] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
+- [x] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
 - [ ] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
 
