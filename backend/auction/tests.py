@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from unittest import mock
 
 from django.conf import settings
 from django.core import mail
@@ -232,6 +233,56 @@ class BiddingTests(AuctionTestCase):
         self.assertEqual(bid['amount'], '5000.00')
         self.assertFalse(bid['is_mine'])
         self.assertNotIn('bidder', bid)
+
+
+@override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT, AUCTION_EXTEND_WINDOW_MINUTES=5, AUCTION_EXTEND_BY_MINUTES=5)
+class AntiSnipingTests(AuctionTestCase):
+    def bid_with_time_left(self, time_left):
+        auction = self.create_auction(ends_at=timezone.now() + time_left)
+        self.pay_deposit(auction, self.buyer)
+        self.assertEqual(self.bid(auction, self.buyer, '5000.00').status_code, 201)
+        auction.refresh_from_db()
+        return auction
+
+    def test_bid_in_the_last_minutes_extends_the_auction(self):
+        auction = self.bid_with_time_left(timedelta(minutes=1))
+        bid_time = auction.bids.get().created_at
+        self.assertEqual(auction.ends_at, bid_time + timedelta(minutes=5))
+
+    def test_extended_auction_is_not_settled_at_its_original_end(self):
+        original_end = timezone.now() + timedelta(seconds=30)
+        auction = self.create_auction(ends_at=original_end)
+        self.pay_deposit(auction, self.buyer)
+        self.bid(auction, self.buyer, '5000.00')
+        with mock.patch('django.utils.timezone.now', return_value=original_end + timedelta(seconds=1)):
+            call_command('close_auctions')
+        auction.refresh_from_db()
+        self.assertEqual(auction.status, Auction.Status.ACTIVE)
+        self.assertGreater(auction.ends_at, original_end)
+
+    def test_earlier_bid_leaves_the_end_time_alone(self):
+        ends_at = timezone.now() + timedelta(hours=2)
+        auction = self.bid_with_time_left(ends_at - timezone.now())
+        self.assertAlmostEqual(auction.ends_at, ends_at, delta=timedelta(seconds=1))
+
+    @override_settings(AUCTION_EXTEND_WINDOW_MINUTES=0)
+    def test_window_of_zero_turns_extension_off(self):
+        ends_at = timezone.now() + timedelta(minutes=1)
+        auction = self.bid_with_time_left(ends_at - timezone.now())
+        self.assertAlmostEqual(auction.ends_at, ends_at, delta=timedelta(seconds=1))
+
+    @override_settings(AUCTION_EXTEND_WINDOW_MINUTES=10, AUCTION_EXTEND_BY_MINUTES=2)
+    def test_extension_never_shortens_the_auction(self):
+        # 8 minutes left is inside the 10-minute window, but "2 minutes from the bid" would be earlier.
+        ends_at = timezone.now() + timedelta(minutes=8)
+        auction = self.bid_with_time_left(ends_at - timezone.now())
+        self.assertAlmostEqual(auction.ends_at, ends_at, delta=timedelta(seconds=1))
+
+    def test_auction_response_describes_the_rule(self):
+        auction = self.create_auction()
+        data = self.client.get(reverse('auction-detail', args=[auction.id])).data
+        self.assertEqual(data['extend_window_minutes'], 5)
+        self.assertEqual(data['extend_by_minutes'], 5)
 
 
 @override_settings(AUCTION_PAYMENT_GATEWAY=MANUAL)
