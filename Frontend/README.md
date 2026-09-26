@@ -122,7 +122,7 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 
 | Layer | Responsibility | Doesn't |
 | --- | --- | --- |
-| `App.jsx` | Picks the page from `window.location.pathname` (no router library), owns the header search state (kept in the URL), and sends signed-out visitors to sign in for account pages (`RedirectToSignIn`). | Fetch page data. |
+| `App.jsx` | Declares the React Router routes, derives the header search from the URL, and sends signed-out visitors to sign in for account pages (`RequireSignIn`). | Fetch page data. |
 | `pages/*` | One per route. **Owns its data:** calls `src/api/`, keeps loading / error / empty / success state, and passes plain values and callbacks down. Page-only pieces sit in the page's folder (`pages/ListingDetail/components/`); a self-contained one may call the API itself (`ContactSellerPanel`, `BidPanel`) and tell the page through a callback (`onChanged`). | Build URLs or parse API responses themselves. |
 | `components/*` | Shared building blocks used by several pages (cards, grid, filters, header, toast, crop dialog). **Presentational:** they get data and callbacks as props (the header is the exception: it reads the sign-in state and runs the search). | Fetch data or know which page they're on. |
 | `api/*` | The only code that talks to the backend: builds requests, attaches auth and language, and **maps between API field names and the UI's** (`life_stage` ↔ `lifeStage`, location codes ↔ keys). Throws `Error`s whose `message` is ready to show. | Hold UI state. |
@@ -162,9 +162,9 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 
 ### Adding things
 
-- **A route:** add the page under `pages/`, then a branch in `renderPage()` in `App.jsx` (wrap it in
-  `isLoggedIn() ? … : <RedirectToSignIn />` if it needs an account; the backend enforces access either
-  way).
+- **A route:** add the page under `pages/`, then a `<Route>` in `App.jsx` (wrap its element in
+  `<RequireSignIn>` if it needs an account; the backend enforces access either way). Link to it with
+  `<Link to>` rather than `<a href>` so navigation stays in the app.
 - **An endpoint:** add a function to the matching `api/*.js` module that calls `request`/`authFetch`
   and maps the response with a `normalize*()`; update the backend README and `docs/API_ENDPOINTS.md`
   when the contract changes.

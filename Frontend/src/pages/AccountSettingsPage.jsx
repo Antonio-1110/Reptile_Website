@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getCurrentProfile, updateCurrentProfile } from "../api/listingsApi";
 import EmptyState from "../components/ui/EmptyState";
 import { errorText, toErrorState } from "../utils/errorState";
+import { Link } from "react-router";
 
 // Form field → the profile API field whose validation errors belong under it.
 const FIELD_ERROR_KEYS = {
@@ -108,7 +109,7 @@ function AccountSettingsPage() {
         <p className="account-settings-kicker">{t("navigation.account")}</p>
         <h1 className="account-settings-title">{t("accountSettings.title")}</h1>
       </div>
-      <a href="/marketplace" className="account-settings-back">{t("accountSettings.back")}</a>
+      <Link to="/marketplace" className="account-settings-back">{t("accountSettings.back")}</Link>
     </div>
   );
 
@@ -164,7 +165,7 @@ function AccountSettingsPage() {
               <p className="account-settings-plan-limits">
                 {t("accountSettings.planLimits", { posts: profile.max_post_count, photos: profile.max_images_per_post })}
               </p>
-              {!isCommercial && <a href="/upgrade" className="account-settings-upgrade-link">{t("accountSettings.upgradeLink")}</a>}
+              {!isCommercial && <Link to="/upgrade" className="account-settings-upgrade-link">{t("accountSettings.upgradeLink")}</Link>}
             </div>
 
             <label className="account-settings-field">

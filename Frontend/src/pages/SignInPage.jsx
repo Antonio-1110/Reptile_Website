@@ -61,6 +61,7 @@ export default function SignInPage() {
       } else {
         await login(form.username.trim(), form.password);
       }
+      // A full load rather than navigate(), so every page and the header start from the new session.
       window.location.href = getNextPath();
     } catch (error) {
       setSubmitting(false);

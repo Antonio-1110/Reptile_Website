@@ -12,6 +12,7 @@ import { matchSpecies } from "../../constants/species";
 import { DEFAULT_EQUIPMENT_CATEGORY, DEFAULT_EQUIPMENT_CONDITION } from "../../constants/equipment";
 import { errorText, toErrorState } from "../../utils/errorState";
 import { existingPhoto, isBlobUrl } from "./mediaItems";
+import { Link } from "react-router";
 
 const EDITOR_CATEGORIES = ["live_animal", "enclosure"];
 
@@ -281,9 +282,9 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     <>
       <main className="listing-editor-page">
         <div className="listing-editor-card">
-        <a href={isEditing ? "/my-listings" : "/marketplace"} className="listing-editor-back">
+        <Link to={isEditing ? "/my-listings" : "/marketplace"} className="listing-editor-back">
           {isEditing ? t("createListing.edit.back") : t("navigation.backToMarketplace")}
-        </a>
+        </Link>
         <h1 className="listing-editor-title">{isEditing ? t("createListing.edit.heading") : t("createListing.heading")}</h1>
         <p className="listing-editor-subtitle">{isEditing ? t("createListing.edit.subtitle") : t("createListing.subtitle")}</p>
         {listingLoadError && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{errorText(t, listingLoadError)}</p>}
@@ -307,12 +308,12 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
             {created.photoError && (
               <p className="listing-editor-result--error">
                 {t("createListing.errors.photos", { reason: created.photoError })}{" "}
-                <a href={editPath(created.id, created.category)}>{t("createListing.created.addPhotos")}</a>
+                <Link to={editPath(created.id, created.category)}>{t("createListing.created.addPhotos")}</Link>
               </p>
             )}
             <div className="listing-editor-created-actions">
-              <a href={listingPagePath(created.id, created.category)} className="listing-editor-created-primary">{t("createListing.created.view")}</a>
-              <a href="/my-listings">{t("createListing.created.myListings")}</a>
+              <Link to={listingPagePath(created.id, created.category)} className="listing-editor-created-primary">{t("createListing.created.view")}</Link>
+              <Link to="/my-listings">{t("createListing.created.myListings")}</Link>
               <button type="button" onClick={startAnotherListing}>{t("createListing.created.another")}</button>
             </div>
           </section>
@@ -379,8 +380,8 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
           <div role="status">
             {submitted && (
               <p className="listing-editor-result listing-editor-result--success">
-                {speciesReview?.status === "pending" ? t("speciesReview.savedPending", { name: speciesReview.name }) : t("createListing.edit.success")}{" "}
-                <a href={listingPagePath(editId, formData.category === "live_animal" ? "live_animal" : "equipment")}>{t("createListing.created.view")}</a>
+                {t("createListing.edit.success")}{" "}
+                <Link to={listingPagePath(editId, formData.category === "live_animal" ? "live_animal" : "equipment")}>{t("createListing.created.view")}</Link>
               </p>
             )}
           </div>

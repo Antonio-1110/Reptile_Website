@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ContactLines from './ContactLines';
 import { getContactPreview, isLoggedIn, requestSellerContact } from '../../../api/listingsApi';
+import { Link } from 'react-router';
 
 // "Contact seller" on a fixed-price listing. The seller's details are never shown (that's what
 // scrapers are after); instead the buyer reviews their own details, we pass them on, and the seller
@@ -61,7 +62,7 @@ export default function ContactSellerPanel({ listingId, category, onToast }) {
       {!sent && (
         <>
           <p className="action-panel-small">
-            {t('listingDetail.contact.wrongDetails')} <a href="/settings">{t('listingDetail.contact.editDetails')}</a>
+            {t('listingDetail.contact.wrongDetails')} <Link to="/settings">{t('listingDetail.contact.editDetails')}</Link>
           </p>
           <div className="action-panel-row">
             <button type="button" className="action-panel-primary" disabled={loading} onClick={send}>

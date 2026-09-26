@@ -5,20 +5,22 @@ import AuctionCard from './components/AuctionCard';
 import ListingGrid from '../../components/listings/ListingGrid';
 import { getAuctionsPage } from '../../api/auctionsApi';
 import useNow from '../../hooks/useNow';
+import { Link, useSearchParams } from 'react-router';
 
 const TABS = ['live', 'ended'];
 const PREFETCH_MARGIN = '800px';
 const emptyFeed = { auctions: [], count: 0, nextPage: 1, loadingPage: 1, failedPage: null };
 
-function readTab() {
-  const tab = new URLSearchParams(window.location.search).get('tab');
+function readTab(params) {
+  const tab = params.get('tab');
   return TABS.includes(tab) ? tab : 'live';
 }
 
 export default function AuctionsPage() {
   const { t } = useTranslation();
   const now = useNow();
-  const [tab, setTab] = useState(readTab);
+  const [params, setParams] = useSearchParams();
+  const tab = readTab(params);
   const [feed, setFeed] = useState(emptyFeed);
   const tabRef = useRef(tab);
   const sentinelRef = useRef(null);
@@ -62,9 +64,8 @@ export default function AuctionsPage() {
 
   const selectTab = (nextTab) => {
     if (nextTab === tab) return;
-    window.history.replaceState(null, '', nextTab === 'live' ? '/auctions' : `/auctions?tab=${nextTab}`);
     setFeed(emptyFeed);
-    setTab(nextTab);
+    setParams(nextTab === 'live' ? {} : { tab: nextTab }, { replace: true });
   };
 
   const hasAuctions = feed.auctions.length > 0;
@@ -125,7 +126,7 @@ export default function AuctionsPage() {
             <div className="auctions-empty">
               <span aria-hidden="true">🦎</span>
               <p>{t(`auctions.empty.${tab}`)}</p>
-              <a href="/marketplace">{t('navigation.browseMarketplace')}</a>
+              <Link to="/marketplace">{t('navigation.browseMarketplace')}</Link>
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { deleteSavedSearch, getSavedSearches, isLoggedIn } from '../api/listingsApi';
 import { formatDateTime } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
+import { Link } from 'react-router';
 
 // How many filters a saved query has besides the search text (e.g. "sex=1.0&price_max=9000" → 2).
 function filterCount(query) {
@@ -27,7 +28,7 @@ export default function SavedSearchesPage() {
     return (
       <div className="saved-searches-page saved-searches-page--center">
         <h1>{t('savedSearches.signedOutTitle')}</h1>
-        <a href="/signin?next=/saved-searches">{t('auth.signIn')}</a>
+        <Link to="/signin?next=/saved-searches">{t('auth.signIn')}</Link>
       </div>
     );
   }
@@ -55,7 +56,7 @@ export default function SavedSearchesPage() {
         {searches && searches.length === 0 && (
           <div className="saved-searches-empty">
             <p>{t('savedSearches.empty')}</p>
-            <a href="/marketplace">{t('navigation.browseMarketplace')}</a>
+            <Link to="/marketplace">{t('navigation.browseMarketplace')}</Link>
           </div>
         )}
         {searches && searches.length > 0 && (

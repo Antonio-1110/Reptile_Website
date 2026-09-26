@@ -9,6 +9,7 @@ import ListingGrid from "../components/listings/ListingGrid";
 import { createSavedSearch, getListingsPage, isLoggedIn, listingQueryString } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import { readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
+import { Link, useLocation, useNavigate } from "react-router";
 
 const initialFilters = {
   minPrice: "", maxPrice: "", minSize: "", maxSize: "",
@@ -27,8 +28,11 @@ const emptyFeed = { listings: [], count: 0, nextPage: 1, loadingPage: 1, failedP
 
 export default function MarketplacePage({ searchTerm = "", searchTags = [], onClearSearch }) {
   const { t } = useTranslation();
-  // "live_animal" or "equipment": which kind of listing the whole page shows.
-  const [category, setCategory] = useState(readMarketplaceCategory);
+  const location = useLocation();
+  const navigate = useNavigate();
+  // "live_animal" or "equipment": which kind of listing the whole page shows. It lives in the URL,
+  // so a link to the other category (or Back) switches it without remounting the page.
+  const category = readMarketplaceCategory(location.search);
   const [filters, setFilters] = useState(initialFilters);
   const debouncedFilters = useDebouncedValue(filters, 300);
   const [feed, setFeed] = useState(emptyFeed);
@@ -102,8 +106,7 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   };
 
   const changeCategory = (value) => {
-    setCategory(value);
-    window.history.replaceState(null, "", withMarketplaceCategory(value));
+    navigate(withMarketplaceCategory(value, location.search), { replace: true });
   };
   const clearFilters = () => {
     setFilters(initialFilters);
@@ -122,13 +125,13 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
                 {hasListings || reachedEnd ? t("listings.available", { count: feed.count }) : t("listings.heading")}
               </h1>
               <div className="marketplace-heading-actions">
-                {isLoggedIn() && <a href="/saved" className="marketplace-saved-link">♥ {t("favorites.title")}</a>}
+                {isLoggedIn() && <Link to="/saved" className="marketplace-saved-link">♥ {t("favorites.title")}</Link>}
                 {/* Saved searches (and their email alerts) cover live animals only. */}
                 {isLoggedIn() && category === "live_animal" && (
                   <div className="marketplace-save-search">
                     {saveState === "saved" ? (
                       <p role="status">
-                        {t("savedSearches.savedNote")} <a href="/saved-searches">{t("savedSearches.manage")}</a>
+                        {t("savedSearches.savedNote")} <Link to="/saved-searches">{t("savedSearches.manage")}</Link>
                       </p>
                     ) : (
                       <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>

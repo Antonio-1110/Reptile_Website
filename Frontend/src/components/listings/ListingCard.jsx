@@ -4,6 +4,7 @@ import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
 import { getSexKey, listingPagePath, sellerPagePath } from '../../api/listingsApi';
 import FavoriteButton from './FavoriteButton';
+import { Link } from 'react-router';
 
 // Draws a live animal or (animal.kind === "equipment") a piece of equipment.
 export default function ListingCard({ animal }) {
@@ -43,7 +44,7 @@ export default function ListingCard({ animal }) {
       <div className="card-content">
         <div className="card-header">
           <h3 className="card-title">
-            <a href={detailHref} className="card-title-link">{animal.title}</a>
+            <Link to={detailHref} className="card-title-link">{animal.title}</Link>
           </h3>
           <span className="card-sex">
             {isEquipment
@@ -68,9 +69,9 @@ export default function ListingCard({ animal }) {
 
         <div className="card-seller-row">
           <span>{t('listings.seller')}</span>
-          <a href={sellerPagePath(animal.sellerId)}>
+          <Link to={sellerPagePath(animal.sellerId)}>
             {animal.sellerTag || animal.seller}
-          </a>
+          </Link>
         </div>
       </div>
     </article>

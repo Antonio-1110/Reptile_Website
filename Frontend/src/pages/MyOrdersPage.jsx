@@ -5,6 +5,7 @@ import { getMyOrdersPage } from '../api/auctionsApi';
 import { isLoggedIn } from '../api/authApi';
 import { formatDateTime, formatMoney } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
+import { Link } from 'react-router';
 
 const TABS = ['', 'buyer', 'seller'];
 
@@ -58,7 +59,7 @@ export default function MyOrdersPage() {
     return (
       <div className="my-orders-signed-out">
         <h1>{t('myOrders.signedOutTitle')}</h1>
-        <a href="/signin?next=/orders">{t('auth.signIn')}</a>
+        <Link to="/signin?next=/orders">{t('auth.signIn')}</Link>
       </div>
     );
   }
@@ -95,7 +96,7 @@ export default function MyOrdersPage() {
         {orders && orders.length === 0 && !feed.loading && (
           <div className="my-orders-empty">
             <p>{t(`myOrders.empty.${role || 'all'}`)}</p>
-            <a href="/auctions">{t('myOrders.browseAuctions')}</a>
+            <Link to="/auctions">{t('myOrders.browseAuctions')}</Link>
           </div>
         )}
 
@@ -112,7 +113,7 @@ export default function MyOrdersPage() {
                       <span className="my-orders-role">{t(`myOrders.role.${order.role}`)}</span>
                       {actionNeeded && <span className="my-orders-action">{t('myOrders.actionNeeded')}</span>}
                     </div>
-                    <h2><a href={orderHref(order)}>{order.listing.title}</a></h2>
+                    <h2><Link to={orderHref(order)}>{order.listing.title}</Link></h2>
                     <p className="my-orders-state">{t(`myOrders.status.${order.role}.${order.status}`)}</p>
                     {deadline && (
                       <p className="my-orders-deadline">
@@ -123,7 +124,7 @@ export default function MyOrdersPage() {
                   <div className="my-orders-row-side">
                     <strong>{formatMoney(order.price, order.currency, language)}</strong>
                     <span>{formatDateTime(order.createdAt, language)}</span>
-                    <a href={orderHref(order)} className="my-orders-open">{t('myOrders.open')}</a>
+                    <Link to={orderHref(order)} className="my-orders-open">{t('myOrders.open')}</Link>
                   </div>
                 </li>
               );

@@ -4,6 +4,7 @@ import AuctionCountdown from '../../../components/auctions/AuctionCountdown';
 import { getSexKey, listingPagePath } from '../../../api/listingsApi';
 import { getSpeciesLabel } from '../../../constants/species';
 import { formatMoney, getAuctionPhase, getHeadlinePrice } from '../../../utils/auctionFormat';
+import { Link } from 'react-router';
 
 const MAX_GENES = 3;
 
@@ -19,7 +20,7 @@ export default function AuctionCard({ auction, now }) {
   const href = listingPagePath(listing.id, listing.category);
 
   return (
-    <a href={href} className="auction-card">
+    <Link to={href} className="auction-card">
       <div className="auction-card-media">
         {listing.image
           ? <img src={listing.image} alt={listing.title} className="auction-card-image" loading="lazy" decoding="async" />
@@ -57,6 +58,6 @@ export default function AuctionCard({ auction, now }) {
           <strong>{auction.sellerName}</strong>
         </p>
       </div>
-    </a>
+    </Link>
   );
 }

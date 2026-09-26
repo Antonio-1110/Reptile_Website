@@ -7,6 +7,7 @@ import Toast from '../components/ui/Toast';
 import { errorText, toErrorState } from '../utils/errorState';
 import { deleteListing, getCurrentProfile, getMyListings, isLoggedIn, updateListingStatus } from '../api/listingsApi';
 import { getMyAuctions } from '../api/auctionsApi';
+import { Link } from 'react-router';
 
 const STATUSES = ['available', 'reserved', 'sold'];
 
@@ -79,7 +80,7 @@ export default function MyListingsPage() {
       <div className="my-listings-signed-out">
         <div className="my-listings-signed-out-inner">
           <h1>{t('myListings.signedOutTitle')}</h1>
-          <a href="/signin?next=/my-listings">{t('auth.signIn')}</a>
+          <Link to="/signin?next=/my-listings">{t('auth.signIn')}</Link>
         </div>
       </div>
     );
@@ -94,10 +95,10 @@ export default function MyListingsPage() {
             <p>{t('myListings.subtitle')}</p>
           </div>
           <div className="my-listings-header-links">
-            <a href="/orders" className="my-listings-orders">{t('myListings.orders')}</a>
-            <a href="/postinput" className="my-listings-new">
+            <Link to="/orders" className="my-listings-orders">{t('myListings.orders')}</Link>
+            <Link to="/postinput" className="my-listings-new">
               {t('myListings.newListing')}
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -127,8 +128,8 @@ export default function MyListingsPage() {
             title={t('myListings.empty')}
             actions={(
               <>
-                <a href="/postinput" className="empty-state-primary">{t('myListings.emptyAction')}</a>
-                <a href="/marketplace">{t('myListings.browseAction')}</a>
+                <Link to="/postinput" className="empty-state-primary">{t('myListings.emptyAction')}</Link>
+                <Link to="/marketplace">{t('myListings.browseAction')}</Link>
               </>
             )}
           >
@@ -162,9 +163,9 @@ export default function MyListingsPage() {
                   {canAuction && (runningAuctions.has(`${listing.category}-${listing.id}`) ? (
                     <span className="my-listings-auction-running">{t('myListings.auctionRunning')}</span>
                   ) : (
-                    <a href={`/auctions/new?listing=${listing.id}&category=${listing.category}`} className="my-listings-auction">
+                    <Link to={`/auctions/new?listing=${listing.id}&category=${listing.category}`} className="my-listings-auction">
                       {t('myListings.startAuction')}
-                    </a>
+                    </Link>
                   ))}
                   <label className="my-listings-status-picker">
                     <span>{t('myListings.status')}</span>
@@ -176,9 +177,9 @@ export default function MyListingsPage() {
                       {STATUSES.map((status) => <option key={status} value={status}>{t(`listingStatus.${status}`)}</option>)}
                     </select>
                   </label>
-                  <a href={`/postinput?edit=${listing.id}&category=${listing.category}`} className="my-listings-edit">
+                  <Link to={`/postinput?edit=${listing.id}&category=${listing.category}`} className="my-listings-edit">
                     {t('myListings.edit')}
-                  </a>
+                  </Link>
                   <button
                     type="button"
                     onClick={() => handleDelete(listing)}

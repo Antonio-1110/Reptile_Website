@@ -5,6 +5,7 @@ import { createAuction, getAuctionRules, getSellerBond, paySellerBond } from '..
 import { getCurrentProfile, getRawListing } from '../../api/listingsApi';
 import { formatMoney } from '../../utils/auctionFormat';
 import { errorText, toErrorState } from '../../utils/errorState';
+import { Link, useNavigate } from 'react-router';
 
 const DEFAULT_DAYS = 7;
 const DEFAULT_INCREMENT = '100';
@@ -41,6 +42,7 @@ function validate(form, rules, t) {
 // when one is required. Reached from My Listings: /auctions/new?listing=<id>&category=<category>.
 export default function StartAuctionPage({ listingId, category }) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const language = i18n.resolvedLanguage;
   const [state, setState] = useState({ loading: true, error: null, profile: null, rules: null, bond: null, listing: null });
   const [form, setForm] = useState(null);
@@ -76,7 +78,7 @@ export default function StartAuctionPage({ listingId, category }) {
       <div className="start-auction-page">
         <div className="start-auction-card">
           <p role="alert" className="start-auction-error">{errorText(t, error)}</p>
-          <a href="/my-listings">{t('startAuction.backToListings')}</a>
+          <Link to="/my-listings">{t('startAuction.backToListings')}</Link>
         </div>
       </div>
     );
@@ -84,7 +86,7 @@ export default function StartAuctionPage({ listingId, category }) {
 
   const header = (
     <>
-      <a href="/my-listings" className="start-auction-back">{t('startAuction.backToListings')}</a>
+      <Link to="/my-listings" className="start-auction-back">{t('startAuction.backToListings')}</Link>
       <h1>{t('startAuction.title')}</h1>
       <p className="start-auction-listing">{listing.title}</p>
     </>
@@ -96,7 +98,7 @@ export default function StartAuctionPage({ listingId, category }) {
         <div className="start-auction-card">
           {header}
           <p>{t('startAuction.paidOnly')}</p>
-          <a href="/upgrade" className="start-auction-primary">{t('startAuction.seePlans')}</a>
+          <Link to="/upgrade" className="start-auction-primary">{t('startAuction.seePlans')}</Link>
         </div>
       </div>
     );
@@ -166,7 +168,7 @@ export default function StartAuctionPage({ listingId, category }) {
         endsAt: new Date(form.endsAt),
         buyNowPrice: form.buyNowPrice,
       });
-      window.location.href = category === 'equipment' ? '/auctions' : `/posts/${listingId}`;
+      navigate(category === 'equipment' ? '/auctions' : `/posts/${listingId}`);
     } catch (createError) {
       setFieldErrors(createError.fields || {});
       const fieldKeys = ['starting_price', 'min_increment', 'starts_at', 'ends_at', 'buy_now_price'];
@@ -224,7 +226,7 @@ export default function StartAuctionPage({ listingId, category }) {
           <button type="submit" className="start-auction-primary" disabled={submitting}>
             {submitting ? t('auctions.pleaseWait') : t('startAuction.submit')}
           </button>
-          <a href={listingHref} className="start-auction-secondary">{t('startAuction.cancel')}</a>
+          <Link to={listingHref} className="start-auction-secondary">{t('startAuction.cancel')}</Link>
         </div>
       </form>
     </div>

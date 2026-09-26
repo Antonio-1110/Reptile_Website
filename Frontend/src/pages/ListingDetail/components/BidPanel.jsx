@@ -4,6 +4,7 @@ import useListingTranslation from '../useListingTranslation';
 import { isLoggedIn } from '../../../api/authApi';
 import { cancelAuction, payDeposit, placeBid } from '../../../api/auctionsApi';
 import { formatMoney } from '../../../utils/auctionFormat';
+import { Link } from 'react-router';
 
 // Quick-pick buttons: the minimum bid and a few increments above it.
 const QUICK_PICK_STEPS = [0, 1, 3];
@@ -86,7 +87,7 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
     return (
       <Panel>
         <p>{t('auctions.signInToBid')}</p>
-        <a className="bid-panel-primary" href={`/signin?next=${next}`}>{t('navigation.signIn')}</a>
+        <Link className="bid-panel-primary" to={`/signin?next=${next}`}>{t('navigation.signIn')}</Link>
       </Panel>
     );
   }
