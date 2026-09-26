@@ -33,11 +33,14 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       threshold, anti-sniping window. All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
-- [ ] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
+- [x] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
       animal's page (and in emails)
 - [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
-- [ ] Equipment has no public detail page, so equipment auctions have nowhere to be shown
+- [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
+      seller, or the auction with bids, buy now and the order), with equipment facts and wording
+- [ ] Auction/order emails (`auction/notifications.py`) and the "can't buy your own animal" error say
+      "animal" even for equipment; they need equipment wording (plus `zh_Hant` translations)
 - [x] Add Traditional Chinese translations for the new photo-upload errors ("Cover index is out of
       range.", "\"%(name)s\" is larger than 5 MB.") via `makemessages` / `compilemessages`
 
@@ -68,8 +71,9 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add richer filtering for location, price and species (live animals)
 - [x] Add richer filtering for equipment (price range, search tags, equipment category): new
       `category` field (set in the editor with `condition`) and `EquipmentPostFilter`
-- [ ] Equipment browse page: the equipment filters exist on the API, but the marketplace only lists
-      live animals
+- [x] Browse equipment: the marketplace filter sidebar has the same Live Animals / Equipment switch as
+      the post page (`?category=equipment`), with equipment type, condition, price, location,
+      shipping and posting-date filters
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
@@ -85,7 +89,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
 - [ ] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
-- [ ] Let sellers reorder or remove individual photos without re-uploading all of them
+- [x] Let sellers reorder or remove individual photos without re-uploading all of them
 
 ## UX improvements
 
@@ -100,7 +104,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Refine English and Chinese wording consistency across the app
 - [ ] Improve empty states and loading states for listings and profile pages
 - [ ] Add clearer success/error messages for posting and login flows
-- [ ] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
+- [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
 - [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
 ## Technical backlog

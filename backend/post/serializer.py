@@ -43,25 +43,60 @@ MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024
 
 
 class ListingPhotoUploadSerializer(serializers.Serializer):
-    """Validates a multipart photo upload that replaces a listing's photos."""
-    photos = serializers.ListField(child=serializers.ImageField(), allow_empty=False)
+    """
+    Validates a multipart request that sets a listing's photos, in one of two forms:
+    - `photos` + `cover_index`: the uploads replace every existing photo;
+    - `order` (+ optional `photos`): the final photos, cover first. Each entry is either one of the
+      listing's current photo URLs (kept as is) or "new:<n>", the n-th uploaded file. Existing photos
+      left out are removed, so this also reorders and deletes without re-uploading.
+    """
+    NEW_PREFIX = 'new:'
+
+    photos = serializers.ListField(child=serializers.ImageField(), required=False, default=list)
     cover_index = serializers.IntegerField(min_value=0, default=0)
+    order = serializers.ListField(child=serializers.CharField(), required=False, allow_null=True, default=None)
 
     def validate_photos(self, photos):
-        account = self.context['request'].user
-        if not account.can_upload_images(len(photos)):
-            raise serializers.ValidationError(
-                _('Image limit exceeded. This account allows %(count)s images per post.') % {'count': account.max_images_per_post}
-            )
         for photo in photos:
             if photo.size > MAX_PHOTO_SIZE_BYTES:
                 raise serializers.ValidationError(_('"%(name)s" is larger than 5 MB.') % {'name': photo.name})
         return photos
 
     def validate(self, attrs):
-        if attrs['cover_index'] >= len(attrs['photos']):
-            raise serializers.ValidationError({'cover_index': _('Cover index is out of range.')})
+        photos, order = attrs['photos'], attrs['order']
+        if order is None:
+            if not photos:
+                raise serializers.ValidationError({'photos': _('Add at least one photo.')})
+            if attrs['cover_index'] >= len(photos):
+                raise serializers.ValidationError({'cover_index': _('Cover index is out of range.')})
+            order = [f'{self.NEW_PREFIX}{attrs["cover_index"]}'] + [
+                f'{self.NEW_PREFIX}{index}' for index in range(len(photos)) if index != attrs['cover_index']
+            ]
+        self._check_order(order, photos)
+        account = self.context['request'].user
+        if not account.can_upload_images(len(order)):
+            raise serializers.ValidationError(
+                {'photos': _('Image limit exceeded. This account allows %(count)s images per post.') % {'count': account.max_images_per_post}}
+            )
+        attrs['order'] = order
         return attrs
+
+    def _check_order(self, order, photos):
+        # Only the listing's own photos can be kept: anything else would let a seller point the listing
+        # at arbitrary URLs.
+        post = self.context['post']
+        current = set(post.gallery or []) | ({post.image} if post.image else set())
+        used_new = []
+        for entry in order:
+            if entry.startswith(self.NEW_PREFIX):
+                index = entry[len(self.NEW_PREFIX):]
+                if not index.isdigit() or int(index) >= len(photos):
+                    raise serializers.ValidationError({'order': _('Photo order refers to a file that was not uploaded.')})
+                used_new.append(int(index))
+            elif entry not in current:
+                raise serializers.ValidationError({'order': _('Photo order refers to a photo this listing does not have.')})
+        if len(set(order)) != len(order) or sorted(used_new) != list(range(len(photos))):
+            raise serializers.ValidationError({'order': _('Each photo must appear in the order exactly once.')})
 
 
 class SpeciesSerializer(serializers.ModelSerializer):
@@ -84,7 +119,17 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class PublicListingFieldsMixin(serializers.Serializer):
+    """Read-only fields the listing detail page shows for both listing types."""
+    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
+    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
+    posted_days = serializers.SerializerMethodField()
+
+    def get_posted_days(self, obj):
+        return max(0, (timezone.now() - obj.created_at).days)
+
+
+class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
     # Nested seller info
@@ -96,9 +141,9 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         fields = [
             'id', 'title', 'description', 'price', 'location', 'contact_info',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -106,7 +151,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -122,9 +167,6 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     
     # Convert genetics string to list on serialization
     genes = serializers.SerializerMethodField()
-    seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
-    seller_rating = serializers.FloatField(source='account.seller_rating', read_only=True)
-    posted_days = serializers.SerializerMethodField()
     
     class Meta:
         model = LiveAnimalPost
@@ -145,9 +187,6 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
         if obj.genetics:
             return [gene.strip() for gene in obj.genetics.split('/') if gene.strip()]
         return []
-
-    def get_posted_days(self, obj):
-        return max(0, (timezone.now() - obj.created_at).days)
     
     def create(self, validated_data):
         # Set the account from the request user

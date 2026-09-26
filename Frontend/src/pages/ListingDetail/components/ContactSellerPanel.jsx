@@ -7,7 +7,7 @@ import { getContactPreview, isLoggedIn, requestSellerContact } from '../../../ap
 // "Contact seller" on a fixed-price listing. The seller's details are never shown (that's what
 // scrapers are after); instead the buyer reviews their own details, we pass them on, and the seller
 // gets in touch.
-export default function ContactSellerPanel({ listingId, onToast }) {
+export default function ContactSellerPanel({ listingId, category, onToast }) {
   const { t } = useTranslation();
   const [preview, setPreview] = useState(null);
   const [sent, setSent] = useState(false);
@@ -27,13 +27,13 @@ export default function ContactSellerPanel({ listingId, onToast }) {
   };
 
   const openPreview = () => run(async () => {
-    const result = await getContactPreview(listingId);
+    const result = await getContactPreview(listingId, category);
     setPreview(result.contact);
     setSent(result.already_sent);
   });
 
   const send = () => run(async () => {
-    await requestSellerContact(listingId);
+    await requestSellerContact(listingId, category);
     setSent(true);
     onToast(t('listingDetail.contact.sentToast'));
   });

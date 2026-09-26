@@ -11,12 +11,12 @@ const NO_BIDS = { results: [], count: 0 };
 // The listing's latest (non-cancelled) auction, its bids and (after it ends) the viewer's order as
 // buyer or seller, kept fresh while it runs. `loaded` is false until the first answer, so the page
 // doesn't flash "for sale" before the auction.
-export default function useListingAuction(listingId, now) {
+export default function useListingAuction(listingId, now, category = 'live_animal') {
   const [state, setState] = useState({ auction: null, bids: NO_BIDS, order: null, loaded: false, error: null });
 
   const refresh = useCallback(async () => {
     try {
-      const auction = await getLatestAuctionForListing(listingId);
+      const auction = await getLatestAuctionForListing(listingId, category);
       const bids = auction ? await getAuctionBids(auction.id) : NO_BIDS;
       const over = auction && getAuctionPhase(auction, Date.now()) === 'ended';
       const order = over && isLoggedIn() ? await getMyOrderForAuction(auction.id) : null;
@@ -24,7 +24,7 @@ export default function useListingAuction(listingId, now) {
     } catch (error) {
       setState((current) => ({ ...current, loaded: true, error: toErrorState(error, 'auctions.detail.loadError') }));
     }
-  }, [listingId]);
+  }, [listingId, category]);
 
   useEffect(() => {
     refresh();
