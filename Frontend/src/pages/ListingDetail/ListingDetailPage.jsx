@@ -8,6 +8,8 @@ import ContactSellerPanel from './components/ContactSellerPanel';
 import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
+import EmptyState from '../../components/ui/EmptyState';
+import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
 import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
@@ -26,6 +28,8 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
   const language = i18n.resolvedLanguage;
   const now = useNow();
   const [listing, setListing] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);
   const [reported, setReported] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
@@ -48,18 +52,54 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
     getListing(listingId, category).then((loadedListing) => {
       setListing(loadedListing);
       setSelectedImage(loadedListing.image);
-    }).catch(() => setListing(false));
-  }, [listingId, category]);
+    }).catch((error) => setLoadError(error.status === 404 ? 'notFound' : 'failed'));
+  }, [listingId, category, loadAttempt]);
 
-  if (listing === null || (listing && !auctionState.loaded)) {
-    return <div className="listing-detail-loading">{t('listingDetail.loading')}</div>;
-  }
-  if (!listing) {
+  const retryLoad = () => {
+    setLoadError(null);
+    setLoadAttempt((attempt) => attempt + 1);
+  };
+
+  if (loadError) {
+    // A 404 means the listing is gone for good; anything else (offline, server error) may pass.
+    const notFound = loadError === 'notFound';
     return (
       <div className="listing-detail-missing">
         <div className="listing-detail-missing-inner">
-          <h1>{t('listingDetail.notFound')}</h1>
-          <a href="/marketplace">{t('navigation.backToMarketplace')}</a>
+          <EmptyState
+            tone={notFound ? 'empty' : 'error'}
+            icon={notFound ? '🔍' : undefined}
+            title={notFound ? t('listingDetail.notFound') : t('listingDetail.loadError')}
+            actions={(
+              <>
+                {!notFound && <button type="button" className="empty-state-primary" onClick={retryLoad}>{t('listings.retry')}</button>}
+                <a href="/marketplace">{t('navigation.backToMarketplace')}</a>
+              </>
+            )}
+          >
+            {notFound ? t('listingDetail.notFoundBody') : t('listingDetail.loadErrorBody')}
+          </EmptyState>
+        </div>
+      </div>
+    );
+  }
+  if (listing === null || !auctionState.loaded) {
+    return (
+      <div className="listing-detail-page">
+        <div className="listing-detail-inner">
+          <p className="sr-only" role="status">{t('listingDetail.loading')}</p>
+          <div className="listing-detail-layout" aria-hidden="true">
+            <section className="listing-detail-card listing-detail-gallery">
+              <Skeleton className="listing-detail-skeleton-hero" />
+            </section>
+            <aside className="listing-detail-card listing-detail-summary listing-detail-skeleton-summary">
+              <Skeleton style={{ width: '30%', height: '1rem' }} />
+              <Skeleton style={{ width: '85%', height: '2rem' }} />
+              <Skeleton style={{ width: '50%', height: '1rem' }} />
+              <Skeleton style={{ width: '40%', height: '2.25rem' }} />
+              <Skeleton style={{ width: '100%', height: '3rem' }} />
+            </aside>
+          </div>
         </div>
       </div>
     );

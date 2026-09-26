@@ -1,0 +1,63 @@
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1.25rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 1rem;
+  color: var(--color-text-subtle);
+  background: var(--color-surface-deep);
+  text-align: center;
+}
+
+.empty-state--error {
+  border-color: rgb(248 113 113 / 45%);
+}
+
+.empty-state-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.empty-state-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.empty-state-text {
+  max-width: 32rem;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.empty-state-actions > a,
+.empty-state-actions > button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.empty-state-actions > .empty-state-primary {
+  border-color: var(--color-accent);
+  color: #fff;
+  background: var(--color-accent);
+}
