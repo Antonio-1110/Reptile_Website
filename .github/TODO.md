@@ -10,8 +10,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [ ] Validate hobbyist vs commercial account workflows end-to-end
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
-- [ ] Confirm authentication flow works in the browser for login and signup
-- [ ] Better UI for choosing the image section for the post cover
+- [x] Confirm authentication flow works in the browser for login and signup
+- [x] Better UI for choosing the image section for the post cover (covered by the cover crop tool and #10's photo reordering)
 - [ ] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
       (move `profile/` over first; the listing editor depends on it)
 - [x] Frontend for auctions: browse (`/auctions`), detail, pay deposit, bid, results, seller cancel
@@ -93,7 +93,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 
 ## UX improvements
 
-- [ ] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
+- [x] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
 - [x] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
@@ -120,7 +120,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       (`.github/workflows/ci.yml`; also fails on a model change without its migration)
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
-- [ ] Remove the empty `.github/appmod/` folder if it's no longer used
+- [x] Remove the empty `.github/appmod/` folder if it's no longer used (already gone)
 
 ## Nice-to-have
 
