@@ -1,6 +1,5 @@
 import { authFetch, isLoggedIn } from "./authApi";
 import { getLocationCode, getLocationKey } from "../constants/locations";
-import i18n from "../i18n";
 import { apiFetch, requestFailedMessage } from "./http";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
@@ -16,7 +15,9 @@ export function getSexKey(code) {
 function normalizeListing(item) {
   return {
     ...item,
-    species: item.species_name,
+    // A listing waiting on a species review (only its owner sees it) shows the name as typed.
+    species: item.species_name || item.species_review?.name,
+    speciesReview: item.species_review || null,
     seller: item.seller_name || item.seller?.display_name || item.seller?.username,
     sellerTag: item.seller?.username,
     sellerId: item.seller_id ?? item.seller?.id,
@@ -100,16 +101,9 @@ export async function updateCurrentProfile(fields) {
   return requestWithAuth("/v1/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
 }
 
-async function getSpeciesId(value) {
-  const species = await requestAllPages("/posts/species/");
-  const trimmedValue = value.trim().toLocaleLowerCase();
-  const normalizedValue = trimmedValue.replace(/[^a-z0-9]/gi, "");
-  const match = species.find((item) => {
-    const normalizedName = item.name.trim().toLocaleLowerCase();
-    return normalizedName === trimmedValue || (normalizedValue && normalizedName.replace(/[^a-z0-9]/gi, "") === normalizedValue);
-  });
-  if (!match) throw new Error(i18n.t("createListing.errors.unknownSpecies"));
-  return match.id;
+// The species list the editor suggests from: [{ id, name, aliases }].
+export async function getSpecies() {
+  return requestAllPages("/posts/species/");
 }
 
 function listingEndpoint(category, id) {
@@ -117,9 +111,11 @@ function listingEndpoint(category, id) {
   return id ? `${base}${id}/` : base;
 }
 
-async function buildLiveAnimalFields(formData) {
+// A species picked from the list is sent by id; anything typed is sent as written, and the server
+// either recognises it (a species name or alias) or holds the listing for a species review.
+function buildLiveAnimalFields(formData) {
   return {
-    species: await getSpeciesId(formData.species),
+    ...(formData.speciesId ? { species: formData.speciesId } : { requested_species: formData.species.trim() }),
     sex: sexCodes[formData.sex] || formData.sex,
     genetics: formData.genetics.trim(),
     life_stage: formData.lifeStage,
@@ -146,7 +142,7 @@ export async function createListing(formData) {
   };
 
   if (isLiveAnimal) {
-    Object.assign(payload, await buildLiveAnimalFields(formData));
+    Object.assign(payload, buildLiveAnimalFields(formData));
   } else {
     Object.assign(payload, buildEquipmentFields(formData));
   }
@@ -170,7 +166,7 @@ export async function updateListing(id, formData) {
   };
 
   if (isLiveAnimal) {
-    Object.assign(payload, await buildLiveAnimalFields(formData));
+    Object.assign(payload, buildLiveAnimalFields(formData));
   } else {
     Object.assign(payload, buildEquipmentFields(formData));
   }

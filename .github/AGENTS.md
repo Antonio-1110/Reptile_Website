@@ -319,6 +319,10 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
   New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
   them and drop the flag, or the new text silently falls back to English.
+- A live-animal listing can have no `species`: a typed species that isn't in the list (or an alias)
+  waits for staff review (`post/species.py`, admin: Species requests), and until then the listing is
+  unpublished like a hidden one. Any new public queryset of live animals must filter by
+  `LiveAnimalPost.PUBLISHED`, and code reading `post.species.name` must allow for `None`.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.

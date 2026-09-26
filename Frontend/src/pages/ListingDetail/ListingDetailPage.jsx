@@ -213,6 +213,14 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             </div>
 
             {listing.isHidden && <p className="listing-detail-alert" role="status">{t('listingDetail.hiddenNotice')}</p>}
+            {listing.speciesReview && (
+              <p className="listing-detail-alert" role="status">
+                {listing.speciesReview.status === 'rejected'
+                  ? t('speciesReview.rejectedNotice', { name: listing.speciesReview.name })
+                  : t('speciesReview.pendingNotice', { name: listing.speciesReview.name })}
+                {listing.speciesReview.status === 'rejected' && listing.speciesReview.note && <> {t('speciesReview.reason', { note: listing.speciesReview.note })}</>}
+              </p>
+            )}
             <h1 className="listing-detail-title">{listing.title}</h1>
             <div className="listing-detail-subtitle">
               {isEquipment ? (

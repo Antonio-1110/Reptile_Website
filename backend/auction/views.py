@@ -46,11 +46,14 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         )
         queryset = queryset.prefetch_related('orders')  # for sale_fell_through
         user = self.request.user
-        # A listing hidden by moderation takes its auction with it, so nobody can keep paying deposits
-        # or bidding on it; only the seller and staff still see it. Every auction action looks the
-        # auction up through here.
+        # An unpublished listing (hidden by moderation, or its species under review) takes its auction
+        # with it, so nobody can keep paying deposits or bidding on it; only the seller and staff still
+        # see it. Every auction action looks the auction up through here.
         if not (user.is_authenticated and user.is_staff):
-            hidden = Q(live_animal_post__is_hidden=True) | Q(equipment_post__is_hidden=True)
+            hidden = (
+                Q(live_animal_post__is_hidden=True) | Q(equipment_post__is_hidden=True)
+                | Q(live_animal_post__isnull=False, live_animal_post__species__isnull=True)
+            )
             queryset = queryset.exclude(hidden & ~Q(seller=user)) if user.is_authenticated else queryset.exclude(hidden)
         if user.is_authenticated:
             queryset = queryset.prefetch_related(

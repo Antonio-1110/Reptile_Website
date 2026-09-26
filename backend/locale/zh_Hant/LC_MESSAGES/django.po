@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 21:11+0800\n"
+"POT-Creation-Date: 2026-09-26 21:52+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,15 +19,16 @@ msgstr ""
 
 #: account/views.py:109
 msgid ""
-"You can review a seller after contacting them about a listing or buying from"
-" them."
+"You can review a seller after contacting them about a listing or buying from "
+"them."
 msgstr "與賣家聯絡過某則刊登或向其購買後，才能評價這位賣家。"
 
 #: auction/notifications.py:16
 msgid ""
 "Only ever pay through the Reptile Marketplace. Never send money directly to "
 "a seller: we can only protect payments made through us."
-msgstr "請只透過爬蟲市集付款，切勿直接匯款給賣家：我們只能保障透過本站完成的付款。"
+msgstr ""
+"請只透過爬蟲市集付款，切勿直接匯款給賣家：我們只能保障透過本站完成的付款。"
 
 #: auction/notifications.py:32
 #, python-format
@@ -36,7 +37,8 @@ msgid ""
 "handed over on the listing page. If it isn't handed over by then, the buyer "
 "is refunded in full and it counts against your account."
 msgstr ""
-"請在 %(handover_due)s 前交貨（或寄出），並在刊登頁面標記為已交貨。若屆時仍未交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
+"請在 %(handover_due)s 前交貨（或寄出），並在刊登頁面標記為已交貨。若屆時仍未"
+"交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
 
 #: auction/notifications.py:33
 #, python-format
@@ -45,7 +47,8 @@ msgid ""
 "over on the listing page. If it isn't handed over by then, the buyer is "
 "refunded in full and it counts against your account."
 msgstr ""
-"請在 %(handover_due)s 前交貨（或寄出），並在刊登頁面標記為已交貨。若屆時仍未交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
+"請在 %(handover_due)s 前交貨（或寄出），並在刊登頁面標記為已交貨。若屆時仍未"
+"交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
 
 #: auction/notifications.py:49
 #, python-format
@@ -59,7 +62,8 @@ msgid ""
 "%(price)s. Whoever completes payment first gets it. If someone else pays "
 "before you, any payment you make is refunded in full."
 msgstr ""
-"另一位買家也開始以直接購買價 %(price)s 購買「%(title)s」。誰先完成付款，誰就能買到。若他人比你先付款，你支付的任何款項都會全額退還。"
+"另一位買家也開始以直接購買價 %(price)s 購買「%(title)s」。誰先完成付款，誰就"
+"能買到。若他人比你先付款，你支付的任何款項都會全額退還。"
 
 #: auction/notifications.py:54
 #, python-format
@@ -75,8 +79,9 @@ msgid ""
 "anything. If you have more than one of these animals, you can reach the "
 "other buyers after the sale."
 msgstr ""
-"目前有 %(count)s 位買家正以你的直接購買價 %(price)s "
-"購買「%(title)s」。最先完成付款者得標，競標隨即結束；之後才付款的人將全額退款。你不需要做任何事。若你有不只一隻相同的個體，可在成交後再聯繫其他買家。"
+"目前有 %(count)s 位買家正以你的直接購買價 %(price)s 購買「%(title)s」。最先完"
+"成付款者得標，競標隨即結束；之後才付款的人將全額退款。你不需要做任何事。若你"
+"有不只一隻相同的個體，可在成交後再聯繫其他買家。"
 
 #: auction/notifications.py:58
 #, python-format
@@ -87,8 +92,9 @@ msgid ""
 "anything. If you have more than one of these items, you can reach the other "
 "buyers after the sale."
 msgstr ""
-"目前有 %(count)s 位買家正以你的直接購買價 %(price)s "
-"購買「%(title)s」。最先完成付款者得標，競標隨即結束；之後才付款的人將全額退款。你不需要做任何事。若你有不只一件相同的物品，可在成交後再聯繫其他買家。"
+"目前有 %(count)s 位買家正以你的直接購買價 %(price)s 購買「%(title)s」。最先完"
+"成付款者得標，競標隨即結束；之後才付款的人將全額退款。你不需要做任何事。若你"
+"有不只一件相同的物品，可在成交後再聯繫其他買家。"
 
 #: auction/notifications.py:70
 #, python-format
@@ -102,16 +108,18 @@ msgid ""
 "yours and the auction has closed. We hold your payment until you have "
 "received the animal, and only then pay the seller."
 msgstr ""
-"我們已收到你為「%(title)s」支付的 %(paid)s，這隻個體歸你所有，競標也已結束。我們會代為保管款項，直到你收到個體後才撥款給賣家。"
+"我們已收到你為「%(title)s」支付的 %(paid)s，這隻個體歸你所有，競標也已結束。"
+"我們會代為保管款項，直到你收到個體後才撥款給賣家。"
 
 #: auction/notifications.py:74
 #, python-format
 msgid ""
-"Your payment of %(paid)s for \"%(title)s\" has arrived, so the item is yours"
-" and the auction has closed. We hold your payment until you have received "
-"the item, and only then pay the seller."
+"Your payment of %(paid)s for \"%(title)s\" has arrived, so the item is yours "
+"and the auction has closed. We hold your payment until you have received the "
+"item, and only then pay the seller."
 msgstr ""
-"我們已收到你為「%(title)s」支付的 %(paid)s，這件物品歸你所有，競標也已結束。我們會代為保管款項，直到你收到物品後才撥款給賣家。"
+"我們已收到你為「%(title)s」支付的 %(paid)s，這件物品歸你所有，競標也已結束。"
+"我們會代為保管款項，直到你收到物品後才撥款給賣家。"
 
 #: auction/notifications.py:76
 #, python-format
@@ -133,21 +141,21 @@ msgstr "「%(title)s」已以你的直接購買價售出"
 #, python-format
 msgid ""
 "A buyer paid your buy-now price of %(paid)s for \"%(title)s\", so the "
-"auction has closed and every bidder's deposit is being refunded. We hold the"
-" payment and pay you once the animal has been handed over."
+"auction has closed and every bidder's deposit is being refunded. We hold the "
+"payment and pay you once the animal has been handed over."
 msgstr ""
-"有買家以你的直接購買價 %(paid)s "
-"購買了「%(title)s」，因此競標已結束，所有出價者的保證金將會退還。我們會代為保管款項，並在個體完成交貨後撥款給你。"
+"有買家以你的直接購買價 %(paid)s 購買了「%(title)s」，因此競標已結束，所有出價"
+"者的保證金將會退還。我們會代為保管款項，並在個體完成交貨後撥款給你。"
 
 #: auction/notifications.py:85
 #, python-format
 msgid ""
 "A buyer paid your buy-now price of %(paid)s for \"%(title)s\", so the "
-"auction has closed and every bidder's deposit is being refunded. We hold the"
-" payment and pay you once the item has been handed over."
+"auction has closed and every bidder's deposit is being refunded. We hold the "
+"payment and pay you once the item has been handed over."
 msgstr ""
-"有買家以你的直接購買價 %(paid)s "
-"購買了「%(title)s」，因此競標已結束，所有出價者的保證金將會退還。我們會代為保管款項，並在物品完成交貨後撥款給你。"
+"有買家以你的直接購買價 %(paid)s 購買了「%(title)s」，因此競標已結束，所有出價"
+"者的保證金將會退還。我們會代為保管款項，並在物品完成交貨後撥款給你。"
 
 #: auction/notifications.py:88 auction/notifications.py:147
 msgid "The buyer's contact details, to arrange the handover:"
@@ -165,7 +173,8 @@ msgid ""
 "auction closed early and no bids can win it. Your deposit of %(deposit)s is "
 "being refunded in full."
 msgstr ""
-"另一位買家以賣家的直接購買價買下了「%(title)s」，因此競標已提前結束，所有出價皆無法得標。你的保證金 %(deposit)s 將會全額退還。"
+"另一位買家以賣家的直接購買價買下了「%(title)s」，因此競標已提前結束，所有出價"
+"皆無法得標。你的保證金 %(deposit)s 將會全額退還。"
 
 #: auction/notifications.py:98
 #, python-format
@@ -178,7 +187,9 @@ msgid ""
 "Another buyer completed payment for \"%(title)s\" first, so it is no longer "
 "available. If you still complete a payment, it will be refunded to you in "
 "full."
-msgstr "另一位買家已先完成「%(title)s」的付款，因此已無法購買。若你仍完成付款，款項將全額退還給你。"
+msgstr ""
+"另一位買家已先完成「%(title)s」的付款，因此已無法購買。若你仍完成付款，款項將"
+"全額退還給你。"
 
 #: auction/notifications.py:107 auction/notifications.py:177
 #, python-format
@@ -191,7 +202,9 @@ msgid ""
 "Your payment of %(paid)s for \"%(title)s\" arrived after the auction had "
 "closed (another buyer paid first, or it ended). It is being refunded to you "
 "in full."
-msgstr "你為「%(title)s」支付的 %(paid)s 在競標結束後才入帳（其他買家已先付款，或競標已結束），款項將全額退還給你。"
+msgstr ""
+"你為「%(title)s」支付的 %(paid)s 在競標結束後才入帳（其他買家已先付款，或競標"
+"已結束），款項將全額退還給你。"
 
 #: auction/notifications.py:135
 #, python-format
@@ -202,12 +215,13 @@ msgstr "你已得標「%(title)s」"
 #, python-format
 msgid ""
 "You won \"%(title)s\" with a bid of %(price)s. Please pay the remaining "
-"%(balance)s through the Reptile Marketplace by %(payment_due)s (your deposit"
-" counts toward the price). If you don't pay in time, your deposit is kept "
-"and the sale is cancelled."
+"%(balance)s through the Reptile Marketplace by %(payment_due)s (your deposit "
+"counts toward the price). If you don't pay in time, your deposit is kept and "
+"the sale is cancelled."
 msgstr ""
-"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過爬蟲市集支付剩餘的 "
-"%(balance)s（保證金會抵扣價款）。若未在期限內付款，保證金將不予退還，交易也會取消。"
+"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過爬蟲市集支付剩餘"
+"的 %(balance)s（保證金會抵扣價款）。若未在期限內付款，保證金將不予退還，交易"
+"也會取消。"
 
 #: auction/notifications.py:141
 #, python-format
@@ -218,21 +232,21 @@ msgstr "「%(title)s」以 %(price)s 成交"
 #, python-format
 msgid ""
 "Your auction for \"%(title)s\" ended with a winning bid of %(price)s. The "
-"winner has until %(payment_due)s to pay us the rest; we'll email you as soon"
-" as they do, and only then should you hand the animal over."
+"winner has until %(payment_due)s to pay us the rest; we'll email you as soon "
+"as they do, and only then should you hand the animal over."
 msgstr ""
-"你的「%(title)s」競標已結束，得標價為 %(price)s。得標者必須在 %(payment_due)s "
-"前付清餘款；對方付款後我們會立即通知你，請在那之後才交貨。"
+"你的「%(title)s」競標已結束，得標價為 %(price)s。得標者必須在 "
+"%(payment_due)s 前付清餘款；對方付款後我們會立即通知你，請在那之後才交貨。"
 
 #: auction/notifications.py:145
 #, python-format
 msgid ""
 "Your auction for \"%(title)s\" ended with a winning bid of %(price)s. The "
-"winner has until %(payment_due)s to pay us the rest; we'll email you as soon"
-" as they do, and only then should you hand the item over."
+"winner has until %(payment_due)s to pay us the rest; we'll email you as soon "
+"as they do, and only then should you hand the item over."
 msgstr ""
-"你的「%(title)s」競標已結束，得標價為 %(price)s。得標者必須在 %(payment_due)s "
-"前付清餘款；對方付款後我們會立即通知你，請在那之後才交貨。"
+"你的「%(title)s」競標已結束，得標價為 %(price)s。得標者必須在 "
+"%(payment_due)s 前付清餘款；對方付款後我們會立即通知你，請在那之後才交貨。"
 
 #: auction/notifications.py:152
 #, python-format
@@ -242,9 +256,11 @@ msgstr "「%(title)s」的競標已結束"
 #: auction/notifications.py:153
 #, python-format
 msgid ""
-"The auction for \"%(title)s\" has ended and another bidder won. Your deposit"
-" of %(deposit)s is being refunded in full."
-msgstr "「%(title)s」的競標已結束，由其他出價者得標。你的保證金 %(deposit)s 將全額退還。"
+"The auction for \"%(title)s\" has ended and another bidder won. Your deposit "
+"of %(deposit)s is being refunded in full."
+msgstr ""
+"「%(title)s」的競標已結束，由其他出價者得標。你的保證金 %(deposit)s 將全額退"
+"還。"
 
 #: auction/notifications.py:160
 #, python-format
@@ -254,8 +270,8 @@ msgstr "已收到「%(title)s」的款項：請交貨"
 #: auction/notifications.py:161
 #, python-format
 msgid ""
-"The buyer has paid the full price of %(price)s for \"%(title)s\", and we are"
-" holding it."
+"The buyer has paid the full price of %(price)s for \"%(title)s\", and we are "
+"holding it."
 msgstr "買家已付清「%(title)s」的全額 %(price)s，款項由我們代為保管。"
 
 #: auction/notifications.py:165
@@ -266,29 +282,31 @@ msgstr "已收到「%(title)s」的款項"
 #: auction/notifications.py:168
 #, python-format
 msgid ""
-"We have received your payment for \"%(title)s\" and are holding it until you"
-" have the animal. The seller has until %(handover_due)s to hand it over or "
+"We have received your payment for \"%(title)s\" and are holding it until you "
+"have the animal. The seller has until %(handover_due)s to hand it over or "
 "ship it; if they don't, you get a full refund."
 msgstr ""
-"我們已收到你為「%(title)s」支付的款項，會代為保管直到你收到個體。賣家必須在 %(handover_due)s "
-"前交貨或寄出；若未完成，你將獲得全額退款。"
+"我們已收到你為「%(title)s」支付的款項，會代為保管直到你收到個體。賣家必須在 "
+"%(handover_due)s 前交貨或寄出；若未完成，你將獲得全額退款。"
 
 #: auction/notifications.py:169
 #, python-format
 msgid ""
-"We have received your payment for \"%(title)s\" and are holding it until you"
-" have the item. The seller has until %(handover_due)s to hand it over or "
-"ship it; if they don't, you get a full refund."
+"We have received your payment for \"%(title)s\" and are holding it until you "
+"have the item. The seller has until %(handover_due)s to hand it over or ship "
+"it; if they don't, you get a full refund."
 msgstr ""
-"我們已收到你為「%(title)s」支付的款項，會代為保管直到你收到物品。賣家必須在 %(handover_due)s "
-"前交貨或寄出；若未完成，你將獲得全額退款。"
+"我們已收到你為「%(title)s」支付的款項，會代為保管直到你收到物品。賣家必須在 "
+"%(handover_due)s 前交貨或寄出；若未完成，你將獲得全額退款。"
 
 #: auction/notifications.py:178
 #, python-format
 msgid ""
-"Your payment for \"%(title)s\" arrived after the deadline, when the sale had"
-" already been cancelled. It is being refunded to you in full."
-msgstr "你為「%(title)s」支付的款項在期限過後才入帳，當時交易已取消，款項將全額退還給你。"
+"Your payment for \"%(title)s\" arrived after the deadline, when the sale had "
+"already been cancelled. It is being refunded to you in full."
+msgstr ""
+"你為「%(title)s」支付的款項在期限過後才入帳，當時交易已取消，款項將全額退還給"
+"你。"
 
 #: auction/notifications.py:185
 #, python-format
@@ -310,8 +328,9 @@ msgid ""
 "we will hold the payment while we look into it. If we hear nothing by then, "
 "the sale completes and the seller is paid."
 msgstr ""
-"收到個體並確認健康後，請在 %(confirm_due)s "
-"前到刊登頁面確認。若有問題，請改在該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即完成並撥款給賣家。"
+"收到個體並確認健康後，請在 %(confirm_due)s 前到刊登頁面確認。若有問題，請改在"
+"該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即完成並"
+"撥款給賣家。"
 
 #: auction/notifications.py:190
 #, python-format
@@ -321,8 +340,9 @@ msgid ""
 "and we will hold the payment while we look into it. If we hear nothing by "
 "then, the sale completes and the seller is paid."
 msgstr ""
-"收到物品並確認與描述相符後，請在 %(confirm_due)s "
-"前到刊登頁面確認。若有問題，請改在該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即完成並撥款給賣家。"
+"收到物品並確認與描述相符後，請在 %(confirm_due)s 前到刊登頁面確認。若有問題，"
+"請改在該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即"
+"完成並撥款給賣家。"
 
 #: auction/notifications.py:198 auction/notifications.py:202
 #, python-format
@@ -356,8 +376,7 @@ msgstr "買家回報「%(title)s」有問題：%(problem)s"
 
 #: auction/notifications.py:216
 msgid ""
-"We are holding the payment while our team looks into it, and may contact "
-"you."
+"We are holding the payment while our team looks into it, and may contact you."
 msgstr "調查期間我們會暫緩撥款，並可能與你聯繫。"
 
 #: auction/notifications.py:224
@@ -381,10 +400,11 @@ msgstr "你購買「%(title)s」的交易已取消"
 #, python-format
 msgid ""
 "We did not receive the rest of the payment for \"%(title)s\" by "
-"%(payment_due)s, so the sale is cancelled and your deposit of %(deposit)s is"
-" kept."
+"%(payment_due)s, so the sale is cancelled and your deposit of %(deposit)s is "
+"kept."
 msgstr ""
-"我們在 %(payment_due)s 前未收到「%(title)s」的餘款，因此交易已取消，你的保證金 %(deposit)s 不予退還。"
+"我們在 %(payment_due)s 前未收到「%(title)s」的餘款，因此交易已取消，你的保證"
+"金 %(deposit)s 不予退還。"
 
 #: auction/notifications.py:246
 #, python-format
@@ -392,7 +412,9 @@ msgid ""
 "You can offer \"%(title)s\" to the next-highest bidder at their bid of "
 "%(runner_up)s: open the listing page to decide. If you don't want to, you "
 "keep the animal."
-msgstr "你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到刊登頁面決定。若不想這麼做，個體仍歸你所有。"
+msgstr ""
+"你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到刊登頁面"
+"決定。若不想這麼做，個體仍歸你所有。"
 
 #: auction/notifications.py:247
 #, python-format
@@ -400,7 +422,9 @@ msgid ""
 "You can offer \"%(title)s\" to the next-highest bidder at their bid of "
 "%(runner_up)s: open the listing page to decide. If you don't want to, you "
 "keep the item."
-msgstr "你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到刊登頁面決定。若不想這麼做，物品仍歸你所有。"
+msgstr ""
+"你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到刊登頁面"
+"決定。若不想這麼做，物品仍歸你所有。"
 
 #: auction/notifications.py:252
 msgid "Nobody else bid on it, so you simply keep the animal."
@@ -442,8 +466,9 @@ msgid ""
 "%(payment_due)s. You are not obliged to: you can decline or simply let the "
 "offer lapse."
 msgstr ""
-"「%(title)s」的得標者未付款，賣家願意以你的出價 %(price)s 讓給你。若要購買，請在 %(payment_due)s "
-"前到刊登頁面付款。你沒有義務購買，可以婉拒或讓邀請自動失效。"
+"「%(title)s」的得標者未付款，賣家願意以你的出價 %(price)s 讓給你。若要購買，"
+"請在 %(payment_due)s 前到刊登頁面付款。你沒有義務購買，可以婉拒或讓邀請自動失"
+"效。"
 
 #: auction/notifications.py:279
 #, python-format
@@ -453,15 +478,15 @@ msgstr "「%(title)s」的讓售邀請未被接受"
 #: auction/notifications.py:282
 #, python-format
 msgid ""
-"The next-highest bidder did not take up your offer for \"%(title)s\", so you"
-" keep the animal."
+"The next-highest bidder did not take up your offer for \"%(title)s\", so you "
+"keep the animal."
 msgstr "次高出價者沒有接受「%(title)s」的讓售邀請，個體仍歸你所有。"
 
 #: auction/notifications.py:283
 #, python-format
 msgid ""
-"The next-highest bidder did not take up your offer for \"%(title)s\", so you"
-" keep the item."
+"The next-highest bidder did not take up your offer for \"%(title)s\", so you "
+"keep the item."
 msgstr "次高出價者沒有接受「%(title)s」的讓售邀請，物品仍歸你所有。"
 
 #: auction/notifications.py:291
@@ -474,7 +499,9 @@ msgstr "「%(title)s」退款通知"
 msgid ""
 "The seller did not hand over \"%(title)s\" by %(handover_due)s, so we are "
 "refunding everything you paid, in full."
-msgstr "賣家未在 %(handover_due)s 前交付「%(title)s」，我們將全額退還你支付的所有款項。"
+msgstr ""
+"賣家未在 %(handover_due)s 前交付「%(title)s」，我們將全額退還你支付的所有款"
+"項。"
 
 #: auction/notifications.py:297
 #, python-format
@@ -493,7 +520,9 @@ msgstr "「%(title)s」交易取消：未交貨"
 msgid ""
 "You did not mark \"%(title)s\" as handed over by %(handover_due)s, so the "
 "buyer has been refunded in full and this has been recorded on your account."
-msgstr "你未在 %(handover_due)s 前將「%(title)s」標記為已交貨，因此買家已獲得全額退款，此事也已記錄在你的帳號上。"
+msgstr ""
+"你未在 %(handover_due)s 前將「%(title)s」標記為已交貨，因此買家已獲得全額退"
+"款，此事也已記錄在你的帳號上。"
 
 #: auction/orders.py:72
 msgid "Only the buyer can pay for this order."
@@ -569,24 +598,30 @@ msgstr "你只能將自己的刊登上架競標。"
 msgid "A sold listing can't be auctioned."
 msgstr "已售出的刊登無法競標。"
 
-#: auction/serializers.py:196
+#: auction/serializers.py:195
+msgid ""
+"This listing's species is still being reviewed. It can be auctioned once "
+"it's published."
+msgstr "這則刊登的物種仍在審核中，刊登上架後才能開始競標。"
+
+#: auction/serializers.py:200
 msgid "This listing already has an active auction."
 msgstr "這則刊登已有進行中的競標。"
 
-#: auction/serializers.py:202
+#: auction/serializers.py:206
 msgid "The buy-now price must be higher than the starting price."
 msgstr "直接購買價必須高於起標價。"
 
-#: auction/serializers.py:209
+#: auction/serializers.py:213
 msgid "An auction can't start in the past."
 msgstr "競標開始時間不能早於現在。"
 
-#: auction/serializers.py:212
+#: auction/serializers.py:216
 #, python-format
 msgid "An auction must run for at least %(hours)s hours."
 msgstr "競標時間至少需要 %(hours)s 小時。"
 
-#: auction/serializers.py:216
+#: auction/serializers.py:220
 #, python-format
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
@@ -641,7 +676,7 @@ msgstr "這場競標已無法直接購買。"
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
 
-#: auction/views.py:105
+#: auction/views.py:121
 msgid "Only the seller can cancel this auction."
 msgstr "只有賣家可以取消此競標。"
 
@@ -665,135 +700,197 @@ msgstr "電子信箱"
 msgid "Phone"
 msgstr "電話"
 
-#: post/search_alerts.py:80
+#: post/search_alerts.py:82
 #, python-format
 msgid "New listings match your saved search \"%(name)s\":"
 msgstr "有新刊登符合你儲存的搜尋「%(name)s」："
 
-#: post/search_alerts.py:81
+#: post/search_alerts.py:83
 #, python-format
 msgid "…and %(more)s more."
 msgstr "……還有另外 %(more)s 則。"
 
-#: post/search_alerts.py:82
+#: post/search_alerts.py:84
 #, python-format
 msgid "Manage your saved searches: %(url)s"
 msgstr "管理你儲存的搜尋：%(url)s"
 
-#: post/search_alerts.py:84
+#: post/search_alerts.py:86
 #, python-format
 msgid "%(count)s new listing for \"%(name)s\""
 msgid_plural "%(count)s new listings for \"%(name)s\""
 msgstr[0] "「%(name)s」有 %(count)s 則新刊登"
 
-#: post/serializer.py:17
+#: post/serializer.py:19
 #, python-format
 msgid "Post limit reached. This account allows %(count)s posts."
 msgstr "已達刊登上限，此帳號最多可發布 %(count)s 則刊登。"
 
-#: post/serializer.py:26 post/serializer.py:89
+#: post/serializer.py:28 post/serializer.py:91
 #, python-format
 msgid "Image limit exceeded. This account allows %(count)s images per post."
 msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
 
-#: post/serializer.py:36
+#: post/serializer.py:38
 msgid ""
 "This listing has a running auction. It can't be marked reserved or sold "
 "until the auction ends."
 msgstr "這則刊登正在競標中，競標結束前無法標記為保留或已售出。"
 
-#: post/serializer.py:72
+#: post/serializer.py:74
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
-#: post/serializer.py:79
+#: post/serializer.py:81
 msgid "Add at least one photo."
 msgstr "請至少加入一張照片。"
 
-#: post/serializer.py:81
+#: post/serializer.py:83
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/serializer.py:104
+#: post/serializer.py:106
 msgid "Photo order refers to a file that was not uploaded."
 msgstr "照片順序中包含未上傳的檔案。"
 
-#: post/serializer.py:107
+#: post/serializer.py:109
 msgid "Photo order refers to a photo this listing does not have."
 msgstr "照片順序中包含這則刊登沒有的照片。"
 
-#: post/serializer.py:109
+#: post/serializer.py:111
 msgid "Each photo must appear in the order exactly once."
 msgstr "每張照片在順序中只能出現一次。"
 
-#: post/serializer.py:231
+#: post/serializer.py:224
+msgid "Choose a species from the list or type one, not both."
+msgstr "請從清單選擇物種，或自行輸入，兩者擇一即可。"
+
+#: post/serializer.py:230
+msgid "Choose a species."
+msgstr "請選擇物種。"
+
+#: post/serializer.py:239
+msgid ""
+"This listing has a running auction, so its species can't be changed to one "
+"that still needs review."
+msgstr "這則刊登正在競標中，無法將物種改為尚待審核的物種。"
+
+#: post/serializer.py:253
+#, python-format
+msgid ""
+"\"%(name)s\" isn't accepted as a species (%(note)s). Choose one from the "
+"list."
+msgstr "「%(name)s」未被接受為物種（%(note)s）。請從清單中選擇。"
+
+#: post/serializer.py:255
+#, python-format
+msgid "\"%(name)s\" isn't accepted as a species. Choose one from the list."
+msgstr "「%(name)s」未被接受為物種。請從清單中選擇。"
+
+#: post/serializer.py:304
 #, python-format
 msgid "This search has filters that can't be saved: %(names)s."
 msgstr "這個搜尋包含無法儲存的篩選條件：%(names)s。"
 
-#: post/serializer.py:240
+#: post/serializer.py:313
 #, python-format
 msgid ""
 "You can keep up to %(count)s saved searches. Delete one to save another."
 msgstr "你最多可儲存 %(count)s 個搜尋。請先刪除一個再儲存新的。"
 
-#: post/serializer.py:243
+#: post/serializer.py:316
 msgid "Marketplace search"
 msgstr "市集搜尋"
 
-#: post/views.py:46
+#: post/species.py:123
+#, python-format
+msgid "Your listing is live: %(title)s"
+msgstr "你的刊登已上架：%(title)s"
+
+#: post/species.py:124
+#, python-format
+msgid ""
+"We reviewed the species you entered, \"%(requested)s\", and listed it as "
+"\"%(species)s\". Your listing \"%(title)s\" is now on the marketplace."
+msgstr "我們已審核你輸入的物種「%(requested)s」，並歸類為「%(species)s」。你的刊登「%(title)s」現已在市集上架。"
+
+#: post/species.py:134
+#, python-format
+msgid ""
+"We couldn't add \"%(requested)s\" to our species list, so your listing "
+"\"%(title)s\" isn't on the marketplace yet."
+msgstr "我們無法將「%(requested)s」加入物種清單，因此你的刊登「%(title)s」尚未在市集上架。"
+
+#: post/species.py:136
+#, python-format
+msgid "Reason: %(note)s"
+msgstr "原因：%(note)s"
+
+#: post/species.py:137
+#, python-format
+msgid ""
+"Edit the listing and choose a species from the list to publish it: %(url)s"
+msgstr "請編輯刊登並從清單中選擇物種，即可上架：%(url)s"
+
+#: post/species.py:140
+#, python-format
+msgid "Choose a different species for your listing: %(title)s"
+msgstr "請為你的刊登選擇其他物種：%(title)s"
+
+#: post/views.py:47
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
 msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:48
+#: post/views.py:49
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on the Reptile "
 "Marketplace and asked us to pass on their contact details:"
-msgstr "%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方式："
+msgstr ""
+"%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方"
+"式："
 
-#: post/views.py:50
+#: post/views.py:51
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:67
+#: post/views.py:68
 #, python-format
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 
-#: post/views.py:68
+#: post/views.py:69
 #, python-format
 msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
 msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
 
-#: post/views.py:134
+#: post/views.py:135
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:139
+#: post/views.py:140
 msgid "This listing has been sold."
 msgstr "這則刊登已售出。"
 
-#: post/views.py:151
+#: post/views.py:152
 msgid ""
-"We've sent your contact details to the seller. They'll get in touch with "
-"you."
+"We've sent your contact details to the seller. They'll get in touch with you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:169
+#: post/views.py:170
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:182
+#: post/views.py:183
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:215
+#: post/views.py:220
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
 
@@ -819,9 +916,11 @@ msgstr "請以 JSON 陣列傳送照片順序。"
 
 #, python-format
 #~ msgid ""
-#~ "%(name)s wants to buy \"%(title)s\" at your listed price of %(price)s on the"
-#~ " Reptile Marketplace. Get in touch to arrange payment and delivery."
-#~ msgstr "%(name)s 想以你在爬蟲市集標示的售價 %(price)s 直接購買「%(title)s」。請與對方聯繫，安排付款與交貨。"
+#~ "%(name)s wants to buy \"%(title)s\" at your listed price of %(price)s on "
+#~ "the Reptile Marketplace. Get in touch to arrange payment and delivery."
+#~ msgstr ""
+#~ "%(name)s 想以你在爬蟲市集標示的售價 %(price)s 直接購買「%(title)s」。請與"
+#~ "對方聯繫，安排付款與交貨。"
 
 #, python-format
 #~ msgid "Reply to them directly: %(contact)s"

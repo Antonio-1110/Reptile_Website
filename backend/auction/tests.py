@@ -242,6 +242,31 @@ class BiddingTests(AuctionTestCase):
         self.assertNotIn('bidder', bid)
 
 
+class SpeciesReviewAuctionTests(AuctionTestCase):
+    def setUp(self):
+        super().setUp()
+        self.client.force_authenticate(self.seller)
+
+    def test_listing_waiting_on_a_species_review_cannot_be_auctioned(self):
+        from post.models import SpeciesRequest
+        LiveAnimalPost.objects.filter(pk=self.listing.pk).update(
+            species=None, species_request=SpeciesRequest.objects.create(name='Mystery Monitors'),
+        )
+        response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Auction.objects.exists())
+
+    def test_listing_with_a_running_auction_cannot_switch_to_an_unreviewed_species(self):
+        self.create_auction()
+        response = self.client.patch(
+            reverse('live-animal-detail', args=[self.listing.id]), {'requested_species': 'Mystery Monitors'}, format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('species', response.data)
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.species, self.species)
+
+
 class HiddenListingAuctionTests(AuctionTestCase):
     def setUp(self):
         super().setUp()

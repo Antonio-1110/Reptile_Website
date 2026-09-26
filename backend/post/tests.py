@@ -12,7 +12,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
-from .models import ContactRequest, EquipmentPost, Favorite, LiveAnimalPost, Report, SavedSearch, Species
+from .models import ContactRequest, EquipmentPost, Favorite, LiveAnimalPost, Report, SavedSearch, Species, SpeciesAlias, SpeciesRequest
 
 
 class PostLimitTests(APITestCase):
@@ -1116,3 +1116,201 @@ class SavedSearchTests(APITestCase):
 		from django.core.management import call_command
 		call_command('send_search_alerts', stdout=io.StringIO())
 		self.assertEqual(mail.outbox, [])
+
+
+@override_settings(ADMINS=[('Staff', 'staff@example.com')], FRONTEND_URL='https://reptiles.example')
+class SpeciesReviewTests(APITestCase):
+	def setUp(self):
+		from . import species as species_catalog
+		self.catalog = species_catalog
+		self.seller = Account.objects.create_user(username='skink-seller', email='seller@example.com', password='pass1234')
+		self.other_seller = Account.objects.create_user(username='skink-seller2', email='seller2@example.com', password='pass1234')
+		self.staff = Account.objects.create_superuser(username='species-staff', email='staff@example.com', password='pass1234')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.pythons = Species.objects.create(name='Review Pythons')
+		SpeciesAlias.objects.create(species=self.pythons, name='審核球蟒')
+
+	def create(self, account=None, **fields):
+		self.client.force_authenticate(account or self.seller)
+		payload = {
+			'title': 'Skink', 'description': 'd', 'price': '3000.00', 'location': 'TPE', 'contact_info': {},
+			'sex': 'unsexed', 'life_stage': 'adult', 'shipping_methods': ['localPickup'],
+		}
+		payload.update(fields)
+		with self.captureOnCommitCallbacks(execute=True):
+			return self.client.post(reverse('live-animal-list'), payload, format='json')
+
+	def public_titles(self, **params):
+		self.client.force_authenticate(None)
+		return [item['title'] for item in self.client.get(reverse('live-animal-list'), params).data['results']]
+
+	def test_typed_name_of_a_listed_species_or_alias_publishes_right_away(self):
+		for typed in ('review-pythons', '  REVIEW PYTHONS ', '審核球蟒'):
+			response = self.create(requested_species=typed, title=f'Typed {typed}')
+			self.assertEqual(response.status_code, 201, response.data)
+			self.assertEqual(response.data['species'], self.pythons.id)
+			self.assertIsNone(response.data['species_review'])
+		self.assertFalse(SpeciesRequest.objects.exists())
+		self.assertEqual(len(self.public_titles()), 3)
+
+	def test_unknown_species_is_saved_for_review_and_kept_off_the_marketplace(self):
+		response = self.create(requested_species='Mystery Skink')
+		self.assertEqual(response.status_code, 201, response.data)
+		self.assertIsNone(response.data['species'])
+		self.assertIsNone(response.data['species_name'])
+		self.assertEqual(response.data['species_review'], {'name': 'Mystery Skink', 'status': 'pending', 'note': ''})
+		self.assertEqual(len(mail.outbox), 1)  # staff are told there's something to review
+		self.assertIn('Mystery Skink', mail.outbox[0].subject)
+
+		detail_url = reverse('live-animal-detail', args=[response.data['id']])
+		self.assertEqual(self.public_titles(), [])
+		self.assertEqual(self.client.get(detail_url).status_code, 404)
+		self.client.force_authenticate(self.other_seller)
+		self.assertEqual(self.client.get(detail_url).status_code, 404)
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.get(detail_url).status_code, 200)
+		self.assertEqual(self.client.get(reverse('live-animal-mine')).data['count'], 1)
+
+	def test_listings_asking_for_the_same_name_share_one_request(self):
+		self.create(requested_species='Mystery Skink')
+		self.create(self.other_seller, requested_species='mystery-skink')
+		self.assertEqual(SpeciesRequest.objects.count(), 1)
+		self.assertEqual(SpeciesRequest.objects.get().listings.count(), 2)
+		self.assertEqual(len(mail.outbox), 1)
+
+	def test_a_listing_needs_a_species(self):
+		response = self.create()
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('species', response.data)
+		self.assertEqual(self.create(species=self.pythons.id, requested_species='Other').status_code, 400)
+
+	def test_mapping_to_an_existing_species_publishes_the_listings_and_remembers_the_name(self):
+		first = self.create(requested_species='Review Royal').data
+		second = self.create(self.other_seller, requested_species='review royal', title='Second').data
+		mail.outbox.clear()
+		with self.captureOnCommitCallbacks(execute=True):
+			self.catalog.approve(SpeciesRequest.objects.get(), self.pythons, self.staff)
+
+		self.assertEqual(sorted(self.public_titles(species_name='Review Pythons')), ['Second', 'Skink'])
+		for listing in (first, second):
+			post = LiveAnimalPost.objects.get(pk=listing['id'])
+			self.assertEqual((post.species, post.species_request), (self.pythons, None))
+		self.assertEqual(sorted(message.to[0] for message in mail.outbox), ['seller2@example.com', 'seller@example.com'])
+		self.assertIn(f'https://reptiles.example/posts/{first["id"]}', mail.outbox[0].body + mail.outbox[1].body)
+
+		# The name is now an alias: the next seller who types it skips the review, and search finds it.
+		self.assertTrue(SpeciesAlias.objects.filter(name='Review Royal', species=self.pythons).exists())
+		self.assertEqual(self.create(requested_species='REVIEW ROYAL', title='Third').data['species'], self.pythons.id)
+		self.assertEqual(len(self.public_titles(search='royal')), 3)
+
+	def test_staff_can_add_a_requested_name_as_a_new_species_in_the_admin(self):
+		listing = self.create(requested_species='mystery skink').data
+		species_request = SpeciesRequest.objects.get()
+		self.client.force_login(self.staff)
+		response = self.client.post(
+			reverse('admin:post_speciesrequest_change', args=[species_request.id]),
+			{'decision': 'create', 'new_species_name': 'Mystery Skinks', 'species': '', 'staff_note': ''},
+		)
+		self.assertEqual(response.status_code, 302)
+		species = Species.objects.get(name='Mystery Skinks')
+		self.assertEqual(LiveAnimalPost.objects.get(pk=listing['id']).species, species)
+		species_request.refresh_from_db()
+		self.assertEqual((species_request.status, species_request.species, species_request.reviewed_by), ('approved', species, self.staff))
+		self.assertEqual(self.public_titles(), ['Skink'])
+
+	def test_admin_refuses_to_add_a_species_that_already_exists(self):
+		self.create(requested_species='Pythons Of Review')
+		self.client.force_login(self.staff)
+		response = self.client.post(
+			reverse('admin:post_speciesrequest_change', args=[SpeciesRequest.objects.get().id]),
+			{'decision': 'create', 'new_species_name': 'review pythons', 'species': '', 'staff_note': ''},
+		)
+		self.assertEqual(response.status_code, 200)  # the form comes back with an error
+		self.assertEqual(Species.objects.filter(name__iexact='review pythons').count(), 1)
+		self.assertEqual(SpeciesRequest.objects.get().status, 'pending')
+
+	def test_rejected_name_keeps_the_listing_unpublished_until_a_listed_species_is_chosen(self):
+		listing = self.create(requested_species='Dragon').data
+		mail.outbox.clear()
+		with self.captureOnCommitCallbacks(execute=True):
+			self.catalog.reject(SpeciesRequest.objects.get(), self.staff, 'Not a real species')
+		self.assertEqual(mail.outbox[0].to, ['seller@example.com'])
+		self.assertIn('Not a real species', mail.outbox[0].body)
+		self.assertIn(f'/postinput?edit={listing["id"]}&category=live_animal', mail.outbox[0].body)
+
+		detail_url = reverse('live-animal-detail', args=[listing['id']])
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.get(detail_url).data['species_review']['status'], 'rejected')
+		# Other edits still save (the listing stays unpublished)...
+		response = self.client.patch(detail_url, {'requested_species': 'Dragon', 'price': '2500.00'}, format='json')
+		self.assertEqual(response.status_code, 200, response.data)
+		self.assertEqual(self.public_titles(), [])
+		# ...another seller is told straight away that the name isn't accepted...
+		response = self.create(self.other_seller, requested_species='dragon')
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('Not a real species', str(response.data['species']))
+		# ...and choosing a listed species publishes it.
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.patch(detail_url, {'species': self.pythons.id}, format='json').status_code, 200)
+		self.assertEqual(self.public_titles(), ['Skink'])
+
+	def test_request_no_listing_waits_on_any_more_is_dropped(self):
+		listing = self.create(requested_species='Mystery Skink').data
+		self.client.patch(reverse('live-animal-detail', args=[listing['id']]), {'species': self.pythons.id}, format='json')
+		self.assertFalse(SpeciesRequest.objects.exists())
+
+		listing = self.create(requested_species='Mystery Skink').data
+		self.client.delete(reverse('live-animal-detail', args=[listing['id']]))
+		self.assertFalse(SpeciesRequest.objects.exists())
+
+	def test_search_alerts_skip_listings_waiting_on_review(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		from .search_alerts import matching_listings
+		self.create(requested_species='Mystery Skink')
+		saved = SavedSearch.objects.create(account=self.other_seller, name='skinks', query='search=skink', last_alerted_at=timezone.now() - timedelta(days=1))
+		self.assertEqual(list(matching_listings(saved, saved.last_alerted_at)), [])
+
+	def test_species_list_includes_aliases(self):
+		species = self.client.get(reverse('species-detail', args=[self.pythons.id])).data
+		self.assertEqual(species['aliases'], ['審核球蟒'])
+
+
+class SpeciesCatalogTests(APITestCase):
+	"""The species list seeded by migration 0018, with the other names people use for each species."""
+
+	def setUp(self):
+		self.seller = Account.objects.create_user(
+			username='catalog-seller', email='catalog@example.com', password='pass1234', account_type='commercial', is_paid_account=True,
+		)
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.client.force_authenticate(self.seller)
+
+	def create(self, requested_species):
+		return self.client.post(reverse('live-animal-list'), {
+			'title': f'A {requested_species}', 'description': 'd', 'price': '100.00', 'location': 'TPE', 'contact_info': {},
+			'requested_species': requested_species, 'sex': 'unsexed', 'life_stage': 'adult', 'shipping_methods': [],
+		}, format='json')
+
+	def test_common_names_scientific_names_and_chinese_names_pick_the_same_species(self):
+		for typed, expected in [
+			('球蟒', 'Ball Pythons'), ('royal python', 'Ball Pythons'), ('Python regius', 'Ball Pythons'),
+			('Elaphe guttata', 'Corn Snakes'), ('蘇卡達', 'Sulcata Tortoises'), ('blue tongue skink', 'Blue-tongued Skinks'),
+			('Red-cheeked Mud Turtle', '紅面蛋'),
+		]:
+			response = self.create(typed)
+			self.assertEqual(response.status_code, 201, response.data)
+			self.assertEqual(response.data['species_name'], expected, typed)
+		self.assertFalse(SpeciesRequest.objects.exists())
+
+	def test_search_finds_listings_by_any_name_of_their_species(self):
+		self.create('Ball Python')
+		self.client.force_authenticate(None)
+		for term in ('球蟒', 'regius', 'ball'):
+			self.assertEqual(self.client.get(reverse('live-animal-list'), {'search': term}).data['count'], 1, term)
+
+	def test_every_alias_picks_one_species(self):
+		from .species import normalize
+		names = [normalize(name) for name in SpeciesAlias.objects.values_list('name', flat=True)]
+		names += [normalize(name) for name in Species.objects.values_list('name', flat=True).distinct()]
+		self.assertEqual(len(names), len(set(names)))
