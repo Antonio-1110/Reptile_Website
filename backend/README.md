@@ -300,6 +300,13 @@ and each `*_exclude` variant inverts its counterpart:
 - `diets` / `diets_exclude`, `shipping` / `shipping_exclude` (match any)
 - `price_min|max`, `size_min|max`, `weight_min|max`, `age_min|max`, `posted_days_min|max`
 
+`GET /equipment/` shares `location` / `location_exclude`, `price_min|max`, `posted_days_min|max`,
+`shipping` / `shipping_exclude` and `?search=` (title, description), and adds:
+
+- `category` / `category_exclude` (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`,
+  `transport`, `other`)
+- `condition` (`2` new, `1` used, `0` not functional; comma-separated)
+
 ### Auctions (`/api/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`

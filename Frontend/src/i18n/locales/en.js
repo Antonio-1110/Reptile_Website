@@ -333,6 +333,20 @@ const en = {
       food: "Food",
       accessories: "Accessories",
     },
+    equipment: {
+      type: "Equipment type",
+      condition: "Condition",
+      types: {
+        enclosure: "Enclosure",
+        heating: "Heating",
+        lighting: "Lighting / UVB",
+        climate: "Thermostats & monitoring",
+        substrateDecor: "Substrate & decor",
+        transport: "Carriers & transport",
+        other: "Other",
+      },
+      conditions: { 2: "New", 1: "Used", 0: "Not working (for parts)" },
+    },
     biological: {
       title: "Biological Data",
       sex: "Sex",

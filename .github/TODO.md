@@ -66,7 +66,10 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       already require a paid account)
 - [x] Add image upload support with per-account limits
 - [x] Add richer filtering for location, price and species (live animals)
-- [ ] Add richer filtering for equipment (price range, search tags, equipment category)
+- [x] Add richer filtering for equipment (price range, search tags, equipment category): new
+      `category` field (set in the editor with `condition`) and `EquipmentPostFilter`
+- [ ] Equipment browse page: the equipment filters exist on the API, but the marketplace only lists
+      live animals
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
