@@ -1,6 +1,6 @@
 import './BidPanel.css';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import useListingTranslation from '../useListingTranslation';
 import { isLoggedIn } from '../../../api/authApi';
 import { cancelAuction, payDeposit, placeBid } from '../../../api/auctionsApi';
 import { formatMoney } from '../../../utils/auctionFormat';
@@ -13,8 +13,8 @@ const PAYABLE_DEPOSIT_STATES = [undefined, 'failed', 'cancelled'];
 
 // Everything the viewer can do on an auction: sign in, pay the deposit, bid, or (as the seller) cancel.
 // Calls onChanged() after anything that changes the auction so the page reloads it.
-export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged, showToast }) {
-  const { t, i18n } = useTranslation();
+export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged, showToast, category }) {
+  const { t, i18n } = useListingTranslation(category);
   const money = (amount) => formatMoney(amount, auction.currency, i18n.resolvedLanguage);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -225,6 +225,11 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
       )}
       {errorLine}
       <p className="bid-panel-hint">{t('auctions.deposit.held', { amount: money(auction.depositAmount) })}</p>
+      {auction.extendWindowMinutes > 0 && (
+        <p className="bid-panel-hint">
+          {t('auctions.bid.extendHint', { window: auction.extendWindowMinutes, by: auction.extendByMinutes })}
+        </p>
+      )}
     </Panel>
   );
 }
