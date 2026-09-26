@@ -1,8 +1,8 @@
-<!-- Keep it short. Link issues/TODO items rather than repeating them. Never paste secrets, .env values or personal data. -->
+<!-- Keep it short. Link issues rather than repeating them. Never paste secrets, .env values or personal data. -->
 
 ## What and why
 
-<!-- One or two sentences: what this changes and the problem it solves. Mention the TODO.md item if there is one. -->
+<!-- One or two sentences: what this changes and the problem it solves. Add "Closes #n" for the issue it finishes. -->
 
 ## Changes
 
@@ -32,7 +32,7 @@
 - [ ] Rules and limits are enforced on the backend; the frontend only mirrors them
 - [ ] Public responses still hide seller contact details and personal data
 - [ ] API changes are reflected in `src/api/*`, the READMEs and `docs/API_ENDPOINTS.md`
-- [ ] `TODO.md` updated (item ticked, or follow-ups added)
+- [ ] Issue linked with "Closes #n"; follow-ups opened as new issues
 
 ## Follow-ups / needs a decision
 

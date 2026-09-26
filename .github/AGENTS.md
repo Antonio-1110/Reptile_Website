@@ -217,8 +217,8 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
    changed since you last looked.
 
 ### While changing
-- Keep diffs focused on the task. Note unrelated problems in your summary (or `TODO.md`) instead of
-  fixing them in passing.
+- Keep diffs focused on the task. Note unrelated problems in your summary (or as a GitHub issue) instead
+  of fixing them in passing.
 - Changing an API field? Update, in the same change: serializer → tests → `src/api/*` mapping →
   components → docs.
 - Adding a user-facing string? Add both translations (§3).
@@ -257,14 +257,14 @@ run, env vars to set, servers to restart). Never commit or push unless asked.
 
 ### Working in parallel with other agents
 Several agents often work on separate branches at once. Almost every conflict so far has been in the
-same few shared files: the locale files, `django.po`, `TODO.md`, the READMEs, `App.jsx`
-routes and `post/migrations/`. To keep merges cheap:
+same few shared files: the locale files, `django.po`, the old `TODO.md` (now GitHub Issues), the
+READMEs, `App.jsx` routes and `post/migrations/`. To keep merges cheap:
 - Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
   (don't rebase a pushed branch) right before asking for review.
 - Put a new feature's strings in **its own section file** (`i18n/locales/en/<section>.js` plus the
   `zh/` twin; it's loaded automatically) rather than adding to a shared one, and don't reorder or
   reformat existing keys. Add new routes in `App.jsx` next to, not in the middle of, others.
-- Leave the READMEs, `AGENTS.md` and `TODO.md` alone unless the change needs them; note doc
+- Leave the READMEs and `AGENTS.md` alone unless the change needs them; note doc
   updates in the PR description, and they can be batched into a docs PR.
 - Resolving a conflict in a translation file means **keeping both sides' keys** (per key or msgid),
   then running `makemessages` and `npm test` (which checks both languages match). Never resolve
@@ -333,4 +333,5 @@ Apply these whenever you build or review a feature — they're the common gaps i
 
 Update this guide in the same change when you add an app, a command, an invariant, or discover a
 gotcha that cost you time. Keep it scannable — link to READMEs for detail rather than duplicating
-them. Project backlog lives in [TODO.md](TODO.md).
+them. The project backlog is [GitHub Issues](https://github.com/Antonio-1110/Reptile_Website/issues) (labels: `high priority`, `needs decision`,
+`feature`, `deployment`, `tech debt`, `nice to have`); reference one with "Closes #n" in the PR.
