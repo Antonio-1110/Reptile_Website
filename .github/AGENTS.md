@@ -118,6 +118,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
   `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+- Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
+  English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
   `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
