@@ -1082,6 +1082,31 @@ class SavedSearchTests(APITestCase):
 		self.client.force_authenticate(self.user)
 		self.assertEqual(self.client.delete(reverse('saved-search-detail', args=[saved['id']])).status_code, 204)
 
+	def test_owner_can_rename_a_saved_search_or_change_its_filters(self):
+		saved = self.save('search=pied', name='Pied males').data
+		detail = reverse('saved-search-detail', args=[saved['id']])
+		response = self.client.patch(detail, {'query': 'search=pied&sex=1.0&page=2'}, format='json')
+		self.assertEqual(response.status_code, 200, response.data)
+		self.assertEqual(response.data['query'], 'search=pied&sex=1.0')  # checked and normalized as on create
+		self.assertEqual(response.data['name'], 'Pied males')  # a filters-only edit keeps the name
+		response = self.client.patch(detail, {'name': 'Pied boys'}, format='json')
+		self.assertEqual(response.data['name'], 'Pied boys')
+		response = self.client.patch(detail, {'name': ''}, format='json')
+		self.assertEqual(response.data['name'], 'pied')  # a blank name falls back to the search text
+		self.assertEqual(self.client.patch(detail, {'query': 'colour=red'}, format='json').status_code, 400)
+
+	@override_settings(SAVED_SEARCH_LIMIT=1)
+	def test_editing_at_the_limit_is_allowed(self):
+		saved = self.save('search=pied').data
+		response = self.client.patch(reverse('saved-search-detail', args=[saved['id']]), {'query': 'search=clown'}, format='json')
+		self.assertEqual(response.status_code, 200, response.data)
+
+	def test_only_the_owner_can_edit_a_saved_search(self):
+		saved = self.save('search=pied', name='Pied males').data
+		self.client.force_authenticate(self.seller)
+		response = self.client.patch(reverse('saved-search-detail', args=[saved['id']]), {'name': 'Mine now'}, format='json')
+		self.assertEqual(response.status_code, 404)
+
 	@override_settings(FRONTEND_URL='https://reptiles.example')
 	def test_alerts_email_only_new_matches_once(self):
 		self.listing('Old Pied Python', self.pythons)  # posted before the search was saved

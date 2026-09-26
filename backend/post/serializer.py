@@ -312,6 +312,9 @@ class SavedSearchSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'detail': _('You can keep up to %(count)s saved searches. Delete one to save another.') % {'count': settings.SAVED_SEARCH_LIMIT},
             })
-        if not attrs.get('name'):
-            attrs['name'] = QueryDict(attrs['query']).get('search') or _('Marketplace search')
+        # A blank name falls back to the search text. An edit that only changes the query (PATCH
+        # without `name`) keeps the name the user gave it.
+        if (self.instance is None or 'name' in attrs) and not attrs.get('name'):
+            query = attrs['query'] if 'query' in attrs else self.instance.query
+            attrs['name'] = QueryDict(query).get('search') or _('Marketplace search')
         return attrs

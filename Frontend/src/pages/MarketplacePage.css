@@ -75,11 +75,44 @@
   gap: 0.5rem 1rem;
 }
 
-.marketplace-save-search { display: grid; gap: 0.25rem; justify-items: end; }
+.marketplace-save-search { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 1rem; }
 .marketplace-save-search p { margin: 0; font-size: 0.9rem; }
 .marketplace-save-search [role="status"] { color: #4ade80; }
 .marketplace-save-search [role="status"] a { color: #93c5fd; }
-.marketplace-save-search [role="alert"] { color: #f87171; }
+
+/* A small callout under the button rather than a line in the heading row, which used to grow the
+   row (and push the listings down) whenever a warning appeared. */
+.marketplace-save-message {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 3rem));
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #7f1d1d;
+  border-radius: 0.5rem;
+  color: #fecaca;
+  background: #1f1113;
+  box-shadow: 0 8px 20px var(--color-overlay);
+}
+
+/* On phones the actions wrap to the left edge, so the callout hangs from there instead. */
+@media (max-width: 47.99rem) {
+  .marketplace-save-message { right: auto; left: 0; }
+}
+
+.marketplace-save-cancel { color: #93c5fd; font-size: 0.9rem; }
+
+.marketplace-editing-note {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #1e3a8a;
+  border-radius: 0.5rem;
+  color: #bfdbfe;
+  background: rgb(30 58 138 / 25%);
+  font-size: 0.9rem;
+}
 
 .marketplace-save-search button {
   padding: 0.4rem 0.9rem;

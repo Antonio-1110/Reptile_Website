@@ -264,6 +264,56 @@ export function listingQueryString(query) {
   return buildListingParams(query).toString();
 }
 
+// The reverse of buildListingParams: a stored query string (a saved search) → the marketplace's
+// search text, header tags and sidebar filters, so the search can be opened and edited. Only the
+// filters present in the query are returned; the caller fills in the rest.
+const RANGE_FILTERS = [
+  ["price", "minPrice", "maxPrice"],
+  ["posted_days", "minPostedDays", "maxPostedDays"],
+  ["size", "minSize", "maxSize"],
+  ["weight", "minWeight", "maxWeight"],
+  ["age", "minAgeYears", "maxAgeYears"],
+];
+const LIST_FILTERS = [
+  ["sex", "sex"],
+  ["category", "equipmentTypes"],
+  ["condition", "conditions"],
+];
+const INCLUDE_EXCLUDE_FILTERS = [
+  ["location", "locations", "includeLocations", getLocationKey],
+  ["shipping", "shippingMethods", "includeShipping"],
+  ["life_stage", "lifeStages", "includeLifeStages"],
+  ["diets", "diets", "includeDiets"],
+];
+
+export function parseListingQuery(queryString) {
+  const params = new URLSearchParams(queryString);
+  const list = (key) => (params.get(key) || "").split(",").filter(Boolean);
+  const filters = {};
+  RANGE_FILTERS.forEach(([key, minName, maxName]) => {
+    if (params.has(`${key}_min`)) filters[minName] = params.get(`${key}_min`);
+    if (params.has(`${key}_max`)) filters[maxName] = params.get(`${key}_max`);
+  });
+  LIST_FILTERS.forEach(([key, name]) => {
+    if (params.has(key)) filters[name] = list(key);
+  });
+  INCLUDE_EXCLUDE_FILTERS.forEach(([key, name, includeName, toUiValue = (value) => value]) => {
+    const exclude = params.has(`${key}_exclude`);
+    if (!exclude && !params.has(key)) return;
+    filters[name] = list(exclude ? `${key}_exclude` : key).map(toUiValue).filter(Boolean);
+    filters[includeName] = !exclude;
+  });
+  const species = params.get("species_name");
+  return {
+    search: params.get("search") || "",
+    tags: [
+      ...(species ? [{ type: "species", value: species }] : []),
+      ...list("genes").map((value) => ({ type: "morph", value })),
+    ],
+    filters,
+  };
+}
+
 // The signed-in user's saved searches ({ id, name, query, createdAt }), newest first.
 export async function getSavedSearches() {
   const payload = await requestWithAuth("/posts/saved-searches/", { method: "GET" });
@@ -273,6 +323,11 @@ export async function getSavedSearches() {
 // Saves a search so the user is emailed about new matches; name defaults to the search text.
 export async function createSavedSearch(query, name = "") {
   return requestWithAuth("/posts/saved-searches/", { method: "POST", body: JSON.stringify({ query, name }) });
+}
+
+// Renames a saved search and/or replaces its query (`changes`: { name?, query? }).
+export async function updateSavedSearch(id, changes) {
+  return requestWithAuth(`/posts/saved-searches/${id}/`, { method: "PATCH", body: JSON.stringify(changes) });
 }
 
 export async function deleteSavedSearch(id) {
