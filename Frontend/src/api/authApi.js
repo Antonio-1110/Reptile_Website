@@ -1,8 +1,7 @@
 import i18n from "../i18n";
-import { apiFetch, requestFailedMessage } from "./http";
+import { API_URL, apiFetch, requestFailedMessage } from "./http";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
-const AUTH_URL = `${API_BASE_URL}/v1/auth`;
+const AUTH_URL = `${API_URL}/auth`;
 
 const ACCESS_KEY = "accessToken";
 const REFRESH_KEY = "refreshToken";
@@ -41,7 +40,9 @@ export function isLoggedIn() {
   return Boolean(getAccessToken());
 }
 
-// Turns a DRF error body ({detail}, {field: [msgs]}) into {message, fields}.
+// Turns an API error body into {message, fields}. The backend always answers errors with
+// {detail: "message"} for the request as a whole and/or {field: ["message", …]} (common/exceptions.py);
+// SimpleJWT adds `code` and `messages`, which aren't fields.
 async function parseError(response) {
   const body = await response.json().catch(() => ({}));
   const fields = {};
@@ -50,10 +51,8 @@ async function parseError(response) {
       fields[key] = Array.isArray(value) ? value.join(" ") : String(value);
     }
   });
-  // `detail` is usually a string, but serializer-level errors raised as {'detail': ...} arrive as a list.
-  const detail = Array.isArray(body.detail) ? body.detail.join(" ") : body.detail;
-  const message = typeof detail === "string" && detail
-    ? detail
+  const message = typeof body.detail === "string" && body.detail
+    ? body.detail
     : Object.values(fields).join(" ") || requestFailedMessage(response.status);
   const error = new Error(message);
   error.status = response.status;
@@ -96,7 +95,7 @@ async function refreshAccessToken() {
 export async function authFetch(path, options = {}) {
   const send = () => {
     const token = getAccessToken();
-    return apiFetch(`${API_BASE_URL}${path}`, {
+    return apiFetch(`${API_URL}${path}`, {
       ...options,
       headers: {
         // FormData bodies (photo uploads) need the browser to set the multipart boundary itself.
@@ -143,5 +142,5 @@ export function logout() {
 }
 
 export async function getMe() {
-  return authFetch("/v1/auth/me/", { method: "GET" });
+  return authFetch("/auth/me/", { method: "GET" });
 }

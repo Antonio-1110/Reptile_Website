@@ -23,11 +23,13 @@ from account.views import SellerProfile, SellerReviews
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Every endpoint lives under /api/v1/: URL segments are plural, kebab-case nouns; JSON fields are snake_case.
     path('api/v1/auth/', include('authentication.urls')),
-    path('api/posts/', include('post.urls')),
-    path('api/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
-    path('api/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
-    path('api/auctions/', include('auction.urls')),
+    path('api/v1/account/', include('account.urls')),
+    path('api/v1/posts/', include('post.urls')),
+    path('api/v1/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
+    path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
+    path('api/v1/auctions/', include('auction.urls')),
     path('api-auth/', include('rest_framework.urls')),
 ]
 

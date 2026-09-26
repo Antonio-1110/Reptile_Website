@@ -20,7 +20,7 @@ backend/
 │   ├── views.py        # UserRegister, UserLogin, UserLogout, UserProfile
 │   ├── urls.py
 │   └── migrations/
-├── auction/            # auctions, bids and bidder deposits (/api/auctions/)
+├── auction/            # auctions, bids and bidder deposits (/api/v1/auctions/)
 │   ├── models.py       # Auction, Bid, Deposit
 │   ├── services.py     # all auction rules: deposits, bidding, cancelling, settling
 │   ├── payments.py     # DepositGateway interface + manual/instant gateways
@@ -38,7 +38,7 @@ backend/
 │   └── migrations/
 ├── backend/            # project settings
 │   ├── settings.py
-│   ├── urls.py         # mounts /api/v1/auth/, /api/posts/ and /api/auctions/
+│   ├── urls.py         # mounts everything under /api/v1/
 │   └── wsgi.py / asgi.py
 ├── manage.py
 ├── requirements.txt
@@ -192,7 +192,7 @@ Buyer and seller see each other's contact details from the moment the winner is 
 has paid a deposit), or once a runner-up / buy-now buyer has paid. Nobody else ever does.
 
 **Seller bond (optional).** With `SELLER_BOND_AMOUNT` above 0, sellers must post that bond
-(`GET`/`POST /api/auctions/seller-bond/`) before starting an auction. It is forfeited if they take a
+(`GET`/`POST /api/v1/auctions/seller-bond/`) before starting an auction. It is forfeited if they take a
 buyer's money and never hand over. At 0 (the default) nothing changes.
 
 **Accounts to review.** Incidents are recorded automatically: buy-now payments started and never
@@ -241,19 +241,22 @@ webhook view that calls `services.confirm_deposit()` / `fail_deposit()` and `con
 
 See [docs/API_ENDPOINTS.md](../docs/API_ENDPOINTS.md) for full request/response examples.
 
+Every endpoint lives under `/api/v1/` (plural kebab-case URL segments, `snake_case` JSON). Errors have
+one shape (`common/exceptions.py`): `{"detail": "message"}` for the request as a whole, always a single
+string, and/or `{"field": ["message", …]}`. Serializer errors that aren't about one field go in `detail`
+(`NON_FIELD_ERRORS_KEY`), and an `AuctionError` raised by `auction/services.py` or `auction/orders.py`
+becomes a 400 on its own, so views don't catch it. Listings and auctions embed the seller as a `seller`
+object (`PublicSellerSerializer`: public standing only, no contact details or plan limits).
+
 ### Auth (`/api/v1/auth/`, JWT)
 
 The only authentication is JWT (SimpleJWT); the old token endpoints under `/api/auth/` were retired.
 Log out by discarding the tokens on the client.
 
-- `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
-  `remaining_post_count`
-- `GET /plans/` — public: the account plans and their limits
-
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
 - `POST /refresh/` — `refresh` → new `access`
-- `GET /me/` (auth required) — `id`, `username`, `email`, `is_verified`
+- `GET /me/` (auth required) — `id`, `username`, `email`, `verified_seller`
 
 Send the access token as `Authorization: Bearer <access>`.
 
@@ -275,6 +278,12 @@ curl -X POST $B/refresh/ -H 'Content-Type: application/json' -d '{"refresh":"<re
 curl $B/me/
 ```
 
+### Account (`/api/v1/account/`)
+
+- `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
+  `remaining_post_count`
+- `GET /plans/` — public: the account plans and their limits
+
 ### Dev auth bypass (DEBUG only)
 
 When `DEBUG = True`, anonymous requests are treated as a `dev-user` superuser (created on first use,
@@ -292,7 +301,7 @@ under `manage.py test`). Three pieces in `common/middleware.py` make this work:
 Note: in dev, the frontend never sees a "logged out" user on DRF endpoints. Set `DEBUG = False` to test
 real login flows.
 
-### Posts (`/api/posts/`)
+### Posts (`/api/v1/posts/`)
 
 - `GET`/`POST /live-animals/`, `GET`/`PATCH`/`DELETE /live-animals/<id>/`
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/`
@@ -334,12 +343,12 @@ and each `*_exclude` variant inverts its counterpart:
   `transport`, `other`)
 - `condition` (`2` new, `1` used, `0` not functional; comma-separated)
 
-### Sellers (`/api/sellers/`)
+### Sellers (`/api/v1/sellers/`)
 
 - `GET /<id>/` — public profile: display name, username, account type, verified badge, rating, review
   count, bio, member since and listing counts. No contact details. Only accounts that have listed
   something have one (404 otherwise), so account ids don't reveal buyers' names. Their listings come
-  from `GET /api/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`). For a signed-in viewer
+  from `GET /api/v1/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`). For a signed-in viewer
   it also says `can_review` and includes `my_review`.
 - `GET /<id>/reviews/` — public, newest first; reviewers appear by username only. `POST` (signed in,
   `{rating: 1-5, comment}`) writes or updates your review; only someone who contacted the seller about
@@ -347,7 +356,7 @@ and each `*_exclude` variant inverts its counterpart:
   `seller_rating` / `total_reviews` are recomputed from the reviews on every change (`account/reviews.py`)
   and are never set directly.
 
-### Auctions (`/api/auctions/`)
+### Auctions (`/api/v1/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
 - `POST /` — paid commercial accounts only (`403` otherwise)

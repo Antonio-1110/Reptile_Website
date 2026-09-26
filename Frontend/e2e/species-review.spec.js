@@ -25,7 +25,7 @@ test('a listing with an unlisted species waits for review and only its seller se
 
   // Not on the marketplace for anyone else (asked with a buyer's token: without one, the dev backend
   // treats the request as its superuser)...
-  const { access } = await (await request.post(`${API}/v1/auth/login/`, {
+  const { access } = await (await request.post(`${API}/auth/login/`, {
     data: { username: 'buyer_hsu', password: DEMO_PASSWORD },
   })).json();
   const search = await (await request.get(`${API}/posts/live-animals/?search=${encodeURIComponent(title)}`, {

@@ -1,8 +1,6 @@
 import { authFetch, isLoggedIn } from "./authApi";
 import { getLocationCode, getLocationKey } from "../constants/locations";
-import { apiFetch, requestFailedMessage } from "./http";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+import { API_URL, apiFetch, requestFailedMessage } from "./http";
 
 const sexCodes = { male: "1.0", female: "0.1", unsexed: "unsexed" };
 
@@ -18,10 +16,10 @@ function normalizeListing(item) {
     // A listing waiting on a species review (only its owner sees it) shows the name as typed.
     species: item.species_name || item.species_review?.name,
     speciesReview: item.species_review || null,
-    seller: item.seller_name || item.seller?.display_name || item.seller?.username,
+    seller: item.seller?.display_name || item.seller?.username,
     sellerTag: item.seller?.username,
-    sellerId: item.seller_id ?? item.seller?.id,
-    rating: item.seller_rating ?? item.seller?.seller_rating ?? 0,
+    sellerId: item.seller?.id,
+    rating: item.seller?.seller_rating ?? 0,
     location: getLocationKey(item.location) || item.location,
     lifeStage: item.life_stage,
     ageYears: item.age_years,
@@ -52,7 +50,7 @@ function normalizeEquipment(item) {
 export { isLoggedIn } from "./authApi";
 
 async function request(path) {
-  const response = await apiFetch(`${API_BASE_URL}${path}`);
+  const response = await apiFetch(`${API_URL}${path}`);
   if (!response.ok) {
     const error = new Error(requestFailedMessage(response.status));
     // Lets pages tell "this doesn't exist" (404) apart from "couldn't load it right now".
@@ -88,17 +86,17 @@ async function requestAllPages(path, fetchPage = request) {
 }
 
 export async function getCurrentProfile() {
-  return requestWithAuth("/v1/auth/profile/", { method: "GET" });
+  return requestWithAuth("/account/profile/", { method: "GET" });
 }
 
 // Public list of account plans with their limits (hobbyist, commercial, commercial_paid).
 export async function getAccountPlans() {
-  return request("/v1/auth/plans/");
+  return request("/account/plans/");
 }
 
 // Partial update of the signed-in user's profile; `fields` uses backend names (phone_number, line_id, …).
 export async function updateCurrentProfile(fields) {
-  return requestWithAuth("/v1/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
+  return requestWithAuth("/account/profile/", { method: "PATCH", body: JSON.stringify(fields) });
 }
 
 // The species list the editor suggests from: [{ id, name, aliases }].
@@ -293,7 +291,7 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
   };
 }
 
-// A seller's public profile (/api/sellers/<id>/): name, badges, rating, bio, listing counts.
+// A seller's public profile (/api/v1/sellers/<id>/): name, badges, rating, bio, listing counts.
 export async function getSellerProfile(id) {
   // Sent with the viewer's token when signed in, so can_review / my_review are theirs.
   const profile = isLoggedIn() ? await requestWithAuth(`/sellers/${id}/`, { method: "GET" }) : await request(`/sellers/${id}/`);

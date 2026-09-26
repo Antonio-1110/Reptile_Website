@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
+from account.serializers import PublicSellerSerializer
 from post.models import EquipmentPost, LiveAnimalPost
 from post.serializer import LiveAnimalPostSerializer
 from . import orders
@@ -47,8 +48,7 @@ class BidSerializer(serializers.ModelSerializer):
 
 
 class AuctionSerializer(serializers.ModelSerializer):
-    seller_id = serializers.IntegerField(source='seller.id', read_only=True)
-    seller_name = serializers.CharField(source='seller.get_display_name', read_only=True)
+    seller = PublicSellerSerializer(read_only=True)
     listing = serializers.SerializerMethodField()
     is_seller = serializers.SerializerMethodField()
     live_animal_post = serializers.PrimaryKeyRelatedField(queryset=LiveAnimalPost.objects.all(), required=False, allow_null=True)
@@ -75,7 +75,7 @@ class AuctionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Auction
         fields = [
-            'id', 'seller_id', 'seller_name', 'is_seller', 'live_animal_post', 'equipment_post', 'listing',
+            'id', 'seller', 'is_seller', 'live_animal_post', 'equipment_post', 'listing',
             'starting_price', 'min_increment', 'deposit_amount', 'currency', 'starts_at', 'ends_at',
             'status', 'is_open', 'bid_count', 'current_price', 'minimum_next_bid', 'winning_bid_amount',
             'buy_now_price', 'buy_now_available', 'pending_buy_now_count', 'sold_via', 'sold_price', 'sale_fell_through',

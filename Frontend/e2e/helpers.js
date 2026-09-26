@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 
-export const API = 'http://127.0.0.1:8001/api';
+export const API = 'http://127.0.0.1:8001/api/v1';
 export const DEMO_PASSWORD = 'DemoPass123!'; // every seed_demo account
 
 // A 1×1 PNG, enough for the photo upload (the backend checks it's a real image).

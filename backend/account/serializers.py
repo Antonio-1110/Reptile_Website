@@ -3,7 +3,7 @@ from . import reviews
 from .models import Account, Review
 
 class AccountSerializer(serializers.ModelSerializer):
-    """Seller profile serializer - used for display in listings"""
+    """An account and its plan limits; the base of the signed-in user's own profile (ProfileAccountSerializer)."""
     display_name = serializers.CharField(source='get_display_name', read_only=True)
     is_commercial = serializers.BooleanField(read_only=True)
     requires_rating = serializers.BooleanField(read_only=True)
@@ -47,15 +47,22 @@ class AccountSerializer(serializers.ModelSerializer):
         ]
 
 
-class PublicSellerSerializer(AccountSerializer):
-    """Seller info embedded in public listings; omits email so contact goes through the /contact/ action."""
+class PublicSellerSerializer(serializers.ModelSerializer):
+    """
+    The `seller` object embedded in listings and auctions: who they are and their standing. Never contact
+    details (buyers reach sellers through the /contact/ action) or plan internals such as limits.
+    """
+    display_name = serializers.CharField(source='get_display_name', read_only=True)
+    is_commercial = serializers.BooleanField(read_only=True)
 
-    class Meta(AccountSerializer.Meta):
-        fields = [field for field in AccountSerializer.Meta.fields if field != 'email']
+    class Meta:
+        model = Account
+        fields = ['id', 'username', 'display_name', 'is_commercial', 'verified_seller', 'seller_rating', 'total_reviews']
+        read_only_fields = fields
 
 
 class SellerProfileSerializer(serializers.ModelSerializer):
-    """A seller's public page (/api/sellers/<id>/): who they are and their track record, never contact details."""
+    """A seller's public page (/api/v1/sellers/<id>/): who they are and their track record, never contact details."""
     display_name = serializers.CharField(source='get_display_name', read_only=True)
     is_commercial = serializers.BooleanField(read_only=True)
     member_since = serializers.DateTimeField(source='date_joined', read_only=True)
@@ -107,8 +114,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class ProfileAccountSerializer(AccountSerializer):
-    """The signed-in user's own profile (/api/v1/auth/profile/). Private contact fields live only here,
-    never on AccountSerializer, because PublicSellerSerializer builds on that one."""
+    """The signed-in user's own profile (/api/v1/account/profile/). Private contact fields live only here,
+    never on a serializer anyone else can read."""
     post_count = serializers.SerializerMethodField()
     remaining_post_count = serializers.SerializerMethodField()
 

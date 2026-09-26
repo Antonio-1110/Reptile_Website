@@ -97,10 +97,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
                 'currency': settings.AUCTION_CURRENCY,
                 'bond': SellerBondSerializer(bond).data if bond else None,
             })
-        try:
-            bond, client_data = orders.request_bond(request.user)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        bond, client_data = orders.request_bond(request.user)
         return Response({**SellerBondSerializer(bond).data, 'payment': client_data})
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
@@ -121,10 +118,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
                 {'detail': _('Only the seller can cancel this auction.')},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        try:
-            services.cancel_auction(auction)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        services.cancel_auction(auction)
         return Response(self.get_serializer(self.get_object()).data)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated],
@@ -132,10 +126,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
     def deposit(self, request, pk=None):
         """Start paying the deposit that's required before bidding. Safe to call repeatedly."""
         auction = self.get_object()
-        try:
-            deposit, client_data = services.request_deposit(auction, request.user)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        deposit, client_data = services.request_deposit(auction, request.user)
         return Response({**DepositSerializer(deposit).data, 'payment': client_data})
 
     @action(detail=True, methods=['get', 'post'])
@@ -151,10 +142,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
 
         serializer = BidSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
-        try:
-            bid = services.place_bid(auction, request.user, serializer.validated_data['amount'])
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        bid = services.place_bid(auction, request.user, serializer.validated_data['amount'])
         return Response(BidSerializer(bid, context=self.get_serializer_context()).data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], url_path='buy-now', permission_classes=[permissions.IsAuthenticated],
@@ -165,10 +153,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         payment arrives first, this one is refunded in full. Safe to call repeatedly.
         """
         auction = self.get_object()
-        try:
-            purchase, client_data, competing = services.start_buy_now(auction, request.user)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        purchase, client_data, competing = services.start_buy_now(auction, request.user)
         return Response({
             **BuyNowPurchaseSerializer(purchase).data,
             'payment': client_data,
@@ -215,19 +200,13 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
         return super().list(request, *args, **kwargs)
 
     def _run(self, action, *args):
-        try:
-            order = action(self.get_object(), self.request.user, *args)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        order = action(self.get_object(), self.request.user, *args)
         return Response(self.get_serializer(order).data)
 
     @action(detail=True, methods=['post'], throttle_classes=[ScopedRateThrottle], throttle_scope='payments')
     def pay(self, request, pk=None):
         """The winner pays the rest of the price, or a runner-up accepts an offer by paying."""
-        try:
-            order, client_data = orders.pay_order(self.get_object(), request.user)
-        except services.AuctionError as error:
-            return Response({'detail': str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        order, client_data = orders.pay_order(self.get_object(), request.user)
         return Response({**self.get_serializer(order).data, 'payment': client_data})
 
     @action(detail=True, methods=['post'], url_path='handed-over')

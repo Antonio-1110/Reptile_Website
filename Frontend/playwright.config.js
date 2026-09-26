@@ -17,7 +17,7 @@ export default defineConfig({
   webServer: [
     {
       command: './e2e/start-backend.sh',
-      url: 'http://127.0.0.1:8001/api/posts/species/',
+      url: 'http://127.0.0.1:8001/api/v1/posts/species/',
       timeout: 120_000,
       reuseExistingServer: false,
     },

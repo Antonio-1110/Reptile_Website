@@ -79,7 +79,7 @@ class MeEndpointTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['username'], 'seller')
         self.assertEqual(response.data['email'], 'seller@example.com')
-        self.assertTrue(response.data['is_verified'])
+        self.assertTrue(response.data['verified_seller'])
 
 
 class DevAuthBypassTests(APITestCase):
