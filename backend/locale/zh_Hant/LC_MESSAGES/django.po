@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 11:58+0800\n"
+"POT-Creation-Date: 2026-09-26 16:10+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -54,7 +54,7 @@ msgid ""
 "handed over on the listing page. If it isn't handed over by then, the buyer "
 "is refunded in full and it counts against your account."
 msgstr ""
-"請在 %(handover_due)s 前交貨（或寄出），並在商品頁面標記為已交貨。若屆時仍未交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
+"請在 %(handover_due)s 前交貨（或寄出），並在刊登頁面標記為已交貨。若屆時仍未交貨，買家將獲得全額退款，並會記錄在你的帳號上。"
 
 #: auction/notifications.py:40
 #, python-format
@@ -269,7 +269,7 @@ msgid ""
 "the sale completes and the seller is paid."
 msgstr ""
 "收到個體並確認健康後，請在 %(confirm_due)s "
-"前到商品頁面確認。若有問題，請改在該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即完成並撥款給賣家。"
+"前到刊登頁面確認。若有問題，請改在該頁面回報問題，我們會在調查期間暫緩撥款。若屆時未收到任何回覆，交易即完成並撥款給賣家。"
 
 #: auction/notifications.py:165 auction/notifications.py:169
 #, python-format
@@ -334,7 +334,7 @@ msgid ""
 "You can offer \"%(title)s\" to the next-highest bidder at their bid of "
 "%(runner_up)s: open the listing page to decide. If you don't want to, you "
 "keep the animal."
-msgstr "你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到商品頁面決定。若不想這麼做，個體仍歸你所有。"
+msgstr "你可以將「%(title)s」以次高出價者的出價 %(runner_up)s 讓給對方：請到刊登頁面決定。若不想這麼做，個體仍歸你所有。"
 
 #: auction/notifications.py:203
 msgid "Nobody else bid on it, so you simply keep the animal."
@@ -366,7 +366,7 @@ msgid ""
 "offer lapse."
 msgstr ""
 "「%(title)s」的得標者未付款，賣家願意以你的出價 %(price)s 讓給你。若要購買，請在 %(payment_due)s "
-"前到商品頁面付款。你沒有義務購買，可以婉拒或讓邀請自動失效。"
+"前到刊登頁面付款。你沒有義務購買，可以婉拒或讓邀請自動失效。"
 
 #: auction/notifications.py:223
 #, python-format
@@ -467,93 +467,93 @@ msgstr "沒有可以婉拒的邀請。"
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:380 auction/services.py:273 auction/views.py:20
+#: auction/orders.py:380 auction/services.py:290 auction/views.py:21
 msgid ""
 "Auctions are available to paid commercial accounts. Upgrade your account to "
 "start one."
 msgstr "競標功能僅限付費商業帳號使用，請升級帳號以發起競標。"
 
-#: auction/serializers.py:168
+#: auction/serializers.py:177
 msgid "Choose exactly one listing to auction."
-msgstr "請選擇一項要上架競標的商品。"
+msgstr "請選擇一項要上架競標的刊登。"
 
-#: auction/serializers.py:173
+#: auction/serializers.py:182
 msgid "You can only auction your own listings."
-msgstr "你只能將自己的商品上架競標。"
+msgstr "你只能將自己的刊登上架競標。"
 
-#: auction/serializers.py:176
+#: auction/serializers.py:185
 msgid "A sold listing can't be auctioned."
-msgstr "已售出的商品無法競標。"
+msgstr "已售出的刊登無法競標。"
 
-#: auction/serializers.py:180
+#: auction/serializers.py:189
 msgid "This listing already has an active auction."
-msgstr "此商品已有進行中的競標。"
+msgstr "這則刊登已有進行中的競標。"
 
-#: auction/serializers.py:186
+#: auction/serializers.py:195
 msgid "The buy-now price must be higher than the starting price."
 msgstr "直接購買價必須高於起標價。"
 
-#: auction/serializers.py:193
+#: auction/serializers.py:202
 msgid "An auction can't start in the past."
 msgstr "競標開始時間不能早於現在。"
 
-#: auction/serializers.py:196
+#: auction/serializers.py:205
 #, python-format
 msgid "An auction must run for at least %(hours)s hours."
 msgstr "競標時間至少需要 %(hours)s 小時。"
 
-#: auction/serializers.py:200
+#: auction/serializers.py:209
 #, python-format
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
 
-#: auction/services.py:36 auction/services.py:114
+#: auction/services.py:37 auction/services.py:115
 msgid "You can't bid on your own auction."
 msgstr "你不能對自己的競標出價。"
 
-#: auction/services.py:38
+#: auction/services.py:39
 msgid "This auction is no longer accepting bids."
 msgstr "此競標已停止接受出價。"
 
-#: auction/services.py:116
+#: auction/services.py:117
 msgid "This auction is not accepting bids right now."
 msgstr "此競標目前不接受出價。"
 
-#: auction/services.py:120
+#: auction/services.py:121
 msgid "Pay the deposit for this auction before bidding."
 msgstr "出價前請先支付此競標的保證金。"
 
-#: auction/services.py:124
+#: auction/services.py:125
 #, python-format
 msgid "Your bid must be at least %(amount)s."
 msgstr "你的出價至少須為 %(amount)s。"
 
-#: auction/services.py:133
+#: auction/services.py:150
 msgid "This auction has already closed."
 msgstr "此競標已結束。"
 
-#: auction/services.py:135
+#: auction/services.py:152
 msgid "An auction can't be cancelled once someone has bid."
 msgstr "已有人出價的競標無法取消。"
 
-#: auction/services.py:179
+#: auction/services.py:196
 msgid "You can't buy your own animal."
 msgstr "你不能購買自己的個體。"
 
-#: auction/services.py:181
+#: auction/services.py:198
 msgid "The seller hasn't offered a buy-now price for this auction."
 msgstr "賣家沒有為這場競標提供直接購買價。"
 
-#: auction/services.py:183
+#: auction/services.py:200
 msgid "Buy now is no longer available for this auction."
 msgstr "這場競標已無法直接購買。"
 
-#: auction/services.py:275
+#: auction/services.py:292
 #, python-format
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
 
-#: auction/views.py:97
+#: auction/views.py:98
 msgid "Only the seller can cancel this auction."
 msgstr "只有賣家可以取消此競標。"
 
@@ -572,12 +572,12 @@ msgstr "電話"
 #: post/serializer.py:17
 #, python-format
 msgid "Post limit reached. This account allows %(count)s posts."
-msgstr "已達刊登上限，此帳號最多可刊登 %(count)s 則商品。"
+msgstr "已達刊登上限，此帳號最多可發布 %(count)s 則刊登。"
 
-#: post/serializer.py:26 post/serializer.py:64
+#: post/serializer.py:26 post/serializer.py:89
 #, python-format
 msgid "Image limit exceeded. This account allows %(count)s images per post."
-msgstr "圖片數量超過上限，此帳號每則商品最多可上傳 %(count)s 張圖片。"
+msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
 
 #: post/serializer.py:36
 msgid ""
@@ -585,55 +585,76 @@ msgid ""
 "until the auction ends."
 msgstr "這則刊登正在競標中，競標結束前無法標記為保留或已售出。"
 
-#: post/serializer.py:68
+#: post/serializer.py:72
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
-#: post/serializer.py:73
+#: post/serializer.py:79
+msgid "Add at least one photo."
+msgstr "請至少加入一張照片。"
+
+#: post/serializer.py:81
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/views.py:36
+#: post/serializer.py:104
+msgid "Photo order refers to a file that was not uploaded."
+msgstr "照片順序中包含未上傳的檔案。"
+
+#: post/serializer.py:107
+msgid "Photo order refers to a photo this listing does not have."
+msgstr "照片順序中包含這則刊登沒有的照片。"
+
+#: post/serializer.py:109
+msgid "Each photo must appear in the order exactly once."
+msgstr "每張照片在順序中只能出現一次。"
+
+#: post/views.py:37
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
-msgstr "你的商品有新的詢問：%(title)s"
+msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:38
+#: post/views.py:39
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on the Reptile "
 "Marketplace and asked us to pass on their contact details:"
-msgstr "%(name)s 對你在爬蟲市集上的商品「%(title)s」有興趣，並請我們轉交他的聯絡方式："
+msgstr "%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方式："
 
-#: post/views.py:40
+#: post/views.py:41
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:65
+#: post/views.py:66
 msgid "You can't contact yourself about your own listing."
-msgstr "你不能就自己的商品聯絡自己。"
+msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:70
+#: post/views.py:71
+#| msgid "This auction has already closed."
 msgid "This listing has been sold."
-msgstr "這件商品已售出。"
+msgstr "這則刊登已售出。"
 
-#: post/views.py:82
+#: post/views.py:83
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with "
 "you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:100
+#: post/views.py:101
 msgid "You can't report your own listing."
-msgstr "你不能檢舉自己的商品。"
+msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:112
+#: post/views.py:113
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
-msgstr "謝謝，我們已收到你的檢舉，團隊會審核這項商品。"
+msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
+
+#: post/views.py:132
+msgid "Send the photo order as a JSON list."
+msgstr "請以 JSON 陣列傳送照片順序。"
 
 #~ msgid ""
 #~ "Only the buyer and the seller can see the contact details for this sale."
@@ -654,7 +675,7 @@ msgstr "謝謝，我們已收到你的檢舉，團隊會審核這項商品。"
 #~ msgstr "請直接回覆對方：%(contact)s"
 
 #~ msgid "This listing has no price, so it can't be bought directly."
-#~ msgstr "此商品沒有標示售價，無法直接購買。"
+#~ msgstr "這則刊登沒有標示售價，無法直接購買。"
 
 #~ msgid "The seller has been notified. Here's their contact information."
 #~ msgstr "已通知賣家，以下是賣家的聯絡方式。"

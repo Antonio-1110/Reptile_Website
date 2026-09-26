@@ -118,6 +118,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 **Both languages, always.**
 - Every user-facing frontend string goes through `t("…")` with the key added to **both**
   `Frontend/src/i18n/locales/en.js` and `zh.js` (Traditional Chinese, Taiwan usage).
+- Terminology: a listing is **刊登** (never 商品; count it with 則), the marketplace is **市集**, and
+  English calls it a "listing" (not a "post"). English headings and buttons use sentence case.
 - Every user-facing backend message (validation errors, API `detail` strings, emails) is wrapped in
   `gettext` (`_()`), using `%(name)s` placeholders, then added to
   `backend/locale/zh_Hant/LC_MESSAGES/django.po` and compiled.
@@ -152,9 +154,10 @@ update that file **and** the API overview in the root README.
   the client requests one page at a time. Don't reintroduce "download everything and filter".
 - Async error state uses `utils/errorState.js` (`toErrorState` / `errorText`) so messages follow a
   language switch.
-- Photos: the editor saves the listing first, then `uploadListingPhotos()` posts multipart to
-  `<id>/photos/`, which replaces all photos; `image` is the cover and `gallery` lists every photo,
-  cover first.
+- Photos: the editor saves the listing first, then `saveListingPhotos()` posts multipart to
+  `<id>/photos/` with the final `order` (kept photo URLs and `new:<n>` for uploads, cover first), so
+  sellers can reorder or remove photos without re-uploading; `image` is the cover and `gallery` lists
+  every photo, cover first.
 
 ### Local dev auth bypass
 

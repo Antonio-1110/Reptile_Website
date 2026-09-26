@@ -1,3 +1,4 @@
+import json
 import os
 import uuid
 
@@ -114,29 +115,39 @@ class ReportListingMixin:
 
 
 class ListingPhotosMixin:
-    """Adds a `/photos/` action that uploads a listing's photos, replacing any it had before."""
+    """
+    Adds a `/photos/` action that sets a listing's photos: uploads new ones, and keeps, reorders or
+    removes existing ones (see ListingPhotoUploadSerializer for the two request forms).
+    """
 
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, pk=None):
         post = self.get_object()  # IsPostOwnerOrReadOnly limits this to the listing's owner
-        upload = ListingPhotoUploadSerializer(
-            data={'photos': request.FILES.getlist('photos'), 'cover_index': request.data.get('cover_index', 0)},
-            context={'request': request},
-        )
+        data = {'photos': request.FILES.getlist('photos'), 'cover_index': request.data.get('cover_index', 0)}
+        if 'order' in request.data:
+            # Multipart can't carry a list of strings cleanly, so `order` arrives as a JSON array.
+            try:
+                data['order'] = json.loads(request.data['order'])
+            except (TypeError, ValueError):
+                return Response({'order': [_('Send the photo order as a JSON list.')]}, status=status.HTTP_400_BAD_REQUEST)
+        upload = ListingPhotoUploadSerializer(data=data, context={'request': request, 'post': post})
         upload.is_valid(raise_exception=True)
         photos = upload.validated_data['photos']
-        cover_index = upload.validated_data['cover_index']
 
         folder = f'listings/{post._meta.model_name}/{post.pk}'
-        urls = []
+        new_urls = []
         for photo in photos:
             extension = os.path.splitext(photo.name)[1].lower() or '.jpg'
             name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', photo)
-            urls.append(request.build_absolute_uri(default_storage.url(name)))
+            new_urls.append(request.build_absolute_uri(default_storage.url(name)))
 
+        prefix = ListingPhotoUploadSerializer.NEW_PREFIX
+        ordered = [
+            new_urls[int(entry[len(prefix):])] if entry.startswith(prefix) else entry
+            for entry in upload.validated_data['order']
+        ]
         previous_urls = set(post.gallery or []) | ({post.image} if post.image else set())
-        ordered = [urls[cover_index]] + [url for index, url in enumerate(urls) if index != cover_index]
-        post.image = ordered[0]
+        post.image = ordered[0] if ordered else ''
         post.gallery = ordered
         post.save(update_fields=['image', 'gallery', 'updated_at'])
         self._delete_uploaded_photos(request, previous_urls - set(ordered))

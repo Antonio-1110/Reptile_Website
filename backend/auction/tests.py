@@ -548,6 +548,18 @@ class OrderTests(AuctionTestCase):
         self.assertEqual(self.client.get(reverse('order-list')).data['count'], 0)
         self.assertEqual(self.client.get(self.order_url()).status_code, 404)
 
+    def test_orders_can_be_narrowed_to_the_viewers_side(self):
+        def count(user, role):
+            self.client.force_authenticate(user)
+            response = self.client.get(reverse('order-list'), {'role': role})
+            self.assertEqual(response.status_code, 200)
+            return response.data['count']
+
+        self.assertEqual((count(self.buyer, 'buyer'), count(self.buyer, 'seller')), (1, 0))
+        self.assertEqual((count(self.seller, 'seller'), count(self.seller, 'buyer')), (1, 0))
+        self.assertEqual(count(self.other_buyer, 'buyer'), 0)
+        self.assertEqual(self.client.get(reverse('order-list'), {'role': 'admin'}).status_code, 400)
+
     def test_happy_path_pay_hand_over_confirm(self):
         response = self.act(self.buyer, 'pay')
         self.assertEqual(response.data['status'], 'paid', response.data)
