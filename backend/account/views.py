@@ -1,66 +1,12 @@
 from django.shortcuts import render
-from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.views import APIView
-from rest_framework import permissions, status
+from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import logout
-from django.utils.translation import gettext as _
-from .serializers import UserRegisterSerializer, UserLoginSerializer, AccountSerializer, ProfileAccountSerializer
+from .serializers import AccountSerializer, ProfileAccountSerializer
 from .models import Account
 
 # Create your views here.
-
-class UserRegister(GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = UserRegisterSerializer
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
-    
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        # Generate token for new user (optional, for token auth)
-        token, created = Token.objects.get_or_create(user=user)
-        
-        return Response({
-            'user': AccountSerializer(user).data,
-            'token': token.key
-        }, status=status.HTTP_201_CREATED)
-
-
-class UserLogin(GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = UserLoginSerializer
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
-    
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        
-        # Generate token (optional, for token auth)
-        token, created = Token.objects.get_or_create(user=user)
-        
-        return Response({
-            'user': AccountSerializer(user).data,
-            'token': token.key
-        }, status=status.HTTP_200_OK)
-
-
-class UserLogout(GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def post(self, request):
-        logout(request)
-        return Response({
-            'message': _('Logged out successfully')
-        }, status=status.HTTP_200_OK)
-
 
 class UserProfile(RetrieveUpdateAPIView):
     """Get or update current user profile"""

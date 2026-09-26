@@ -141,18 +141,21 @@ class ProfileUpdateTests(APITestCase):
 
 class RegistrationTests(APITestCase):
     def test_registration_cannot_self_assign_commercial_type_or_rating(self):
-        response = self.client.post(reverse('register'), {
+        response = self.client.post(reverse('jwt-register'), {
             'username': 'sneaky',
             'email': 'sneaky@example.com',
-            'password': 'pass12345',
-            'password2': 'pass12345',
+            'password': 'S3curePass!23',
             'account_type': 'commercial',
+            'is_paid_account': True,
+            'verified_seller': True,
             'seller_rating': 5.0,
         }, format='json')
 
         self.assertEqual(response.status_code, 201)
         account = Account.objects.get(username='sneaky')
         self.assertFalse(account.is_commercial)
+        self.assertFalse(account.is_paid_account)
+        self.assertFalse(account.verified_seller)
         self.assertEqual(account.seller_rating, 0.0)
 
 
@@ -170,3 +173,22 @@ class AccountPlansTests(APITestCase):
         self.assertFalse(plans['commercial']['can_start_auction'])
         self.assertTrue(plans['commercial_paid']['can_start_auction'])
 
+
+
+class LegacyTokenAuthRetiredTests(APITestCase):
+    def test_the_old_token_endpoints_are_gone(self):
+        for path in ('/api/auth/register/', '/api/auth/login/', '/api/auth/logout/', '/api/auth/profile/'):
+            self.assertEqual(self.client.post(path, {}).status_code, 404, path)
+
+    def test_profile_and_plans_live_next_to_the_jwt_endpoints(self):
+        self.assertEqual(reverse('profile'), '/api/v1/auth/profile/')
+        self.assertEqual(reverse('account-plans'), '/api/v1/auth/plans/')
+
+    def test_a_jwt_from_login_opens_the_profile(self):
+        Account.objects.create_user(username='jwt_user', email='jwt@example.com', password='S3curePass!23')
+        tokens = self.client.post(reverse('jwt-login'), {'username': 'jwt_user', 'password': 'S3curePass!23'}).data
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+        response = self.client.get(reverse('profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['username'], 'jwt_user')
+        self.assertIn('remaining_post_count', response.data)
