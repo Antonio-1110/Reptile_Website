@@ -19,14 +19,8 @@ class PostLimitSerializerMixin:
                 'detail': _('Post limit reached. This account allows %(count)s posts.') % {'count': account.max_post_count}
             })
 
-        image = attrs.get('image', getattr(self.instance, 'image', ''))
-        gallery = attrs.get('gallery', getattr(self.instance, 'gallery', [])) or []
-        # The cover is normally also the first gallery entry, so count distinct photos.
-        image_count = len(set(gallery) | ({image} if image else set()))
-        if not account.can_upload_images(image_count):
-            raise serializers.ValidationError({
-                'gallery': _('Image limit exceeded. This account allows %(count)s images per post.') % {'count': account.max_images_per_post}
-            })
+        # Photos are only set through the photos action (ListingPhotoUploadSerializer), which enforces
+        # the per-listing image limit; `image` and `gallery` are read-only here.
 
         # Bidders are paying deposits on a running auction, so the listing can't be marked reserved or
         # sold under them; the auction decides who gets it.
@@ -121,6 +115,12 @@ class SpeciesSerializer(serializers.ModelSerializer):
 
 
 class ContactInfoField(serializers.Field):
+    # Legacy: what gets shared with a buyer comes from the account (Account.contact_details()), so
+    # clients may leave this out; a new listing then stores an empty object.
+    def __init__(self, **kwargs):
+        kwargs.setdefault('required', False)
+        super().__init__(**kwargs)
+
     def to_representation(self, value):
         if isinstance(value, dict):
             return value
@@ -152,7 +152,6 @@ class PublicListingFieldsMixin(serializers.Serializer):
 
 
 class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
-    # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
 
     class Meta:
@@ -162,11 +161,14 @@ class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Post
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
             'seller', 'posted_days', 'is_favorite'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'posted_days', 'is_hidden', 'is_favorite']
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'seller', 'posted_days', 'is_hidden', 'is_favorite', 'image', 'gallery',
+        ]
     
     def create(self, validated_data):
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
+        validated_data.setdefault('contact_info', '{}')
         return super().create(validated_data)
 
 
@@ -199,7 +201,7 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'is_hidden', 'species_name', 'species_review', 'genes',
-            'posted_days', 'is_favorite'
+            'posted_days', 'is_favorite', 'image', 'gallery',
         ]
     
     def get_species_review(self, obj):
@@ -273,6 +275,7 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
     def create(self, validated_data):
         # Set the account from the request user
         validated_data['account'] = self.context['request'].user
+        validated_data.setdefault('contact_info', '{}')
         self._save_species_request(validated_data)
         return super().create(validated_data)
 

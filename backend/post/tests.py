@@ -31,12 +31,10 @@ class PostLimitTests(APITestCase):
 			'description': 'Healthy animal',
 			'price': '450.00',
 			'location': 'TPE',
-			'contact_info': {},
 			'species': self.species.id,
 			'sex': 'unsexed',
 			'life_stage': 'adult',
 			'shipping_methods': ['localPickup'],
-			'gallery': [],
 		}
 		payload.update(overrides)
 		return payload
@@ -60,61 +58,52 @@ class PostLimitTests(APITestCase):
 		self.assertEqual(response.status_code, 400)
 		self.assertIn('Post limit reached', str(response.data))
 
-	def test_hobbyist_cannot_create_a_post_with_four_images(self):
+	def test_listing_json_cannot_set_photo_urls(self):
+		# Photos only go through the photos action, which checks the image limit and that each
+		# kept URL is the listing's own; the JSON body can't point a listing at other URLs.
 		response = self.client.post(
 			reverse('live-animal-list'),
-			self.post_payload(
-				image='https://example.com/cover.jpg',
-				gallery=[
-					'https://example.com/one.jpg',
-					'https://example.com/two.jpg',
-					'https://example.com/three.jpg',
-				],
-			),
-			format='json',
-		)
-
-		self.assertEqual(response.status_code, 400)
-		self.assertIn('Image limit exceeded', str(response.data))
-
-	def test_hobbyist_can_create_post_at_image_limit(self):
-		response = self.client.post(
-			reverse('live-animal-list'),
-			self.post_payload(
-				image='https://example.com/cover.jpg',
-				gallery=[
-					'https://example.com/one.jpg',
-					'https://example.com/two.jpg',
-				],
-			),
+			self.post_payload(image='https://example.com/cover.jpg', gallery=['https://example.com/one.jpg']),
 			format='json',
 		)
 
 		self.assertEqual(response.status_code, 201)
+		post = LiveAnimalPost.objects.get(pk=response.data['id'])
+		self.assertEqual(post.image, '')
+		self.assertEqual(post.gallery, [])
 
-	def test_hobbyist_cannot_update_post_over_image_limit(self):
+		response = self.client.patch(
+			reverse('live-animal-detail', args=[post.id]),
+			{'gallery': ['https://example.com/one.jpg'], 'image': 'https://example.com/cover.jpg'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		post.refresh_from_db()
+		self.assertEqual(post.image, '')
+		self.assertEqual(post.gallery, [])
+
+	def test_listing_can_be_created_without_contact_info(self):
+		response = self.client.post(reverse('live-animal-list'), self.post_payload(), format='json')
+
+		self.assertEqual(response.status_code, 201)
+		self.assertEqual(response.data['contact_info'], {})
+
+	def test_editing_a_listing_over_a_lowered_image_limit_still_saves(self):
+		# A seller whose plan now allows fewer photos can still edit or mark the listing sold.
 		post = LiveAnimalPost.objects.create(
 			account=self.account,
 			species=self.species,
 			title='Existing animal',
 			description='Existing animal',
 			contact_info='{}',
-			image='https://example.com/cover.jpg',
-			gallery=['https://example.com/one.jpg', 'https://example.com/two.jpg'],
+			image='https://example.com/one.jpg',
+			gallery=[f'https://example.com/{index}.jpg' for index in range(self.account.max_images_per_post + 1)],
 		)
 
-		response = self.client.patch(
-			reverse('live-animal-detail', args=[post.id]),
-			{'gallery': [
-				'https://example.com/one.jpg',
-				'https://example.com/two.jpg',
-				'https://example.com/three.jpg',
-			]},
-			format='json',
-		)
+		response = self.client.patch(reverse('live-animal-detail', args=[post.id]), {'status': 'sold'}, format='json')
 
-		self.assertEqual(response.status_code, 400)
-		self.assertIn('Image limit exceeded', str(response.data))
+		self.assertEqual(response.status_code, 200)
 
 	def test_seller_cannot_update_another_sellers_post(self):
 		post = LiveAnimalPost.objects.create(
