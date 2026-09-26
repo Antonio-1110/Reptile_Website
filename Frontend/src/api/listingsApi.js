@@ -52,7 +52,8 @@ async function request(path) {
   const response = await apiFetch(`${API_BASE_URL}${path}`);
   if (!response.ok) {
     const error = new Error(requestFailedMessage(response.status));
-    error.status = response.status; // lets pages tell "not found" from a failure
+    // Lets pages tell "this doesn't exist" (404) apart from "couldn't load it right now".
+    error.status = response.status;
     throw error;
   }
   return response.json();
