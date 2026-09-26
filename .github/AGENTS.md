@@ -260,13 +260,15 @@ Useful tricks:
 ### Report honestly
 Pull requests follow `.github/pull_request_template.md`.
 Say what you verified and how, what you didn't verify, and anything left for the user (migrations to
-run, env vars to set, servers to restart). Never commit or push unless asked.
+run, env vars to set, servers to restart). Never commit or push unless asked (being asked to work on
+issues counts; see "Working through the issue backlog").
 
 ### Working in parallel with other agents
 Several agents often work on separate branches at once. Almost every conflict so far has been in the
 same few shared files: the locale files, `django.po`, the old `TODO.md` (now GitHub Issues), the
 READMEs, `App.jsx` routes and `post/migrations/`. To keep merges cheap:
-- Branch from the **latest `master`** and keep the PR to one feature. Merge `master` into your branch
+- Branch from the **latest `master`** and keep the PR to one feature (or one batch of related issues,
+  below). Merge `master` into your branch
   (don't rebase a pushed branch) right before asking for review.
 - Put a new feature's strings in **its own section file** (`i18n/locales/en/<section>.js` plus the
   `zh/` twin; it's loaded automatically) rather than adding to a shared one, and don't reorder or
@@ -278,6 +280,54 @@ READMEs, `App.jsx` routes and `post/migrations/`. To keep merges cheap:
   these with a whole-file "accept incoming/current".
 - Two branches that both add a migration to the same app need a merge migration
   (`makemigrations --merge`, renamed descriptively) once the second one reaches `master`.
+
+### Working through the issue backlog
+[GitHub Issues](https://github.com/Antonio-1110/Reptile_Website/issues) are the backlog. When the user
+asks you to "work on issues", "pick something from the backlog" or similar, find the work yourself;
+don't ask them to paste issue text. That request is also permission to branch, commit, push and open a
+draft PR for the batch. It is **not** permission to merge: merging stays with the user.
+
+Use `gh` (`gh issue list`, `gh issue view <n> --comments`) if it is installed and authenticated,
+otherwise the GitHub tools your environment provides (cloud sessions usually have no `gh`). Read each
+candidate issue's full body **and comments**; decisions and changed requirements often live there.
+
+**Choosing issues**
+- Prefer `high priority`, then `feature` and `tech debt`; `nice to have` only when asked or nothing else
+  is actionable. Prefer an `agent-ready` label if one ever exists.
+- Skip `needs decision` issues unless the user (in this conversation or in an issue comment) has made
+  the decision. You may list the open question for them instead.
+- `deployment` issues usually depend on a hosting choice (#42) or production access; do only the
+  in-repo part (settings from env vars, docs, commands) and say what's left for the user.
+- Skip an issue that already has an open PR or an assignee other than you.
+
+**Batching:** don't open one PR per issue. Read the code the candidates touch, then group 2–5 issues
+that share a subsystem or implementation work, enable one another, or are easiest to test and review
+together (PR #69 closed #66–#68 this way). Keep an issue on its own when it is unrelated, needs its own
+architectural change, is risky, or would make the combined PR hard to follow. If the user hasn't
+approved a batch, pick the most useful one, say which issues and why, and start.
+
+**Implementing:** one branch per batch, from freshly pulled `master` (`git fetch origin master`).
+Everything else in this guide still applies: the §3 invariants, both languages with new strings in
+their own section file, only the `.po` committed (never `django.mo`), named migrations, and the §6
+verification table. Prefer one commit per issue where practical, with the issue number in the message
+(`feat: species care sheet page (#51)`). Stay inside the issues' scope; file new issues for what you
+notice on the way.
+
+**Self-review before the PR:** read the whole diff against every issue in the batch and check each
+requirement is actually met; run the checks CI runs (§6) and fix what fails. Don't add unrelated
+improvements at this stage.
+
+**The PR:** one draft PR for the batch, using `.github/pull_request_template.md`. Under "What and why"
+put a `Closes #n` line for each issue it fully finishes (use "Part of #n" for partial work). Put
+anything needing human judgement under "Follow-ups / needs a decision": design trade-offs, ambiguous
+requirements you resolved, behaviour you couldn't test, risky changes, policy numbers you assumed.
+Then drive it until CI is green, and mark it ready for review. Don't merge it, and don't enable
+auto-merge.
+
+**Stop and ask** when requirements conflict, an architectural choice has significant trade-offs,
+the change would be destructive (dropping data or columns, deleting records, rewriting history), it
+would touch production or real money, or an issue is too ambiguous to implement safely. Otherwise
+proceed without waiting.
 
 ---
 
