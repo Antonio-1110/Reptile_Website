@@ -96,8 +96,8 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
       (`AUCTION_EXTEND_WINDOW_MINUTES` / `AUCTION_EXTEND_BY_MINUTES`, default 5 / 5)
 
-- [ ] Improve the home page copy and layout polish
-- [ ] Refine English and Chinese wording consistency across the app
+- [x] Improve the home page copy and layout polish
+- [x] Refine English and Chinese wording consistency across the app
 - [ ] Improve empty states and loading states for listings and profile pages
 - [ ] Add clearer success/error messages for posting and login flows
 - [ ] Show existing photos in the listing editor when editing (it currently only allows a replacement set)

@@ -563,9 +563,9 @@ class SellerInquiryEmailTests(APITestCase):
 		self.assertEqual(len(mail.outbox), 1)
 		email = mail.outbox[0]
 		self.assertIn('New inquiry about your listing: Pied', email.subject)
-		self.assertIn('你的商品有新的詢問：Pied', email.subject)
+		self.assertIn('你的刊登有新的詢問：Pied', email.subject)
 		self.assertIn('is interested in your listing "Pied"', email.body)
-		self.assertIn('對你在爬蟲市集上的商品「Pied」有興趣', email.body)
+		self.assertIn('對你在爬蟲市集上的刊登「Pied」有興趣', email.body)
 
 
 class ContactPrivacyTests(APITestCase):
