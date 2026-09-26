@@ -5,9 +5,8 @@ import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
 import Toast from '../components/ui/Toast';
 import { errorText, toErrorState } from '../utils/errorState';
-import { deleteListing, getCurrentProfile, getMyListings, isLoggedIn } from '../api/listingsApi';
+import { deleteListing, getCurrentProfile, getMyListings, isLoggedIn, updateListingStatus } from '../api/listingsApi';
 import { getMyAuctions } from '../api/auctionsApi';
-import { deleteListing, getMyListings, isLoggedIn, updateListingStatus } from '../api/listingsApi';
 
 const STATUSES = ['available', 'reserved', 'sold'];
 

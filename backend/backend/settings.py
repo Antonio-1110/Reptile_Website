@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework.authtoken',
     'corsheaders',
     'django_filters',
     'post',
@@ -126,7 +125,8 @@ AUTH_USER_MODEL = 'account.Account'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # DJANGO_SQLITE_PATH lets the end-to-end tests run on a throwaway database.
+        'NAME': Path(os.environ.get('DJANGO_SQLITE_PATH', BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -219,6 +219,9 @@ REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
 SAVED_SEARCH_LIMIT = env_int('SAVED_SEARCH_LIMIT', 20)
 # Where the website lives, for links in emails (e.g. https://example.com). No trailing slash.
 FRONTEND_URL = os.environ.get('DJANGO_FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+# People who saved a listing get at most one price-drop email per listing in this many hours, so a
+# seller can't mass-email them by lowering the price a little at a time.
+PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)
 
 
 # Static files (CSS, JavaScript, Images)
@@ -252,9 +255,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         # Session auth that ignores the DevAuthBypassMiddleware user, so that user doesn't trigger CSRF.
         'common.middleware.DevAwareSessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
         # Dev-only fallback; DEBUG-gated internally, so it's inert in production. Kept last so
-        # real JWT/Token/Session credentials are always tried first.
+        # real JWT/Session credentials are always tried first.
         'common.middleware.DevAuthBypassAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [

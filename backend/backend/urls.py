@@ -19,11 +19,14 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from account.views import SellerProfile, SellerReviews
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/', include('account.urls')),
     path('api/v1/auth/', include('authentication.urls')),
     path('api/posts/', include('post.urls')),
+    path('api/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
+    path('api/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/auctions/', include('auction.urls')),
     path('api-auth/', include('rest_framework.urls')),
 ]

@@ -5,13 +5,15 @@ import AuctionHistoryCard from './components/AuctionHistoryCard';
 import BidPanel from './components/BidPanel';
 import BuyNowPanel from './components/BuyNowPanel';
 import ContactSellerPanel from './components/ContactSellerPanel';
+import ImageLightbox from './components/ImageLightbox';
 import OrderPanel from './components/OrderPanel';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
-import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
+import FavoriteButton from '../../components/listings/FavoriteButton';
+import { getListing, getSexKey, isLoggedIn, reportListing, sellerPagePath } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
 import useNow from '../../hooks/useNow';
@@ -160,7 +162,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
           <a href={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)} className="listing-detail-back">
             {showAuction ? t('auctions.detail.back') : t('listingDetail.back')}
           </a>
-          <div className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</div>
+          <a href={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</a>
         </div>
 
         <div className="listing-detail-layout">
@@ -198,6 +200,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
               </span>
               <div className="listing-detail-summary-actions">
                 <span className="listing-detail-rating">★ {listing.rating}</span>
+                <FavoriteButton listingId={listingId} category={category} initial={listing.isFavorite} />
                 <button
                   type="button"
                   onClick={handleReportListing}
@@ -297,7 +300,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             )}
 
             <a
-              href={buildMarketplaceUrl(listing.sellerTag || listing.seller, [], category)}
+              href={sellerPagePath(listing.sellerId)}
               className="listing-detail-more-link"
             >
               {t('listingDetail.moreFromSeller')}
@@ -341,14 +344,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
         </div>
 
         {expandedImage && (
-          <div className="listing-detail-lightbox" onClick={() => setExpandedImage(null)}>
-            <div className="listing-detail-lightbox-frame">
-              <button type="button" className="listing-detail-lightbox-close" onClick={() => setExpandedImage(null)} aria-label={t('common.dismiss')}>
-                ×
-              </button>
-              <img className="listing-detail-lightbox-image" src={expandedImage} alt={listing.title} />
-            </div>
-          </div>
+          <ImageLightbox src={expandedImage} alt={listing.title} onClose={() => setExpandedImage(null)} />
         )}
       </div>
 

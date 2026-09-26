@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
-import { getSexKey, listingPagePath } from '../../api/listingsApi';
+import { getSexKey, listingPagePath, sellerPagePath } from '../../api/listingsApi';
+import FavoriteButton from './FavoriteButton';
 
 // Draws a live animal or (animal.kind === "equipment") a piece of equipment.
 export default function ListingCard({ animal }) {
@@ -31,6 +32,12 @@ export default function ListingCard({ animal }) {
         {animal.status && animal.status !== 'available' && (
           <span className={`card-status card-status--${animal.status}`}>{t(`listingStatus.${animal.status}`)}</span>
         )}
+        <FavoriteButton
+          listingId={animal.id}
+          category={isEquipment ? 'equipment' : 'live_animal'}
+          initial={animal.isFavorite}
+          className="card-favorite"
+        />
       </div>
 
       <div className="card-content">
@@ -61,7 +68,7 @@ export default function ListingCard({ animal }) {
 
         <div className="card-seller-row">
           <span>{t('listings.seller')}</span>
-          <a href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}>
+          <a href={sellerPagePath(animal.sellerId)}>
             {animal.sellerTag || animal.seller}
           </a>
         </div>

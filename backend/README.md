@@ -8,7 +8,7 @@ Django + Django REST Framework API powering authentication, listings, and seller
 - Django REST Framework 3.14
 - django-cors-headers, django-filter
 - SQLite for local development
-- JWT authentication (`djangorestframework-simplejwt`), plus legacy token auth (`rest_framework.authtoken`)
+- JWT authentication (`djangorestframework-simplejwt`)
 
 ## App layout
 
@@ -38,7 +38,7 @@ backend/
 │   └── migrations/
 ├── backend/            # project settings
 │   ├── settings.py
-│   ├── urls.py         # mounts /api/auth/ and /api/posts/
+│   ├── urls.py         # mounts /api/v1/auth/, /api/posts/ and /api/auctions/
 │   └── wsgi.py / asgi.py
 ├── manage.py
 ├── requirements.txt
@@ -241,12 +241,14 @@ webhook view that calls `services.confirm_deposit()` / `fail_deposit()` and `con
 
 See [docs/API_ENDPOINTS.md](../docs/API_ENDPOINTS.md) for full request/response examples.
 
-### Auth (`/api/auth/`)
+### Auth (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/`, `POST /logout/` (auth required)
-- `GET`/`PATCH /profile/` (auth required) — includes `post_count` and `remaining_post_count`
+The only authentication is JWT (SimpleJWT); the old token endpoints under `/api/auth/` were retired.
+Log out by discarding the tokens on the client.
 
-### JWT auth (`/api/v1/auth/`)
+- `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
+  `remaining_post_count`
+- `GET /plans/` — public: the account plans and their limits
 
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
@@ -310,6 +312,9 @@ real login flows.
   `SAVED_SEARCH_LIMIT` per account. `python manage.py send_search_alerts` (schedule it, e.g. every few
   hours) emails each user the listings posted since their last alert that match, with links built from
   `DJANGO_FRONTEND_URL`.
+- `POST`/`DELETE /live-animals/<id>/favorite/` (and `equipment/…`) — save or unsave a listing (signed in);
+  `GET /live-animals/favorites/` lists the user's saved listings, newest first. Listing responses carry
+  `is_favorite` for the viewer. Lowering a listing's price emails everyone who saved it (one email each).
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).
@@ -328,6 +333,19 @@ and each `*_exclude` variant inverts its counterpart:
 - `category` / `category_exclude` (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`,
   `transport`, `other`)
 - `condition` (`2` new, `1` used, `0` not functional; comma-separated)
+
+### Sellers (`/api/sellers/`)
+
+- `GET /<id>/` — public profile: display name, username, account type, verified badge, rating, review
+  count, bio, member since and listing counts. No contact details. Only accounts that have listed
+  something have one (404 otherwise), so account ids don't reveal buyers' names. Their listings come
+  from `GET /api/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`). For a signed-in viewer
+  it also says `can_review` and includes `my_review`.
+- `GET /<id>/reviews/` — public, newest first; reviewers appear by username only. `POST` (signed in,
+  `{rating: 1-5, comment}`) writes or updates your review; only someone who contacted the seller about
+  a listing, or completed an auction purchase from them, may (403 otherwise). `DELETE` removes yours.
+  `seller_rating` / `total_reviews` are recomputed from the reviews on every change (`account/reviews.py`)
+  and are never set directly.
 
 ### Auctions (`/api/auctions/`)
 

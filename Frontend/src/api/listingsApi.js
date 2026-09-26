@@ -1,4 +1,4 @@
-import { authFetch } from "./authApi";
+import { authFetch, isLoggedIn } from "./authApi";
 import { getLocationCode, getLocationKey } from "../constants/locations";
 import i18n from "../i18n";
 import { apiFetch, requestFailedMessage } from "./http";
@@ -19,6 +19,7 @@ function normalizeListing(item) {
     species: item.species_name,
     seller: item.seller_name || item.seller?.display_name || item.seller?.username,
     sellerTag: item.seller?.username,
+    sellerId: item.seller_id ?? item.seller?.id,
     rating: item.seller_rating ?? item.seller?.seller_rating ?? 0,
     location: getLocationKey(item.location) || item.location,
     lifeStage: item.life_stage,
@@ -27,6 +28,7 @@ function normalizeListing(item) {
     weight: item.weight_grams,
     status: item.status || "available",
     shippingMethods: item.shipping_methods || [],
+    isFavorite: Boolean(item.is_favorite), // saved by the signed-in viewer
     isHidden: Boolean(item.is_hidden), // hidden by moderation; only its owner (and staff) ever see it
     postedDays: item.posted_days ?? 0,
     guideNotes: item.guide_notes || "",
@@ -60,6 +62,17 @@ async function request(path) {
 }
 
 const requestWithAuth = authFetch;
+
+// Public listing reads, sent with the viewer's token when there is one so `is_favorite` is theirs. A
+// token that can't be refreshed any more mustn't break a public page, so a 401 retries anonymously.
+async function readListings(path) {
+  try {
+    return await authFetch(path, { method: "GET" });
+  } catch (error) {
+    if (error.status === 401) return request(path);
+    throw error;
+  }
+}
 const requestWithAuthGet = (path) => authFetch(path, { method: "GET" });
 
 // List endpoints are paginated (DRF PAGE_SIZE); the UI filters client-side, so it needs every page.
@@ -74,17 +87,17 @@ async function requestAllPages(path, fetchPage = request) {
 }
 
 export async function getCurrentProfile() {
-  return requestWithAuth("/auth/profile/", { method: "GET" });
+  return requestWithAuth("/v1/auth/profile/", { method: "GET" });
 }
 
 // Public list of account plans with their limits (hobbyist, commercial, commercial_paid).
 export async function getAccountPlans() {
-  return request("/auth/plans/");
+  return request("/v1/auth/plans/");
 }
 
 // Partial update of the signed-in user's profile; `fields` uses backend names (phone_number, line_id, …).
 export async function updateCurrentProfile(fields) {
-  return requestWithAuth("/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
+  return requestWithAuth("/v1/auth/profile/", { method: "PATCH", body: JSON.stringify(fields) });
 }
 
 async function getSpeciesId(value) {
@@ -208,11 +221,12 @@ export async function getMyListings() {
 
 // Marketplace sidebar state → query params understood by backend/post/filters.py. Only the filters
 // that exist for the chosen category are sent; the others keep their values for switching back.
-function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {} }) {
+function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {}, seller = null }) {
   const params = new URLSearchParams();
   const set = (key, value) => {
     if (value !== "" && value != null) params.set(key, value);
   };
+  set("seller", seller);
   const setList = (key, values) => {
     if (values?.length) params.set(key, values.join(","));
   };
@@ -275,7 +289,7 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
   const isEquipment = query.category === "equipment";
   const params = buildListingParams(query);
   params.set("page", page);
-  const payload = await request(`${listingEndpoint(isEquipment ? "equipment" : "live_animal")}?${params}`);
+  const payload = await readListings(`${listingEndpoint(isEquipment ? "equipment" : "live_animal")}?${params}`);
   return {
     results: payload.results.map(isEquipment ? normalizeEquipment : normalizeListing),
     count: payload.count,
@@ -283,9 +297,77 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
   };
 }
 
+// A seller's public profile (/api/sellers/<id>/): name, badges, rating, bio, listing counts.
+export async function getSellerProfile(id) {
+  // Sent with the viewer's token when signed in, so can_review / my_review are theirs.
+  const profile = isLoggedIn() ? await requestWithAuth(`/sellers/${id}/`, { method: "GET" }) : await request(`/sellers/${id}/`);
+  return {
+    id: profile.id,
+    username: profile.username,
+    displayName: profile.display_name,
+    isCommercial: profile.is_commercial,
+    verified: profile.verified_seller,
+    rating: profile.seller_rating,
+    totalReviews: profile.total_reviews,
+    bio: profile.bio || "",
+    memberSince: new Date(profile.member_since),
+    liveAnimalCount: profile.live_animal_count,
+    equipmentCount: profile.equipment_count,
+    canReview: Boolean(profile.can_review),
+    myReview: profile.my_review ? normalizeReview(profile.my_review) : null,
+  };
+}
+
+function normalizeReview(review) {
+  return {
+    id: review.id,
+    reviewer: review.reviewer,
+    rating: review.rating,
+    comment: review.comment || "",
+    createdAt: new Date(review.created_at),
+    isMine: Boolean(review.is_mine),
+  };
+}
+
+// One page of a seller's reviews, newest first.
+export async function getSellerReviews(sellerId, page = 1) {
+  const path = `/sellers/${sellerId}/reviews/?page=${page}`;
+  const payload = isLoggedIn() ? await requestWithAuth(path, { method: "GET" }) : await request(path);
+  return { results: payload.results.map(normalizeReview), count: payload.count, hasMore: Boolean(payload.next) };
+}
+
+// Write or update the signed-in user's review of a seller.
+export async function saveSellerReview(sellerId, rating, comment) {
+  return normalizeReview(await requestWithAuth(`/sellers/${sellerId}/reviews/`, {
+    method: "POST",
+    body: JSON.stringify({ rating, comment }),
+  }));
+}
+
+export async function deleteSellerReview(sellerId) {
+  return requestWithAuth(`/sellers/${sellerId}/reviews/`, { method: "DELETE" });
+}
+
+// Where a seller's name links to.
+export function sellerPagePath(sellerId) {
+  return `/sellers/${sellerId}`;
+}
+
+// Save (on = true) or unsave a listing for the signed-in user. Returns the new state.
+export async function setFavorite(id, category, on) {
+  const result = await requestWithAuth(`${listingEndpoint(category, id)}favorite/`, { method: on ? "POST" : "DELETE" });
+  return Boolean(result?.is_favorite);
+}
+
+// One page of the signed-in user's saved animals, most recently saved first.
+export async function getFavoritesPage(page = 1) {
+  const payload = await requestWithAuth(`/posts/live-animals/favorites/?page=${page}`, { method: "GET" });
+  return { results: payload.results.map(normalizeListing), count: payload.count, hasMore: Boolean(payload.next) };
+}
+
 // `category` is "live_animal" (default) or "equipment" in the functions below.
 export async function getListing(id, category = "live_animal") {
-  const item = await request(listingEndpoint(category, id));
+  const item = await readListings(listingEndpoint(category, id));
   return category === "equipment" ? normalizeEquipment(item) : normalizeListing(item);
 }
 

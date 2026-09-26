@@ -129,6 +129,14 @@ class ContactInfoField(serializers.Field):
             return json.dumps(value)
         return str(value)
 
+class FavoriteFlagMixin(serializers.Serializer):
+    # Whether the viewer saved the listing; the viewsets annotate it (FavoritesMixin), else False.
+    is_favorite = serializers.SerializerMethodField()
+
+    def get_is_favorite(self, obj):
+        return bool(getattr(obj, 'is_favorite', False))
+
+
 class PublicListingFieldsMixin(serializers.Serializer):
     """Read-only fields the listing detail page shows for both listing types."""
     seller_name = serializers.CharField(source='account.get_display_name', read_only=True)
@@ -139,7 +147,7 @@ class PublicListingFieldsMixin(serializers.Serializer):
         return max(0, (timezone.now() - obj.created_at).days)
 
 
-class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     # Same as live animals: the editor sends contact_info as an object.
     contact_info = ContactInfoField()
     # Nested seller info
@@ -151,9 +159,9 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         fields = [
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_hidden', 'is_favorite']
     
     def create(self, validated_data):
         # Set the account from the request user
@@ -161,7 +169,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     species_name = serializers.CharField(source='species.name', read_only=True)
     
@@ -185,11 +193,11 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
-            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
+            'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'seller_id', 'seller_name', 'is_hidden',
-            'seller_rating', 'species_name', 'genes', 'posted_days'
+            'seller_rating', 'species_name', 'genes', 'posted_days', 'is_favorite'
         ]
     
     def get_genes(self, obj):
