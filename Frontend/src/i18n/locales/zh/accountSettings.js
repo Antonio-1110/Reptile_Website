@@ -1,6 +1,5 @@
 export default {
   title: "帳號設定",
-  back: "返回市集",
   profileDetails: "個人資料",
   username: "使用者名稱",
   displayName: "顯示名稱",

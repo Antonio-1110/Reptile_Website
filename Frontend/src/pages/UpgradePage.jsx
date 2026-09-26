@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAccountPlans, getCurrentProfile } from "../api/listingsApi";
 import { errorText, toErrorState } from "../utils/errorState";
-import { Link } from "react-router";
+import BackLink from "../components/ui/BackLink";
 
 // Plans in upgrade order, so anything after the current plan counts as an upgrade.
 const PLAN_ORDER = ["hobbyist", "commercial", "commercial_paid"];
@@ -32,12 +32,10 @@ export default function UpgradePage() {
 
   const header = (
     <div className="upgrade-header">
-      <div>
-        <p className="upgrade-kicker">{t("navigation.account")}</p>
-        <h1 className="upgrade-title">{t("upgrade.title")}</h1>
-        <p className="upgrade-subtitle">{t("upgrade.subtitle")}</p>
-      </div>
-      <Link to="/settings" className="upgrade-back">{t("upgrade.back")}</Link>
+      <BackLink to="/settings">{t("upgrade.back")}</BackLink>
+      <p className="upgrade-kicker">{t("navigation.account")}</p>
+      <h1 className="upgrade-title">{t("upgrade.title")}</h1>
+      <p className="upgrade-subtitle">{t("upgrade.subtitle")}</p>
     </div>
   );
 

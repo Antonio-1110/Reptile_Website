@@ -1,6 +1,5 @@
 export default {
   title: "Account settings",
-  back: "Back to market",
   profileDetails: "Profile details",
   username: "Username",
   displayName: "Display name",

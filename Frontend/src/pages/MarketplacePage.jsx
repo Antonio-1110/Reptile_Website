@@ -6,9 +6,9 @@ import EndOfResultsCard from "../components/listings/EndOfResultsCard";
 import ListingCard from "../components/listings/ListingCard";
 import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
-import { createSavedSearch, getListingsPage, isLoggedIn, listingQueryString } from "../api/listingsApi";
+import { createSavedSearch, getListingsPage, getSavedSearches, isLoggedIn, listingQueryString, parseListingQuery, updateSavedSearch } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
-import { readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
+import { buildMarketplaceUrl, readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
 import { Link, useLocation, useNavigate } from "react-router";
 
 const initialFilters = {
@@ -92,18 +92,52 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   const isLoadingMore = feed.loadingPage > 1;
   const reachedEnd = !feed.loadingPage && !feed.failedPage && feed.nextPage === null;
   const errorMessage = feed.failedPage && t(feed.failedPage === 1 ? "listings.loadError" : "listings.loadMoreError");
-  // "Save this search": null, "saving", "saved" or an error message.
+  // "Save this search": null, "saving", "saved", "empty" (nothing to save) or an error message.
   const [saveState, setSaveState] = useState(null);
   useEffect(() => setSaveState(null), [query]);
+  // The saved search being edited ({ id, name }), opened from the saved searches page with
+  // ?saved=<id>. Its search goes into the URL and its filters into the sidebar; the id then leaves the
+  // URL, so the edit carries on while the user changes the search from the header.
+  const [editingSearch, setEditingSearch] = useState(null);
+  const savedSearchId = new URLSearchParams(location.search).get("saved");
+  useEffect(() => {
+    if (!savedSearchId || !isLoggedIn()) return;
+    let cancelled = false;
+    getSavedSearches()
+      .then((searches) => {
+        if (cancelled) return;
+        const saved = searches.find((item) => String(item.id) === savedSearchId);
+        if (!saved) throw new Error(t("savedSearches.openError"));
+        const { search, tags, filters: savedFilters } = parseListingQuery(saved.query);
+        setFilters({ ...initialFilters, ...savedFilters });
+        setEditingSearch({ id: saved.id, name: saved.name });
+        navigate(buildMarketplaceUrl(search, tags), { replace: true });
+      })
+      .catch((error) => !cancelled && setSaveState(error.message));
+    return () => { cancelled = true; };
+  }, [savedSearchId, navigate, t]);
+
   const saveSearch = async () => {
+    const queryString = listingQueryString(query);
+    // Saving the whole marketplace would email every new listing; ask for a search or filter first.
+    if (!queryString) {
+      setSaveState("empty");
+      return;
+    }
     setSaveState("saving");
     try {
-      await createSavedSearch(listingQueryString(query), searchTerm.trim());
+      if (editingSearch) await updateSavedSearch(editingSearch.id, { query: queryString });
+      else await createSavedSearch(queryString, searchTerm.trim());
       setSaveState("saved");
     } catch (error) {
       setSaveState(error.message);
     }
   };
+  const saveMessage = {
+    empty: t("savedSearches.nothingToSave"),
+    saving: null,
+    saved: null,
+  }[saveState] ?? saveState;
 
   const changeCategory = (value) => {
     navigate(withMarketplaceCategory(value, location.search), { replace: true });
@@ -131,18 +165,26 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
                   <div className="marketplace-save-search">
                     {saveState === "saved" ? (
                       <p role="status">
-                        {t("savedSearches.savedNote")} <Link to="/saved-searches">{t("savedSearches.manage")}</Link>
+                        {t(editingSearch ? "savedSearches.updated" : "savedSearches.savedNote")}{" "}
+                        <Link to="/saved-searches">{t("savedSearches.manage")}</Link>
                       </p>
                     ) : (
-                      <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
-                        🔔 {t("savedSearches.save")}
-                      </button>
+                      <>
+                        {editingSearch && <Link to="/saved-searches" className="marketplace-save-cancel">{t("savedSearches.cancel")}</Link>}
+                        <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
+                          🔔 {t(editingSearch ? "savedSearches.update" : "savedSearches.save")}
+                        </button>
+                      </>
                     )}
-                    {saveState && !["saving", "saved"].includes(saveState) && <p role="alert">{saveState}</p>}
+                    {/* Floats under the button, so a message doesn't push the listings down. */}
+                    {saveMessage && <p role="alert" className="marketplace-save-message">{saveMessage}</p>}
                   </div>
                 )}
               </div>
             </div>
+            {editingSearch && category === "live_animal" && (
+              <p className="marketplace-editing-note" role="status">{t("savedSearches.editing", { name: editingSearch.name })}</p>
+            )}
             {isFirstLoad && (
               <>
                 <p className="sr-only" role="status">{t("listings.loading")}</p>

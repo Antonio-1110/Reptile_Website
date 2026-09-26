@@ -15,18 +15,6 @@
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
-.listing-editor-back {
-  display: inline-block;
-  margin-bottom: 1.5rem;
-  color: oklch(79.2% 0.209 151.711);
-  font-size: 0.875rem;
-  line-height: calc(1.25 / 0.875);
-}
-
-.listing-editor-back:hover {
-  color: oklch(87.1% 0.15 154.449);
-}
-
 .listing-editor-title {
   margin-bottom: 0.5rem;
   color: oklch(72.3% 0.219 149.579);

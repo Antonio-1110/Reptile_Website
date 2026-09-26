@@ -4,7 +4,7 @@ export default {
   notFoundBody: "It may have been sold or removed by the seller.",
   loadError: "Couldn't load this listing",
   loadErrorBody: "Check your connection and try again.",
-  back: "← Back to marketplace",
+  back: "Back to marketplace",
   forSale: "For sale",
   reservedNote: "Reserved: the seller is holding this for a buyer. You can still get in touch in case it falls through.",
   soldNote: "This has been sold.",

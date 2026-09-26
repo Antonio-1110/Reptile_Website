@@ -2,6 +2,7 @@ import './Header.css';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
+import AccountMenu from './AccountMenu';
 import { isLoggedIn, logout } from '../../api/authApi';
 import { getSpeciesLabel } from '../../constants/species';
 import { Link, useLocation } from 'react-router';
@@ -129,10 +130,8 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
         <button type="button" className="headerLink">{t('navigation.community')}</button>
         {isLoggedIn() ? (
           <>
-            <Link to="/my-listings" className="headerLink">{t('navigation.myListings')}</Link>
             <Link to="/postinput" className="headerLink headerPostLink">{t('navigation.postListing')}</Link>
-            <Link to="/settings" className="headerButton">{t('navigation.account')}</Link>
-            <button type="button" className="headerLink" onClick={handleSignOut}>{t('navigation.signOut')}</button>
+            <AccountMenu onSignOut={handleSignOut} />
           </>
         ) : (
           <>

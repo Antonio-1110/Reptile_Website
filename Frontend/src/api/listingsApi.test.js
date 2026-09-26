@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createListing, getListingsPage, getSexKey } from './listingsApi';
+import { createListing, getListingsPage, getSexKey, listingQueryString, parseListingQuery } from './listingsApi';
 
 // A fetch stand-in that records the URL and answers with one page of API results.
 function mockFetch(results = [], { next = null, count = results.length } = {}) {
@@ -104,5 +104,28 @@ describe('createListing: species', () => {
     const body = await sentBody({ species: ' Blue Tongue Skink ', speciesId: null });
     expect(body.requested_species).toBe('Blue Tongue Skink');
     expect(body).not.toHaveProperty('species');
+  });
+});
+
+describe('parseListingQuery: a saved search → marketplace search and filters', () => {
+  it('reads back what listingQueryString wrote', () => {
+    const query = {
+      search: 'pied',
+      tags: [{ type: 'species', value: 'Ball Pythons' }, { type: 'morph', value: 'Pastel' }],
+      filters: {
+        sex: ['0.1'],
+        locations: ['taipei', 'taichung'], includeLocations: false,
+        lifeStages: ['adult'], includeLifeStages: true,
+        minPrice: '1000', maxWeight: '500', minAgeYears: '1.5',
+      },
+    };
+    const parsed = parseListingQuery(listingQueryString(query));
+    expect(parsed.search).toBe('pied');
+    expect(parsed.tags).toEqual(query.tags);
+    expect(parsed.filters).toEqual(query.filters);
+  });
+
+  it('returns no filters for an empty query', () => {
+    expect(parseListingQuery('')).toEqual({ search: '', tags: [], filters: {} });
   });
 });

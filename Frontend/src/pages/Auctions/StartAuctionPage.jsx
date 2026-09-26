@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createAuction, getAuctionRules, getSellerBond, paySellerBond } from '../../api/auctionsApi';
 import { getCurrentProfile, getRawListing } from '../../api/listingsApi';
+import BackLink from '../../components/ui/BackLink';
 import { formatMoney } from '../../utils/auctionFormat';
 import { errorText, toErrorState } from '../../utils/errorState';
 import { Link, useNavigate } from 'react-router';
@@ -86,7 +87,7 @@ export default function StartAuctionPage({ listingId, category }) {
 
   const header = (
     <>
-      <Link to="/my-listings" className="start-auction-back">{t('startAuction.backToListings')}</Link>
+      <BackLink to="/my-listings">{t('startAuction.backToListings')}</BackLink>
       <h1>{t('startAuction.title')}</h1>
       <p className="start-auction-listing">{listing.title}</p>
     </>

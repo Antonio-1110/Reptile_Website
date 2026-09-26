@@ -2,6 +2,7 @@ import "./AccountSettingsPage.css";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getCurrentProfile, updateCurrentProfile } from "../api/listingsApi";
+import BackLink from "../components/ui/BackLink";
 import EmptyState from "../components/ui/EmptyState";
 import { errorText, toErrorState } from "../utils/errorState";
 import { Link } from "react-router";
@@ -105,11 +106,9 @@ function AccountSettingsPage() {
 
   const header = (
     <div className="account-settings-header">
-      <div>
-        <p className="account-settings-kicker">{t("navigation.account")}</p>
-        <h1 className="account-settings-title">{t("accountSettings.title")}</h1>
-      </div>
-      <Link to="/marketplace" className="account-settings-back">{t("accountSettings.back")}</Link>
+      <BackLink to="/marketplace">{t("navigation.backToMarketplace")}</BackLink>
+      <p className="account-settings-kicker">{t("navigation.account")}</p>
+      <h1 className="account-settings-title">{t("accountSettings.title")}</h1>
     </div>
   );
 

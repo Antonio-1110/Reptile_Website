@@ -174,7 +174,7 @@ export default {
     loading: "Loading auction…",
     notFound: "Auction not found",
     loadError: "Unable to load this auction.",
-    back: "← All auctions",
+    back: "All auctions",
     kicker: "Auction",
     bids: "Bids",
     nextBid: "Next minimum bid",

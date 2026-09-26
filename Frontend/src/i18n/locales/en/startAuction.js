@@ -2,7 +2,7 @@ export default {
   title: "Start an auction",
   loading: "Loading…",
   loadError: "Unable to load this listing. Check that it's yours and try again.",
-  backToListings: "← Back to my listings",
+  backToListings: "Back to my listings",
   intro: "Buyers pay a refundable deposit before they bid. The highest bid when time runs out wins; the winner then pays the rest through us.",
   paidOnly: "Auctions are available to paid commercial accounts.",
   seePlans: "See plans",

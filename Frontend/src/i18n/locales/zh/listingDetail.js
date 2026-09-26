@@ -4,7 +4,7 @@ export default {
   notFoundBody: "可能已售出，或已被賣家移除。",
   loadError: "無法載入這則刊登",
   loadErrorBody: "請檢查網路連線後再試一次。",
-  back: "← 返回市集",
+  back: "返回市集",
   forSale: "出售中",
   reservedNote: "已保留：賣家正為某位買家保留這則刊登。若交易未成，你仍可與賣家聯絡。",
   soldNote: "這則刊登已售出。",

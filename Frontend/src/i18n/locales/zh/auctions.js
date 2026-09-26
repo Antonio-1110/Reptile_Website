@@ -169,7 +169,7 @@ export default {
     loading: "正在載入競標…",
     notFound: "找不到這場競標",
     loadError: "目前無法載入這場競標。",
-    back: "← 所有競標",
+    back: "所有競標",
     kicker: "競標",
     bids: "出價次數",
     nextBid: "下一口最低出價",
