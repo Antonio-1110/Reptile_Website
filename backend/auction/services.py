@@ -4,6 +4,7 @@ all behave the same way. Anything that moves money goes through the configured p
 all money (deposits, buy-now payments) is collected and held by the platform.
 """
 import logging
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -123,7 +124,23 @@ def place_bid(auction, bidder, amount):
         if amount < minimum:
             raise AuctionError(_('Your bid must be at least %(amount)s.') % {'amount': format_money(minimum, auction.currency)})
 
-        return Bid.objects.create(auction=auction, bidder=bidder, amount=amount, deposit=deposit)
+        bid = Bid.objects.create(auction=auction, bidder=bidder, amount=amount, deposit=deposit)
+        _extend_if_sniped(auction, bid.created_at)
+        return bid
+
+
+def _extend_if_sniped(auction, bid_time):
+    """
+    A bid just before the end would leave nobody time to answer it, so it pushes the end time back.
+    Runs under the auction lock taken by place_bid, so settle_auction can't close it meanwhile.
+    """
+    window = timedelta(minutes=settings.AUCTION_EXTEND_WINDOW_MINUTES)
+    if not window or auction.ends_at - bid_time > window:
+        return
+    new_end = bid_time + timedelta(minutes=settings.AUCTION_EXTEND_BY_MINUTES)
+    if new_end > auction.ends_at:
+        auction.ends_at = new_end
+        auction.save(update_fields=['ends_at', 'updated_at'])
 
 
 def cancel_auction(auction):
