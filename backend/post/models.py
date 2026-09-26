@@ -31,7 +31,17 @@ class BasePost(models.Model):
         LIE = 'LIE', '連江縣'
         OTH = 'OTH', '其他'
     
+    # Sellers mark a listing reserved or sold instead of deleting it. Sold listings drop out of the
+    # marketplace but keep their page; a completed auction sale marks the listing sold.
+    class Status(models.TextChoices):
+        AVAILABLE = 'available', 'Available'
+        RESERVED = 'reserved', 'Reserved'
+        SOLD = 'sold', 'Sold'
+
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='%(class)s_posts')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.AVAILABLE)
+    # Hidden by moderation (a staff action, or enough reports): only the owner and staff can see it.
+    is_hidden = models.BooleanField(default=False, help_text='Hidden from everyone but the owner and staff')
     title = models.CharField(max_length=200)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -120,9 +130,18 @@ class ContactRequest(models.Model):
 
 class Report(models.Model):
     """Records a user flagging a listing for manual moderation review."""
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending review'
+        RESOLVED = 'resolved', 'Resolved (action taken)'
+        DISMISSED = 'dismissed', 'Dismissed (nothing wrong)'
+
     reporter = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='reports_filed')
     live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
     equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='reports')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reviewed_by = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, blank=True, related_name='reports_reviewed')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    staff_note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -132,3 +151,23 @@ class Report(models.Model):
     @property
     def post(self):
         return self.live_animal_post or self.equipment_post
+
+class SavedSearch(models.Model):
+    """
+    A marketplace search a user asked to be emailed about. `query` is the listing API's query string
+    (the sidebar filters and search, e.g. "search=pied&sex=1.0"); `manage.py send_search_alerts` emails
+    new matches since `last_alerted_at`.
+    """
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='saved_searches')
+    name = models.CharField(max_length=100)
+    query = models.CharField(max_length=1000)
+    last_alerted_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Saved search'
+        verbose_name_plural = 'Saved searches'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'{self.account}: {self.name}'

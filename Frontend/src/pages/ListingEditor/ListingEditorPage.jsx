@@ -3,14 +3,16 @@ import { useTranslation } from "react-i18next";
 import "./ListingEditorPage.css";
 import BasicDetailsSection from "./components/BasicDetailsSection";
 import BiologicalDataSection from "./components/BiologicalDataSection";
-import CategorySwitch from "./components/CategorySwitch";
+import CategorySwitch from "../../components/ui/CategorySwitch";
 import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
-import { createListing, getCurrentProfile, getRawListing, getSexKey, saveListingPhotos, updateListing } from "../../api/listingsApi";
+import { createListing, getCurrentProfile, getRawListing, getSexKey, listingPagePath, saveListingPhotos, updateListing } from "../../api/listingsApi";
 import { getLocationKey } from "../../constants/locations";
 import { DEFAULT_EQUIPMENT_CATEGORY, DEFAULT_EQUIPMENT_CONDITION } from "../../constants/equipment";
 import { errorText, toErrorState } from "../../utils/errorState";
 import { existingPhoto, isBlobUrl } from "./mediaItems";
+
+const EDITOR_CATEGORIES = ["live_animal", "enclosure"];
 
 const initialFormData = {
   title: "",
@@ -33,13 +35,44 @@ const initialFormData = {
   media: [],
 };
 
+// API field → the form label it belongs to, so a server validation error says which field to fix.
+const FIELD_LABEL_KEYS = {
+  title: "createListing.basic.titleLabel",
+  description: "createListing.basic.description",
+  price: "createListing.basic.price",
+  species: "createListing.basic.species",
+  sex: "createListing.biological.sex",
+  genetics: "createListing.biological.genetics",
+  life_stage: "createListing.biological.lifeStage",
+  age_years: "createListing.biological.ageYears",
+  weight_grams: "createListing.biological.weight",
+  size_cm: "createListing.biological.size",
+  diets: "createListing.biological.diet",
+  location: "createListing.logistics.location",
+  shipping_methods: "createListing.logistics.shipping",
+};
+
+function editPath(id, category) {
+  return `/postinput?edit=${id}&category=${category}`;
+}
+
+// Kept photos preview from their real URL; only local blob previews need revoking.
+function revokePreviews(media) {
+  media.forEach(({ previewUrl, originalPreviewUrl }) => {
+    if (isBlobUrl(previewUrl)) URL.revokeObjectURL(previewUrl);
+    if (isBlobUrl(originalPreviewUrl) && originalPreviewUrl !== previewUrl) URL.revokeObjectURL(originalPreviewUrl);
+  });
+}
+
 export default function ListingEditorPage({ editId = null, editCategory = null }) {
   const { t } = useTranslation();
   const isEditing = Boolean(editId);
   const [formData, setFormData] = useState(initialFormData);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
+  const [submitError, setSubmitError] = useState([]);
+  // Set once a new listing is saved; the form is swapped for a summary so it can't be posted twice.
+  const [created, setCreated] = useState(null);
   const [quota, setQuota] = useState(null);
   const [quotaLoading, setQuotaLoading] = useState(true);
   const [quotaError, setQuotaError] = useState(null);
@@ -51,12 +84,7 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
   const savedPhotosRef = useRef([]);
 
   mediaRef.current = formData.media;
-  useEffect(() => () => {
-    mediaRef.current.forEach(({ previewUrl, originalPreviewUrl }) => {
-      if (isBlobUrl(previewUrl)) URL.revokeObjectURL(previewUrl);
-      if (isBlobUrl(originalPreviewUrl) && originalPreviewUrl !== previewUrl) URL.revokeObjectURL(originalPreviewUrl);
-    });
-  }, []);
+  useEffect(() => () => revokePreviews(mediaRef.current), []);
 
   useEffect(() => {
     getCurrentProfile()
@@ -71,10 +99,7 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     const raw = await getRawListing(listingId, editCategory);
     const photos = raw.gallery?.length ? raw.gallery : [raw.image].filter(Boolean);
     savedPhotosRef.current = photos;
-    mediaRef.current.forEach(({ previewUrl, originalPreviewUrl }) => {
-      if (isBlobUrl(previewUrl)) URL.revokeObjectURL(previewUrl);
-      if (isBlobUrl(originalPreviewUrl) && originalPreviewUrl !== previewUrl) URL.revokeObjectURL(originalPreviewUrl);
-    });
+    revokePreviews(mediaRef.current);
     setCoverIndex(0);
     setFormData((current) => ({ ...current, media: photos.map(existingPhoto) }));
   };
@@ -151,54 +176,80 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
     }));
   };
 
+  // One line per problem; field errors name the field so the seller knows where to look.
+  const describeError = (error, fallbackKey) => {
+    const fields = Object.entries(error.fields || {});
+    if (!fields.length) return [error.message || t(fallbackKey)];
+    return fields.map(([field, message]) => (FIELD_LABEL_KEYS[field]
+      ? t("createListing.errors.field", { field: t(FIELD_LABEL_KEYS[field]), message })
+      : message));
+  };
+
   // Photos are saved after the listing itself: kept photos by URL, new ones uploaded, cover first.
+  // Returns the upload error message, or null when the photos were saved (or didn't change).
   const uploadPhotos = async (listingId) => {
     const { media } = formData;
     const ordered = media.length ? [media[coverIndex], ...media.filter((_, index) => index !== coverIndex)] : [];
     const items = ordered.map((item) => (item.existingUrl ? { url: item.existingUrl } : { file: item.file }));
     const unchanged = items.length === savedPhotosRef.current.length
       && items.every((item, index) => item.url === savedPhotosRef.current[index]);
-    if (unchanged) return true;
+    if (unchanged) return null;
     const category = formData.category === "live_animal" ? "live_animal" : "equipment";
     try {
       await saveListingPhotos(listingId, category, items);
-      return true;
+      return null;
     } catch (error) {
-      setSubmitError(t("createListing.errors.photos", { reason: error.message }));
-      return false;
+      return error.message;
     }
+  };
+
+  const startAnotherListing = () => {
+    revokePreviews(formData.media);
+    setFormData({ ...initialFormData, category: formData.category });
+    setCoverIndex(0);
+    setCreated(null);
+    setSubmitted(false);
+    window.scrollTo(0, 0);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitted(false);
-    setSubmitError("");
+    setSubmitError([]);
     if (isEditing) {
       setSubmitting(true);
       try {
         await updateListing(editId, formData);
-        if (await uploadPhotos(editId)) {
+        const photoError = await uploadPhotos(editId);
+        if (photoError) {
+          setSubmitError([t("createListing.errors.photosOnEdit", { reason: photoError })]);
+        } else {
           await reloadSavedPhotos(editId);
           setSubmitted(true);
         }
       } catch (error) {
-        setSubmitError(error.message || t("createListing.errors.update"));
+        setSubmitError(describeError(error, "createListing.errors.update"));
       } finally {
         setSubmitting(false);
       }
       return;
     }
     if (!quota || quota.remaining_post_count <= 0) {
-      setSubmitError(t("createListing.quotaReached"));
+      setSubmitError([t("createListing.quotaReached")]);
       return;
     }
     setSubmitting(true);
     try {
-      const created = await createListing(formData);
-      setQuota(await getCurrentProfile());
-      if (await uploadPhotos(created.id)) setSubmitted(true);
+      const listing = await createListing(formData);
+      const photoError = await uploadPhotos(listing.id);
+      // The API's category ("equipment"), not the form's "enclosure", so the links below reach the right page.
+      const category = formData.category === "live_animal" ? "live_animal" : "equipment";
+      setCreated({ id: listing.id, category, title: listing.title, photoError });
+      window.scrollTo(0, 0);
+      // The quota only feeds the notice for the next listing; failing to refresh it isn't worth an error.
+      getCurrentProfile().then(setQuota).catch(() => {});
     } catch (error) {
-      setSubmitError(error.message || t("createListing.errors.publish"));
+      setSubmitError(describeError(error, "createListing.errors.publish"));
     } finally {
       setSubmitting(false);
     }
@@ -217,11 +268,38 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
         {!isEditing && quota && <p className="listing-editor-notice">{t("createListing.quota", { remaining: quota.remaining_post_count, max: quota.max_post_count })}</p>}
         {!isEditing && quotaError && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{errorText(t, quotaError)}</p>}
         {!isEditing && quota && quota.remaining_post_count === 0 && <p role="alert" className="listing-editor-notice listing-editor-notice--error">{t("createListing.quotaReached")}</p>}
-        {listingLoading ? (
+        {created ? (
+          <section className="listing-editor-created" role="status">
+            <h2>{t("createListing.created.heading")}</h2>
+            <p>{t("createListing.created.body", { title: created.title })}</p>
+            {created.photoError && (
+              <p className="listing-editor-result--error">
+                {t("createListing.errors.photos", { reason: created.photoError })}{" "}
+                <a href={editPath(created.id, created.category)}>{t("createListing.created.addPhotos")}</a>
+              </p>
+            )}
+            <div className="listing-editor-created-actions">
+              <a href={listingPagePath(created.id, created.category)} className="listing-editor-created-primary">{t("createListing.created.view")}</a>
+              <a href="/my-listings">{t("createListing.created.myListings")}</a>
+              <button type="button" onClick={startAnotherListing}>{t("createListing.created.another")}</button>
+            </div>
+          </section>
+        ) : listingLoading ? (
           <p className="listing-editor-loading">{t("createListing.loading")}</p>
         ) : (
         <form onSubmit={handleSubmit} className="listing-editor-form">
-          <CategorySwitch value={formData.category} onChange={handleCategoryChange} disabled={isEditing} />
+          {/* "enclosure" is the equipment category; the editor maps it to the equipment endpoint. A
+              listing can't move between the two endpoints, so the switch is locked when editing. */}
+          <CategorySwitch
+            className="category-switch-section"
+            labelClassName="listing-form-label"
+            label={t("createListing.basic.category")}
+            options={EDITOR_CATEGORIES.map((value) => ({ value, label: t(`createListing.categories.${value}`) }))}
+            value={formData.category}
+            onChange={handleCategoryChange}
+            disabled={isEditing}
+            hint={isEditing && <p className="listing-form-hint">{t("createListing.basic.categoryLocked")}</p>}
+          />
           <MediaUploader
             files={formData.media}
             coverIndex={coverIndex}
@@ -240,11 +318,32 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
             />
           )}
           <LogisticsSection formData={formData} onChange={updateFormData} onShippingChange={toggleShippingMethod} />
-          <button type="submit" disabled={!formData.legalAgreed || submitting || (!isEditing && (quotaLoading || !quota || quota.remaining_post_count === 0))} className="listing-editor-submit">
-            {isEditing ? (submitting ? t("createListing.edit.saving") : t("createListing.edit.save")) : t("createListing.submit")}
+          <button
+            type="submit"
+            disabled={!formData.legalAgreed || submitting || (!isEditing && (quotaLoading || !quota || quota.remaining_post_count === 0))}
+            aria-describedby={!formData.legalAgreed ? "listing-editor-submit-hint" : undefined}
+            className="listing-editor-submit"
+          >
+            {isEditing
+              ? (submitting ? t("createListing.edit.saving") : t("createListing.edit.save"))
+              : (submitting ? t("createListing.submitting") : t("createListing.submit"))}
           </button>
-          {submitError && <p role="alert" className="listing-editor-result listing-editor-result--error">{submitError}</p>}
-          {submitted && <p className="listing-editor-result listing-editor-result--success">{isEditing ? t("createListing.edit.success") : t("createListing.success")}</p>}
+          {!formData.legalAgreed && (
+            <p id="listing-editor-submit-hint" className="listing-editor-result listing-editor-hint">{t("createListing.complianceHint")}</p>
+          )}
+          {submitError.length > 0 && (
+            <div role="alert" className="listing-editor-result listing-editor-result--error">
+              {submitError.map((line) => <p key={line}>{line}</p>)}
+            </div>
+          )}
+          <div role="status">
+            {submitted && (
+              <p className="listing-editor-result listing-editor-result--success">
+                {t("createListing.edit.success")}{" "}
+                <a href={listingPagePath(editId, formData.category === "live_animal" ? "live_animal" : "equipment")}>{t("createListing.created.view")}</a>
+              </p>
+            )}
+          </div>
         </form>
         )}
         </div>

@@ -17,12 +17,14 @@ Frontend/src/
 ├── App.jsx                    # path-based routing
 ├── index.css                  # global tokens (colors) + Tailwind base reset
 ├── api/
-│   ├── auctionsApi.js         # auctions, deposits and bids + backend <-> UI field mapping
-│   ├── authApi.js             # JWT login/register/refresh, authFetch()
-│   └── listingsApi.js         # listing CRUD + backend <-> UI field mapping
+│   ├── http.js                # apiFetch(): every request; sends Accept-Language, translates network errors
+│   ├── authApi.js             # JWT login/register/refresh, tokens, authFetch() (signed requests)
+│   ├── auctionsApi.js         # auctions, deposits, bids, buy now, orders + backend <-> UI field mapping
+│   └── listingsApi.js         # listings, photos, contact/report, profile + backend <-> UI field mapping
 ├── constants/
 │   ├── listingLimits.js       # client-side mirror of backend field limits
-│   └── locations.js           # location keys <-> backend codes (single source of truth)
+│   ├── locations.js           # location keys <-> backend codes (single source of truth)
+│   └── species.js             # backend species names -> translated labels
 ├── hooks/
 │   ├── useDebouncedValue.js
 │   └── useNow.js              # ticking clock shared by a page's countdowns
@@ -32,28 +34,31 @@ Frontend/src/
 ├── utils/
 │   ├── auctionFormat.js       # auction phase, countdowns, money and date formatting
 │   ├── cropImage.js           # canvas helper for cropping listing photos
-│   └── marketplaceSearch.js   # search term + tags <-> /marketplace URL
+│   ├── errorState.js          # toErrorState() / errorText(): async error messages that follow a language switch
+│   └── marketplaceSearch.js   # search term + tags + category <-> /marketplace URL
 ├── assets/
 ├── components/                # shared across pages
 │   ├── layout/                # Header
 │   ├── listings/              # ListingCard, ListingGrid, EndOfResultsCard
 │   ├── auctions/              # AuctionCountdown (auction cards + listing page)
 │   ├── filters/               # FilterSidebar and its sections (FilterSection, RangeFilter, …)
-│   └── ui/                    # generic widgets: Toast, ImageCropModal, LanguageSwitcher
+│   └── ui/                    # generic widgets: Toast, ImageCropModal, LanguageSwitcher, CategorySwitch
 └── pages/                     # one file per route
     ├── HomePage               # /
     ├── MarketplacePage        # /marketplace
-    ├── ListingDetail/         # /posts/:id — the one page per animal, for sale or being auctioned
+    ├── ListingDetail/         # /posts/:id (animal) and /equipment/:id — one page per listing, for sale or being auctioned
     │   ├── ListingDetailPage.jsx
     │   ├── useListingAuction.js   # the listing's latest auction + bids, refreshed while it runs
+    │   ├── useListingTranslation.js  # t() that prefers `key_equipment` variants on equipment pages
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
     ├── MyOrdersPage           # /orders — the user's orders as buyer and seller
+    ├── SavedSearchesPage      # /saved-searches — searches the user is emailed about (saved from the marketplace)
     ├── AccountSettingsPage    # /settings
     ├── SignInPage             # /signin
-    ├── Auctions/              # /auctions (?tab=ended); cards link to the animal's /posts/:id page
+    ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page
     │   ├── AuctionsPage.jsx
-    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the animal's page
+    │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the listing's page
     │   └── components/        # AuctionCard
     └── ListingEditor/         # /postinput (create) and /postinput?edit=<id>&category= (edit)
         ├── ListingEditorPage.jsx
@@ -93,6 +98,10 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
   (`getListingsPage()`), and `MarketplacePage` fetches the next 20 results when a sentinel below the grid
   comes within 800px of the viewport. Filter edits are debounced; responses for an outdated query are
   ignored. When the results run out, `EndOfResultsCard` closes the feed (or stands in for an empty one).
+- The Live Animals / Equipment switch at the top of the filter sidebar (the same `CategorySwitch` as the
+  listing editor) decides what the whole page shows: which endpoint `getListingsPage()` calls, which
+  filters the sidebar offers and are sent, and how `ListingCard` draws a card. It's kept in the URL
+  (`?category=equipment`).
 - Authenticated requests send `Authorization: Bearer <access token>` (JWT from `/api/v1/auth/`);
   `authFetch()` refreshes an expired access token once and retries.
 - `api/listingsApi.js` converts UI field names to backend serializer names before
@@ -100,8 +109,64 @@ Runs at `http://localhost:5173`. Set `VITE_API_URL` if the backend isn't at
 - `constants/listingLimits.js` mirrors backend validation constraints (string lengths, numeric ranges) so
   the form can give immediate feedback, but the backend is the enforcement source of truth for account
   post/image quotas — see [backend/README.md](../backend/README.md).
-- The backend currently accepts image URLs only; `MediaUploader.jsx` keeps local file previews but
-  submits an empty gallery until a real upload endpoint exists.
+- Photos are uploaded after the listing itself is saved: `uploadListingPhotos()` posts the files as
+  multipart to `<id>/photos/`, which replaces the listing's photos; the chosen cover (cropped in the
+  browser with `ImageCropModal`) comes first.
+
+## How the pieces fit
+
+### Who does what
+
+| Layer | Responsibility | Doesn't |
+| --- | --- | --- |
+| `App.jsx` | Picks the page from `window.location.pathname` (no router library), owns the header search state (kept in the URL), and sends signed-out visitors to sign in for account pages (`RedirectToSignIn`). | Fetch page data. |
+| `pages/*` | One per route. **Owns its data:** calls `src/api/`, keeps loading / error / empty / success state, and passes plain values and callbacks down. Page-only pieces sit in the page's folder (`pages/ListingDetail/components/`); a self-contained one may call the API itself (`ContactSellerPanel`, `BidPanel`) and tell the page through a callback (`onChanged`). | Build URLs or parse API responses themselves. |
+| `components/*` | Shared building blocks used by several pages (cards, grid, filters, header, toast, crop dialog). **Presentational:** they get data and callbacks as props (the header is the exception: it reads the sign-in state and runs the search). | Fetch data or know which page they're on. |
+| `api/*` | The only code that talks to the backend: builds requests, attaches auth and language, and **maps between API field names and the UI's** (`life_stage` ↔ `lifeStage`, location codes ↔ keys). Throws `Error`s whose `message` is ready to show. | Hold UI state. |
+| `hooks/`, `utils/`, `constants/` | Pure helpers: formatting, the shared clock (`useNow`), debouncing, lookup tables. | Import React components. |
+
+### Calling the API
+
+- **Every request goes through `apiFetch`** (`api/http.js`), which sends `Accept-Language` so the
+  backend answers in the UI language, and turns a failed connection into a translated "can't reach
+  the server" error.
+- **Signed-in requests use `authFetch`** (`api/authApi.js`): it adds `Authorization: Bearer <access>`,
+  refreshes the access token once on a 401 and retries, sets a JSON `Content-Type` unless the body is
+  `FormData`, and turns an error response into an `Error` with `message` (the API's `detail`, or its
+  field messages) plus `status` and `fields` (`{field: "message"}` for forms).
+- **Public reads** that don't need a user use the module's `request()` helper; auction reads use
+  `authFetch` even when public, so a signed-in viewer gets their own `my_deposit` / `is_seller`.
+- **Map at the edge.** `normalizeListing()` / `normalizeAuction()` / `normalizeOrder()` turn API objects
+  into what components use, and the build/create functions go the other way. Components never see
+  snake_case API fields.
+- **Lists are paginated on the server.** Ask for one page at a time (`getListingsPage`,
+  `getAuctionsPage`) with `{results, count, hasMore}` back; never download everything and filter in the
+  browser.
+
+### Async state in a page
+
+- Keep `loading`, `error`, the data, and (for lists) `nextPage` together, and render all four states:
+  loading text, `role="alert"` error with a retry button, an empty message, and the content.
+- Store errors with `toErrorState(error, 'fallback.key')` and show them with `errorText(t, state)`.
+  The API's message is already translated; the fallback key is translated at render time, so it
+  follows a language switch.
+- When a newer request can overtake an older one (typing in a filter), drop stale answers:
+  `MarketplacePage` bumps a `queryIdRef` per query and ignores responses for an old id. Debounce input
+  with `useDebouncedValue`.
+- Pages that show countdowns call `useNow()` once and pass `now` down, so every countdown ticks
+  together; `useListingAuction` also reloads the auction every 15 s and when the countdown hits zero.
+- Short confirmations go in a `Toast` owned by the page (`showToast(message, tone)` passed down).
+
+### Adding things
+
+- **A route:** add the page under `pages/`, then a branch in `renderPage()` in `App.jsx` (wrap it in
+  `isLoggedIn() ? … : <RedirectToSignIn />` if it needs an account; the backend enforces access either
+  way).
+- **An endpoint:** add a function to the matching `api/*.js` module that calls `request`/`authFetch`
+  and maps the response with a `normalize*()`; update the backend README and `docs/API_ENDPOINTS.md`
+  when the contract changes.
+- **A user-facing string:** add the key to both `i18n/locales/en.js` and `zh.js` (see Conventions).
+- **A lookup table** (locations, species, limits): `constants/`, one source of truth each.
 
 ## Conventions for contributors
 

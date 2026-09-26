@@ -23,8 +23,8 @@ listings, and bid in auctions.
 
 Django apps in `backend/`:
 
-- `account/` — `Account` user model (hobbyist vs commercial, paid tier, limits), legacy token auth at `/api/auth/`
-- `authentication/` — JWT auth at `/api/v1/auth/` (**this is what the frontend uses**)
+- `account/` — `Account` user model (hobbyist vs commercial, paid tier, limits), profile and plans views
+- `authentication/` — JWT auth at `/api/v1/auth/` (the only auth; also serves `profile/` and `plans/`)
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
 - `common/` — dev-only auth bypass middleware
@@ -59,6 +59,7 @@ cd backend
 ../.venv/bin/python manage.py seed_demo --reset        # demo accounts + ~70 listings
 ../.venv/bin/python manage.py close_auctions           # settle auctions past their end time
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
+../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
 ../.venv/bin/python manage.py compilemessages
 ../.venv/bin/python manage.py check --deploy           # production settings audit
@@ -134,8 +135,7 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 | Base path | What | Auth |
 | --- | --- | --- |
-| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/` | JWT |
-| `/api/auth/` | legacy token auth + `profile/` (quota info used by the listing editor) | Token or JWT |
+| `/api/v1/auth/` | `register/`, `login/` (JWT pair), `refresh/`, `me/`, `profile/` (quota info used by the listing editor), `plans/` | JWT |
 | `/api/posts/live-animals/`, `/api/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
 | `/api/posts/species/` | species lookup | public |
 | `/api/auctions/` | auctions, deposits, bids | read: public; write: authenticated |
@@ -268,7 +268,10 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - **UX states:** every async view has loading, empty, error and success states; disable buttons while
   submitting; errors say what to do next.
 - **Accessibility:** real `<button>`/`<label>` elements, `alt` text on images, `role="alert"` for
-  errors, visible focus, keyboard-reachable dialogs, colour contrast in the tokens.
+  errors, visible focus, keyboard-reachable dialogs (use `hooks/useDialogFocus`: focus in, Tab
+  trapped, Escape closes, focus returns), inputs named even when they only show a placeholder, colour
+  contrast in the tokens (light text goes on `--color-accent`/`--color-accent-strong`, never on
+  `--color-accent-bright`).
 - **i18n:** no string concatenation for sentences (use interpolation), dates and prices formatted
   per locale, layouts that tolerate longer or shorter translations.
 - **Responsiveness:** check narrow phones and wide desktops; no horizontal scrolling.
@@ -282,8 +285,8 @@ Apply these whenever you build or review a feature — they're the common gaps i
   and `.dev/logs/backend.log`. A stale `.dev/pids` makes `start-dev.sh` refuse to start; run
   `./stop-dev.sh` first. `start-dev.sh` uses `.venv/` at the repo root (then `backend/.venv`, then the
   system `python3`, which usually lacks Django).
-- Two auth systems coexist (`/api/auth/` token, `/api/v1/auth/` JWT). New frontend code uses JWT via
-  `authFetch`. Don't build new features on the legacy token endpoints.
+- Auth is JWT only (`/api/v1/auth/`, `authFetch` on the frontend). The old `/api/auth/` token endpoints
+  were retired; a dev database may still have an unused `authtoken_token` table.
 - Seeded listing photos are hot-linked Wikimedia URLs; uploaded ones are absolute URLs under
   `/media/`. Code that deletes photo files must only touch the latter (see
   `ListingPhotosMixin._delete_uploaded_photos`).
@@ -294,6 +297,9 @@ Apply these whenever you build or review a feature — they're the common gaps i
   and require staff confirmation in the admin otherwise.
 - Buy-now emails are sent with `transaction.on_commit`; in tests wrap the request in
   `self.captureOnCommitCallbacks(execute=True)` or `mail.outbox` stays empty.
+- `makemessages` / `compilemessages` need GNU gettext (`apt install gettext`, `brew install gettext`).
+  New msgids for an existing string come out `#, fuzzy` with the old translation pre-filled: translate
+  them and drop the flag, or the new text silently falls back to English.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.

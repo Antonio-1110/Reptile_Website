@@ -53,6 +53,8 @@ function normalizeAuction(item) {
     pendingBuyNowCount: item.pending_buy_now_count || 0,
     soldVia: item.sold_via, // "bid", "buy_now" or null
     soldPrice: item.sold_price,
+    // It sold, but the sale then fell through (winner didn't pay, runner-up declined, …): unsold again.
+    saleFellThrough: Boolean(item.sale_fell_through),
     myDeposit: normalizeDeposit(item.my_deposit),
     myPurchase: normalizePurchase(item.my_purchase),
     // Anti-sniping: a bid this close to the end pushes the end time back (0 = off).
@@ -92,8 +94,9 @@ export async function getAuctionBids(id, page = 1) {
 
 // A live-animal listing's most recent auction that wasn't cancelled (running, upcoming or ended),
 // or null. A listing has at most one active auction, and it's always the newest.
-export async function getLatestAuctionForListing(listingId) {
-  const payload = await get(`/auctions/?live_animal_post=${listingId}&ordering=-created_at`);
+export async function getLatestAuctionForListing(listingId, category = "live_animal") {
+  const field = category === "equipment" ? "equipment_post" : "live_animal_post";
+  const payload = await get(`/auctions/?${field}=${listingId}&ordering=-created_at`);
   const latest = payload.results.find((item) => item.status !== "cancelled");
   return latest ? normalizeAuction(latest) : null;
 }

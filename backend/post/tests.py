@@ -12,7 +12,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
-from .models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, Species
+from .models import ContactRequest, EquipmentPost, LiveAnimalPost, Report, SavedSearch, Species
 
 
 class PostLimitTests(APITestCase):
@@ -259,6 +259,15 @@ class ContactAndReportTests(APITestCase):
 			description='Healthy animal',
 			contact_info='{"phone": "0912345678", "email": "seller@example.com"}',
 		)
+
+	def test_equipment_contact_and_report_work_like_live_animals(self):
+		gear = EquipmentPost.objects.create(account=self.seller, title='Heat Mat', description='d', contact_info='{}')
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.get(reverse('equipment-contact', args=[gear.id])).status_code, 200)
+		self.assertIn(self.client.post(reverse('equipment-contact', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(ContactRequest.objects.filter(requester=self.buyer, equipment_post=gear).exists())
+		self.assertIn(self.client.post(reverse('equipment-report', args=[gear.id])).status_code, (200, 201))
+		self.assertTrue(Report.objects.filter(reporter=self.buyer, equipment_post=gear).exists())
 
 	def test_anonymous_user_cannot_request_contact(self):
 		response = self.client.post(reverse('live-animal-contact', args=[self.post.id]))
@@ -539,6 +548,15 @@ class EquipmentFilterTests(APITestCase):
 		}, format='json')
 		self.assertEqual(response.status_code, 201, response.data)
 
+	def test_detail_has_public_seller_fields_but_no_contact_details(self):
+		post = EquipmentPost.objects.get(title='UVB Kit')
+		data = self.client.get(reverse('equipment-detail', args=[post.id])).data
+		self.assertEqual(data['seller_name'], post.account.get_display_name())
+		self.assertEqual(data['posted_days'], 1)
+		self.assertIn('seller_rating', data)
+		self.assertNotIn('contact_info', data)
+		self.assertNotIn('email', data['seller'])
+
 	def test_category_is_saved_and_returned(self):
 		seller = Account.objects.get(username='gear-seller')
 		self.client.force_authenticate(seller)
@@ -769,3 +787,257 @@ class ListingPhotoUploadTests(APITestCase):
 		kept = self.upload_three()
 		self.client.force_authenticate(self.other)
 		self.assertEqual(self.set_order(list(reversed(kept))).status_code, 403)
+
+class ListingStatusTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='status-seller', email='s@example.com', password='pass1234')
+		self.buyer = Account.objects.create_user(username='status-buyer', email='b@example.com', password='pass1234')
+		species = Species.objects.create(name='Status Pythons')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+
+		def make(title, status):
+			return LiveAnimalPost.objects.create(
+				account=self.seller, species=species, title=title, description='d', contact_info='{}', status=status,
+			)
+
+		self.available = make('Available One', 'available')
+		self.reserved = make('Reserved One', 'reserved')
+		self.sold = make('Sold One', 'sold')
+
+	def titles(self, **params):
+		return sorted(item['title'] for item in self.client.get(reverse('live-animal-list'), params).data['results'])
+
+	def test_marketplace_hides_sold_listings_unless_asked(self):
+		self.assertEqual(self.titles(), ['Available One', 'Reserved One'])
+		self.assertEqual(self.titles(status='sold'), ['Sold One'])
+		self.assertEqual(self.titles(status='available,reserved,sold'), ['Available One', 'Reserved One', 'Sold One'])
+
+	def test_sold_listing_keeps_its_page(self):
+		response = self.client.get(reverse('live-animal-detail', args=[self.sold.id]))
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.data['status'], 'sold')
+
+	def test_seller_still_sees_sold_listings_in_mine(self):
+		self.client.force_authenticate(self.seller)
+		titles = [item['title'] for item in self.client.get(reverse('live-animal-mine')).data['results']]
+		self.assertIn('Sold One', titles)
+
+	def test_owner_can_mark_a_listing_sold_but_others_cannot(self):
+		url = reverse('live-animal-detail', args=[self.available.id])
+		self.client.force_authenticate(self.buyer)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 403)
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.patch(url, {'status': 'nonsense'}, format='json').status_code, 400)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 200)
+		self.available.refresh_from_db()
+		self.assertEqual(self.available.status, 'sold')
+
+	def test_listing_with_a_running_auction_cannot_be_marked_reserved_or_sold(self):
+		from datetime import timedelta
+		from decimal import Decimal
+		from django.utils import timezone
+		from auction.models import Auction
+
+		auction = Auction.objects.create(
+			seller=self.seller, live_animal_post=self.available, starting_price=Decimal('1000'),
+			min_increment=Decimal('100'), deposit_amount=Decimal('100'), currency='TWD',
+			starts_at=timezone.now() - timedelta(minutes=1), ends_at=timezone.now() + timedelta(days=1),
+		)
+		url = reverse('live-animal-detail', args=[self.available.id])
+		self.client.force_authenticate(self.seller)
+		for status in ('reserved', 'sold'):
+			response = self.client.patch(url, {'status': status}, format='json')
+			self.assertEqual(response.status_code, 400)
+			self.assertIn('status', response.data)
+		self.assertEqual(self.client.patch(url, {'title': 'Renamed'}, format='json').status_code, 200)
+
+		Auction.objects.filter(pk=auction.pk).update(status=Auction.Status.ENDED)
+		self.assertEqual(self.client.patch(url, {'status': 'sold'}, format='json').status_code, 200)
+
+	def test_buyers_cannot_contact_about_a_sold_listing(self):
+		self.client.force_authenticate(self.buyer)
+		response = self.client.post(reverse('live-animal-contact', args=[self.sold.id]))
+		self.assertEqual(response.status_code, 400)
+		self.assertEqual(response.data['detail'], 'This listing has been sold.')
+		self.assertIn(self.client.post(reverse('live-animal-contact', args=[self.reserved.id])).status_code, (200, 201))
+
+	def test_equipment_list_hides_sold_too(self):
+		EquipmentPost.objects.create(account=self.seller, title='Sold Tank', description='d', contact_info='', status='sold')
+		EquipmentPost.objects.create(account=self.seller, title='Open Tank', description='d', contact_info='')
+		titles = [item['title'] for item in self.client.get(reverse('equipment-list')).data['results']]
+		self.assertIn('Open Tank', titles)
+		self.assertNotIn('Sold Tank', titles)
+
+
+class ReportModerationTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='mod-seller', email='seller@example.com', password='pass1234')
+		self.reporters = [
+			Account.objects.create_user(username=f'reporter{index}', email=f'r{index}@example.com', password='pass1234')
+			for index in range(3)
+		]
+		self.staff = Account.objects.create_superuser(username='staff', email='staff@example.com', password='pass1234')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.post = LiveAnimalPost.objects.create(
+			account=self.seller, species=Species.objects.create(name='Mod Pythons'),
+			title='Suspicious Python', description='d', contact_info='{}',
+		)
+		self.detail_url = reverse('live-animal-detail', args=[self.post.id])
+
+	def report(self, user):
+		self.client.force_authenticate(user)
+		return self.client.post(reverse('live-animal-report', args=[self.post.id]))
+
+	def listed_titles(self):
+		return [item['title'] for item in self.client.get(reverse('live-animal-list')).data['results']]
+
+	def test_hidden_listing_is_only_visible_to_its_owner_and_staff(self):
+		LiveAnimalPost.objects.filter(pk=self.post.pk).update(is_hidden=True)
+		self.assertEqual(self.listed_titles(), [])  # anonymous
+		self.assertEqual(self.client.get(self.detail_url).status_code, 404)
+		self.client.force_authenticate(self.reporters[0])
+		self.assertEqual(self.client.get(self.detail_url).status_code, 404)
+		self.client.force_authenticate(self.seller)
+		self.assertTrue(self.client.get(self.detail_url).data['is_hidden'])
+		self.assertEqual(self.client.get(reverse('live-animal-mine')).data['count'], 1)
+		self.client.force_authenticate(self.staff)
+		self.assertEqual(self.client.get(self.detail_url).status_code, 200)
+
+	def test_reports_only_queue_for_review_by_default(self):
+		for reporter in self.reporters:
+			self.report(reporter)
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+		self.assertEqual(Report.objects.filter(status=Report.Status.PENDING).count(), 3)
+
+	@override_settings(REPORT_AUTO_HIDE_THRESHOLD=2, ADMINS=[('Staff', 'staff@example.com')])
+	def test_listing_hides_itself_after_enough_different_reporters(self):
+		with self.captureOnCommitCallbacks(execute=True):
+			self.report(self.reporters[0])
+			self.report(self.reporters[0])  # the same account twice still counts once
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+
+		with self.captureOnCommitCallbacks(execute=True):
+			self.report(self.reporters[1])
+		self.post.refresh_from_db()
+		self.assertTrue(self.post.is_hidden)
+		self.assertEqual(len(mail.outbox), 1)
+		self.assertIn('Suspicious Python', mail.outbox[0].subject)
+
+	def admin_action(self, action, reports):
+		self.client.force_login(self.staff)
+		return self.client.post(reverse('admin:post_report_changelist'), {
+			'action': action, '_selected_action': [report.pk for report in reports],
+		})
+
+	def test_staff_can_hide_and_resolve_or_dismiss_from_the_admin(self):
+		self.report(self.reporters[0])
+		self.report(self.reporters[1])
+		reports = list(Report.objects.all())
+
+		self.assertEqual(self.admin_action('hide_and_resolve', reports[:1]).status_code, 302)
+		self.post.refresh_from_db()
+		self.assertTrue(self.post.is_hidden)
+		resolved = Report.objects.get(pk=reports[0].pk)
+		self.assertEqual((resolved.status, resolved.reviewed_by), (Report.Status.RESOLVED, self.staff))
+		self.assertIsNotNone(resolved.reviewed_at)
+
+		self.admin_action('dismiss', reports[1:])
+		self.post.refresh_from_db()
+		self.assertFalse(self.post.is_hidden)
+		self.assertEqual(Report.objects.get(pk=reports[1].pk).status, Report.Status.DISMISSED)
+		self.assertEqual(Report.objects.get(pk=reports[0].pk).status, Report.Status.RESOLVED)  # closed reports stay closed
+
+	def test_admin_lists_listings_with_their_pending_reports(self):
+		self.report(self.reporters[0])
+		self.client.force_login(self.staff)
+		response = self.client.get(reverse('admin:post_liveanimalpost_changelist'))
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Suspicious Python')
+
+
+class SavedSearchTests(APITestCase):
+	def setUp(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		self.timedelta, self.timezone = timedelta, timezone
+		self.user = Account.objects.create_user(username='searcher', email='searcher@example.com', password='pass1234')
+		self.seller = Account.objects.create_user(username='breeder', email='breeder@example.com', password='pass1234')
+		self.pythons = Species.objects.create(name='Search Pythons')
+		self.geckos = Species.objects.create(name='Search Geckos')
+		LiveAnimalPost.objects.all().delete()  # ignore the sample listings from migration 0006
+		self.url = reverse('saved-search-list')
+
+	def save(self, query, **fields):
+		self.client.force_authenticate(self.user)
+		return self.client.post(self.url, {'query': query, **fields}, format='json')
+
+	def listing(self, title, species, account=None, **fields):
+		return LiveAnimalPost.objects.create(
+			account=account or self.seller, species=species, title=title, description='d', contact_info='{}', **fields,
+		)
+
+	def test_saving_needs_an_account(self):
+		self.assertEqual(self.client.post(self.url, {'query': 'search=pied'}, format='json').status_code, 401)
+
+	def test_query_is_checked_and_stored_in_a_stable_form(self):
+		response = self.save('sex=1.0&search=pied&page=3&price_max=9000')
+		self.assertEqual(response.status_code, 201, response.data)
+		self.assertEqual(response.data['query'], 'price_max=9000&search=pied&sex=1.0')  # sorted, page dropped
+		self.assertEqual(response.data['name'], 'pied')  # defaults to the search text
+
+	def test_unknown_or_invalid_filters_are_rejected(self):
+		self.assertEqual(self.save('colour=red').status_code, 400)
+		self.assertEqual(self.save('price_min=cheap').status_code, 400)
+
+	@override_settings(SAVED_SEARCH_LIMIT=2)
+	def test_saved_searches_are_capped_per_account(self):
+		self.save('search=a')
+		self.save('search=b')
+		response = self.save('search=c')
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('2', str(response.data))
+
+	def test_users_only_see_and_delete_their_own(self):
+		saved = self.save('search=pied', name='Pied males').data
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.get(self.url).data['count'], 0)
+		self.assertEqual(self.client.delete(reverse('saved-search-detail', args=[saved['id']])).status_code, 404)
+		self.client.force_authenticate(self.user)
+		self.assertEqual(self.client.delete(reverse('saved-search-detail', args=[saved['id']])).status_code, 204)
+
+	@override_settings(FRONTEND_URL='https://reptiles.example')
+	def test_alerts_email_only_new_matches_once(self):
+		self.listing('Old Pied Python', self.pythons)  # posted before the search was saved
+		saved = SavedSearch.objects.get(pk=self.save('search=pied&species_name=search pythons').data['id'])
+		SavedSearch.objects.filter(pk=saved.pk).update(last_alerted_at=self.timezone.now() - self.timedelta(seconds=1))
+		LiveAnimalPost.objects.filter(title='Old Pied Python').update(created_at=self.timezone.now() - self.timedelta(days=1))
+
+		match = self.listing('New Pied Python', self.pythons, price=8000)
+		self.listing('New Pied Gecko', self.geckos)  # wrong species
+		self.listing('New Normal Python', self.pythons)  # no "pied"
+		self.listing('My Own Pied Python', self.pythons, account=self.user)  # the user's own
+
+		from django.core.management import call_command
+		call_command('send_search_alerts', stdout=io.StringIO())
+		self.assertEqual(len(mail.outbox), 1)
+		body = mail.outbox[0].body
+		self.assertEqual(mail.outbox[0].to, ['searcher@example.com'])
+		self.assertIn('New Pied Python', body)
+		self.assertIn(f'https://reptiles.example/posts/{match.id}', body)
+		for other in ('Old Pied Python', 'New Pied Gecko', 'New Normal Python', 'My Own Pied Python'):
+			self.assertNotIn(other, body)
+
+		call_command('send_search_alerts', stdout=io.StringIO())
+		self.assertEqual(len(mail.outbox), 1)  # nothing new since the last alert
+
+	def test_alerts_leave_out_hidden_and_sold_listings(self):
+		saved = SavedSearch.objects.get(pk=self.save('search=pied').data['id'])
+		SavedSearch.objects.filter(pk=saved.pk).update(last_alerted_at=self.timezone.now() - self.timedelta(seconds=1))
+		self.listing('Hidden Pied Python', self.pythons, is_hidden=True)
+		self.listing('Sold Pied Python', self.pythons, status='sold')
+
+		from django.core.management import call_command
+		call_command('send_search_alerts', stdout=io.StringIO())
+		self.assertEqual(mail.outbox, [])
