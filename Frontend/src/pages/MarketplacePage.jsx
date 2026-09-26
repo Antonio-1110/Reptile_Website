@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import FilterSidebar from "../components/filters/FilterSidebar";
 import EndOfResultsCard from "../components/listings/EndOfResultsCard";
 import ListingCard from "../components/listings/ListingCard";
+import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
 import { getListingsPage } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
@@ -102,8 +103,18 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
         <FilterSidebar category={category} onCategoryChange={changeCategory} filters={filters} setFilters={setFilters} />
         <main className="marketplace-main">
           <div className="marketplace-results" aria-busy={Boolean(feed.loadingPage)}>
-            <h1 className="marketplace-heading">{t("listings.available", { count: feed.count })}</h1>
-            {isFirstLoad && <p className="marketplace-status">{t("listings.loading")}</p>}
+            {/* The count is only known once a page has loaded; "(0)" while loading would read as "no results". */}
+            <h1 className="marketplace-heading">
+              {hasListings || reachedEnd ? t("listings.available", { count: feed.count }) : t("listings.heading")}
+            </h1>
+            {isFirstLoad && (
+              <>
+                <p className="sr-only" role="status">{t("listings.loading")}</p>
+                <ListingGrid>
+                  {Array.from({ length: 6 }, (_, index) => <ListingCardSkeleton key={index} />)}
+                </ListingGrid>
+              </>
+            )}
 
             {(hasListings || reachedEnd) && (
               <div className={`marketplace-feed${isRefreshing ? " is-refreshing" : ""}`}>

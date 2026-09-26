@@ -78,22 +78,8 @@
   text-decoration: none;
 }
 
-.my-listings-error {
-  color: #f87171;
-}
 
-.my-listings-status {
-  color: #94a3b8;
-}
 
-.my-listings-empty {
-  padding: 32px;
-  border: 1px solid #1f2937;
-  border-radius: 16px;
-  color: #94a3b8;
-  background: #111827;
-  text-align: center;
-}
 
 .my-listings-list {
   display: grid;
@@ -178,4 +164,10 @@
   background: #b91c1c;
   font-size: 11px;
   font-weight: 700;
+}
+
+.my-listings-skeleton-text {
+  display: grid;
+  flex: 1;
+  gap: 0.6rem;
 }
