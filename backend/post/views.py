@@ -1,18 +1,24 @@
+import json
 import os
 import uuid
 
 from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
 from common.notifications import contact_lines, send_notification
 from .serializer import (
+    SavedSearchSerializer,
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
-from .filters import LiveAnimalPostFilter
-from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Report
+from .filters import EquipmentPostFilter, LiveAnimalPostFilter
+from django.db.models import Q
+from . import moderation
+from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Report, SavedSearch
+from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -66,6 +72,9 @@ class ContactSellerMixin:
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        if post.status == post.Status.SOLD:
+            return Response({'detail': _('This listing has been sold.')}, status=status.HTTP_400_BAD_REQUEST)
+
         requests = ContactRequest.objects.filter(requester=requester, **{self.contact_request_field: post})
         if request.method == 'GET':
             return Response({'contact': requester.contact_details(), 'already_sent': requests.exists()})
@@ -104,36 +113,61 @@ class ReportListingMixin:
 
         if not already_reported:
             Report.objects.create(reporter=reporter, **{self.report_request_field: post})
+            moderation.hide_if_reported_enough(post)
 
         return Response({
             'detail': _("Thanks — we've received your report and our team will review this listing."),
         })
 
 
+class HiddenListingsMixin:
+    """Listings hidden by moderation are invisible (404) to everyone but their owner and staff."""
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if user.is_authenticated and user.is_staff:
+            return queryset
+        visible = Q(is_hidden=False)
+        if user.is_authenticated:
+            visible |= Q(account=user)
+        return queryset.filter(visible)
+
+
 class ListingPhotosMixin:
-    """Adds a `/photos/` action that uploads a listing's photos, replacing any it had before."""
+    """
+    Adds a `/photos/` action that sets a listing's photos: uploads new ones, and keeps, reorders or
+    removes existing ones (see ListingPhotoUploadSerializer for the two request forms).
+    """
 
     @action(detail=True, methods=['post'], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, pk=None):
         post = self.get_object()  # IsPostOwnerOrReadOnly limits this to the listing's owner
-        upload = ListingPhotoUploadSerializer(
-            data={'photos': request.FILES.getlist('photos'), 'cover_index': request.data.get('cover_index', 0)},
-            context={'request': request},
-        )
+        data = {'photos': request.FILES.getlist('photos'), 'cover_index': request.data.get('cover_index', 0)}
+        if 'order' in request.data:
+            # Multipart can't carry a list of strings cleanly, so `order` arrives as a JSON array.
+            try:
+                data['order'] = json.loads(request.data['order'])
+            except (TypeError, ValueError):
+                return Response({'order': [_('Send the photo order as a JSON list.')]}, status=status.HTTP_400_BAD_REQUEST)
+        upload = ListingPhotoUploadSerializer(data=data, context={'request': request, 'post': post})
         upload.is_valid(raise_exception=True)
         photos = upload.validated_data['photos']
-        cover_index = upload.validated_data['cover_index']
 
         folder = f'listings/{post._meta.model_name}/{post.pk}'
-        urls = []
+        new_urls = []
         for photo in photos:
             extension = os.path.splitext(photo.name)[1].lower() or '.jpg'
             name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', photo)
-            urls.append(request.build_absolute_uri(default_storage.url(name)))
+            new_urls.append(request.build_absolute_uri(default_storage.url(name)))
 
+        prefix = ListingPhotoUploadSerializer.NEW_PREFIX
+        ordered = [
+            new_urls[int(entry[len(prefix):])] if entry.startswith(prefix) else entry
+            for entry in upload.validated_data['order']
+        ]
         previous_urls = set(post.gallery or []) | ({post.image} if post.image else set())
-        ordered = [urls[cover_index]] + [url for index, url in enumerate(urls) if index != cover_index]
-        post.image = ordered[0]
+        post.image = ordered[0] if ordered else ''
         post.gallery = ordered
         post.save(update_fields=['image', 'gallery', 'updated_at'])
         self._delete_uploaded_photos(request, previous_urls - set(ordered))
@@ -147,6 +181,16 @@ class ListingPhotosMixin:
         for url in urls:
             if url.startswith(media_prefix):
                 default_storage.delete(url[len(media_prefix):])
+
+
+class HideSoldListingsMixin:
+    """The marketplace list leaves sold listings out unless `?status=` asks for them."""
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        if self.action == 'list' and 'status' not in self.request.query_params:
+            queryset = queryset.exclude(status=queryset.model.Status.SOLD)
+        return queryset
 
 
 class OwnListingsMixin:
@@ -168,13 +212,13 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species').all()
     serializer_class = LiveAnimalPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = LiveAnimalPostFilter
-    search_fields = ['title', 'description', 'genetics', 'species__name']
+    search_fields = LIVE_ANIMAL_SEARCH_FIELDS
     ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm']
     ordering = ['-created_at', '-id']
     contact_request_field = 'live_animal_post'
@@ -184,17 +228,33 @@ class LiveAnimalViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin
         serializer.save(account=self.request.user)
 
 
-class EquipmentViewSet(ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['condition', 'location']
+    filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
     ordering_fields = ['price', 'created_at']
-    ordering = ['-created_at']
+    ordering = ['-created_at', '-id']
     contact_request_field = 'equipment_post'
     report_request_field = 'equipment_post'
     
     def perform_create(self, serializer):
         serializer.save(account=self.request.user)
+
+class SavedSearchViewSet(viewsets.ModelViewSet):
+    """
+    The signed-in user's saved marketplace searches (list, save, rename, delete). Each is emailed about
+    when new listings match it (manage.py send_search_alerts).
+    """
+    serializer_class = SavedSearchSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+    def get_queryset(self):
+        return SavedSearch.objects.filter(account=self.request.user)
+
+    def perform_create(self, serializer):
+        # Alerts cover listings posted from now on, not everything that already matches.
+        serializer.save(account=self.request.user, last_alerted_at=timezone.now())

@@ -11,7 +11,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add server-side enforcement for post limits and image limits
 - [ ] Review and clean up API response shapes for the frontend
 - [x] Confirm authentication flow works in the browser for login and signup
-- [ ] Better UI for choosing the image section for the post cover
+- [x] Better UI for choosing the image section for the post cover (covered by the cover crop tool and #10's photo reordering)
 - [x] Consolidate auth on JWT (`/api/v1/auth/`) and retire the legacy token endpoints in `account/`
       (move `profile/` over first; the listing editor depends on it)
 - [x] Frontend for auctions: browse (`/auctions`), detail, pay deposit, bid, results, seller cancel
@@ -22,7 +22,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       deleted: today it cascades and the deposit records disappear. Probably block deletion while an
       auction is active or deposits are held
 - [ ] Schedule `manage.py close_auctions` and `manage.py process_orders` (cron / worker, every few
-      minutes) wherever the backend is hosted
+      minutes) and `manage.py send_search_alerts` (every few hours) wherever the backend is hosted
 - [x] Buy now: optional seller price, paid in full up front, first payment wins and closes the
       auction, deposits refunded, everyone emailed; contact details only shared after a paid sale
 - [x] Orders: winner pays the rest within a deadline or loses the deposit; seller may then offer the
@@ -30,14 +30,17 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       (sale completes if they do neither); seller no-show refunds the buyer. Emails at every step
 - [x] Track accounts behaving oddly (incidents + admin "Accounts to review"); nothing auto-blocked
 - [ ] Decide the real numbers: payment / handover / confirm windows, fee, seller bond amount, review
-      threshold. All are env-var settings with placeholder defaults (see `backend/.env.example`)
+      threshold, anti-sniping window, report auto-hide threshold (`REPORT_AUTO_HIDE_THRESHOLD`, off by default). All are env-var settings with placeholder defaults (see `backend/.env.example`)
 - [ ] Payouts: completed orders show the seller's payout, but paying sellers is manual (admin
       "Mark the seller as paid out"); automate with the payment processor
-- [ ] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
+- [x] "My orders" page listing a user's orders as buyer and seller; today orders only show on the
       animal's page (and in emails)
-- [ ] After a sale falls through (winner defaulted, offer declined), the public page still shows the
+- [x] After a sale falls through (winner defaulted, offer declined), the public page still shows the
       auction's winning bid; show the listing as available again or let the seller relist it
-- [ ] Equipment has no public detail page, so equipment auctions have nowhere to be shown
+- [x] Equipment detail page at `/equipment/:id`: the same page as animals (fixed price + contact
+      seller, or the auction with bids, buy now and the order), with equipment facts and wording
+- [ ] Auction/order emails (`auction/notifications.py`) and the "can't buy your own animal" error say
+      "animal" even for equipment; they need equipment wording (plus `zh_Hant` translations)
 - [x] Add Traditional Chinese translations for the new photo-upload errors ("Cover index is out of
       range.", "\"%(name)s\" is larger than 5 MB.") via `makemessages` / `compilemessages`
 
@@ -66,38 +69,43 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       already require a paid account)
 - [x] Add image upload support with per-account limits
 - [x] Add richer filtering for location, price and species (live animals)
-- [ ] Add richer filtering for equipment (price range, search tags, equipment category)
+- [x] Add richer filtering for equipment (price range, search tags, equipment category): new
+      `category` field (set in the editor with `condition`) and `EquipmentPostFilter`
+- [x] Browse equipment: the marketplace filter sidebar has the same Live Animals / Equipment switch as
+      the post page (`?category=equipment`), with equipment type, condition, price, location,
+      shipping and posting-date filters
 - [x] Add listing detail pages
 - [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [ ] Add saved favorites or watchlist functionality (optional price-drop alerts)
-- [ ] Listing status: available / reserved / sold, so sold items aren't deleted
+- [x] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`
 - [x] Let users report listings for moderation
-- [ ] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
+- [x] Admin review workflow for reports (pending/resolved, hide listing, auto-hide after N reports)
 - [ ] Structured genetics: a `Gene` model per species (recessive / co-dominant / dominant, het %)
       replacing the free-text `genetics` field
 - [ ] Pairing calculator: predicted offspring odds for two morphs, linking to matching listings
 - [ ] Species care sheets (temperature, humidity, diet, enclosure) linked from listings
 - [ ] Permit / CITES field and warnings for protected species
 - [ ] In-app buyer–seller messaging instead of exchanging phone and LINE details
-- [ ] Saved searches with email alerts (search state is already in the URL)
+- [x] Saved searches with email alerts (search state is already in the URL)
 - [ ] Seller verification workflow for `verified_seller`
-- [ ] Let sellers reorder or remove individual photos without re-uploading all of them
+- [x] Let sellers reorder or remove individual photos without re-uploading all of them
 
 ## UX improvements
 
-- [ ] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
+- [x] Responsive header: below ~1180px the signed-in links don't fit next to the search bar (they
       overlap it on tablets and phones). Needs a menu/drawer on narrow screens
-- [ ] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
+- [x] `ListingCard` nests the seller `<a>` inside the card `<a>` (React warns "<a> cannot be a
       descendant of <a>"); make the card a non-link container with a stretched title link
-- [ ] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+- [x] Anti-sniping for auctions: extend the end time when a bid lands in the last few minutes
+      (`AUCTION_EXTEND_WINDOW_MINUTES` / `AUCTION_EXTEND_BY_MINUTES`, default 5 / 5)
 
-- [ ] Improve the home page copy and layout polish
-- [ ] Refine English and Chinese wording consistency across the app
-- [ ] Improve empty states and loading states for listings and profile pages
-- [ ] Add clearer success/error messages for posting and login flows
-- [ ] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
-- [ ] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
+- [x] Improve the home page copy and layout polish
+- [x] Refine English and Chinese wording consistency across the app
+- [x] Improve empty states and loading states for listings and profile pages
+- [x] Add clearer success/error messages for posting and login flows
+- [x] Show existing photos in the listing editor when editing (it currently only allows a replacement set)
+- [x] Accessibility pass: keyboard navigation in the crop modal and filters, focus management, contrast
 
 ## Technical backlog
 
@@ -105,13 +113,14 @@ a problem outside your task, add it here rather than fixing it in passing. How t
 - [x] Add tests for account validation, posting rules, and serializer behavior
 - [x] Review and clean up duplicate or legacy documentation files
 - [x] Consider a clearer separation between public listing endpoints and seller-only actions
-- [ ] Document frontend component responsibilities and API integration patterns
+- [x] Document frontend component responsibilities and API integration patterns (`Frontend/README.md`)
 - [ ] Frontend tests: Vitest + React Testing Library for `src/api/` mapping and key components
 - [ ] End-to-end tests (e.g. Playwright) for sign in → create listing with photos → view → contact seller
-- [ ] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+- [x] CI (GitHub Actions): backend tests, `npm run lint`, `npm run build` on every PR
+      (`.github/workflows/ci.yml`; also fails on a model change without its migration)
 - [ ] Replace hand-rolled routing in `App.jsx` with React Router once more routes land
 - [ ] Decide whether `docs/` should be tracked in git (it's currently ignored, so doc updates never reach PRs)
-- [ ] Remove the empty `.github/appmod/` folder if it's no longer used
+- [x] Remove the empty `.github/appmod/` folder if it's no longer used (already gone)
 
 ## Nice-to-have
 

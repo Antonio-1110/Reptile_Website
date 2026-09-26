@@ -54,7 +54,7 @@ class PublicSellerSerializer(AccountSerializer):
 
 
 class ProfileAccountSerializer(AccountSerializer):
-    """The signed-in user's own profile (/api/auth/profile/). Private contact fields live only here,
+    """The signed-in user's own profile (/api/v1/auth/profile/). Private contact fields live only here,
     never on AccountSerializer, because PublicSellerSerializer builds on that one."""
     post_count = serializers.SerializerMethodField()
     remaining_post_count = serializers.SerializerMethodField()
