@@ -31,6 +31,9 @@ fi
 
 (
   cd "$ROOT_DIR/backend"
+  # The compiled translations (.mo) aren't committed; build them from the .po files.
+  "$PYTHON" manage.py compilemessages -v0 --ignore=".venv/*" --ignore=".e2e/*" \
+    || echo "Warning: couldn't compile translations; install GNU gettext for Chinese API messages." >&2
   exec "$PYTHON" manage.py runserver 127.0.0.1:8000 >"$LOG_DIR/backend.log" 2>&1
 ) &
 BACKEND_PID=$!

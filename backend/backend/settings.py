@@ -167,6 +167,9 @@ LANGUAGES = [
 ]
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
+# Compiles locale/*.po before the tests; the .mo files aren't committed.
+TEST_RUNNER = 'common.test_runner.CompilingTestRunner'
+
 USE_TZ = True
 
 # Email

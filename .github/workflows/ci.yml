@@ -30,6 +30,8 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
+      # msgfmt, which the test runner uses to compile the translations (.mo files aren't committed).
+      - run: sudo apt-get install -y --no-install-recommends gettext
       - run: python manage.py check
       # Fails when a model change ships without its migration.
       - run: python manage.py makemigrations --check --dry-run

@@ -380,6 +380,11 @@ python3 manage.py makemessages -l zh_Hant --ignore=".venv/*" --ignore="*/migrati
 python3 manage.py compilemessages --ignore=".venv/*"
 ```
 
+Only the `.po` file is committed. The compiled `django.mo` is git-ignored because git can't merge a
+binary file; `start-dev.sh`, the test runner (`common/test_runner.py`) and CI build it with
+`compilemessages`, which needs GNU gettext. **When you deploy**, run `compilemessages` as part of the
+build (next to `collectstatic`), or the API answers in English only.
+
 Emails to sellers are sent in every supported language, since accounts don't store a language
 preference yet.
 
