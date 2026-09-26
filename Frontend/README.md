@@ -61,6 +61,7 @@ Frontend/src/
     ├── Auctions/              # /auctions (?tab=ended); cards link to the listing's own page
     │   ├── AuctionsPage.jsx
     │   ├── AuctionRedirectPage.jsx  # /auctions/:id → the listing's page
+    │   ├── StartAuctionPage.jsx     # /auctions/new?listing=&category= — start an auction (and post the seller bond)
     │   └── components/        # AuctionCard
     └── ListingEditor/         # /postinput (create) and /postinput?edit=<id>&category= (edit)
         ├── ListingEditorPage.jsx

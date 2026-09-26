@@ -172,6 +172,56 @@ export const reportProblem = (id, text) => orderAction("report-problem")(id, { t
 export const decideRunnerUp = (id, offer) => orderAction("runner-up")(id, { offer });
 export const declineOffer = orderAction("decline");
 
+// --- Selling at auction -------------------------------------------------------------------------
+
+// The auction settings the start form explains: duration limits, deposit rate, bond. Enforced by the API.
+export async function getAuctionRules() {
+  const rules = await get("/auctions/rules/");
+  return {
+    currency: rules.currency,
+    minDurationHours: rules.min_duration_hours,
+    maxDurationDays: rules.max_duration_days,
+    depositRate: Number(rules.deposit_rate),
+    minDeposit: Number(rules.min_deposit),
+    bondRequired: Boolean(rules.bond_required),
+    bondAmount: rules.bond_amount,
+  };
+}
+
+// { required, amount, currency, bond: {status, …} | null } for the signed-in seller.
+export async function getSellerBond() {
+  return get("/auctions/seller-bond/");
+}
+
+// Starts paying the seller bond; `payment` says what the gateway needs next (e.g. { checkout_url }).
+export async function paySellerBond() {
+  const result = await post("/auctions/seller-bond/");
+  return { bond: { status: result.status, amount: result.amount, currency: result.currency }, payment: result.payment || {} };
+}
+
+// fields: { category, listingId, startingPrice, minIncrement, startsAt (Date|null), endsAt (Date), buyNowPrice }
+export async function createAuction(fields) {
+  const payload = {
+    [fields.category === "equipment" ? "equipment_post" : "live_animal_post"]: fields.listingId,
+    starting_price: String(fields.startingPrice),
+    min_increment: String(fields.minIncrement),
+    ends_at: fields.endsAt.toISOString(),
+    ...(fields.startsAt ? { starts_at: fields.startsAt.toISOString() } : {}),
+    ...(fields.buyNowPrice !== "" ? { buy_now_price: String(fields.buyNowPrice) } : {}),
+  };
+  return normalizeAuction(await post("/auctions/", payload));
+}
+
+// Every auction the signed-in user runs as a seller (all pages; sellers have few).
+export async function getMyAuctions() {
+  const auctions = [];
+  for (let page = 1; ; page += 1) {
+    const payload = await get(`/auctions/mine/?page=${page}`);
+    auctions.push(...payload.results.map(normalizeAuction));
+    if (!payload.next) return auctions;
+  }
+}
+
 export async function cancelAuction(id) {
   return normalizeAuction(await post(`/auctions/${id}/cancel/`));
 }

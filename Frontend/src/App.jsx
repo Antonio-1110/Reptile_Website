@@ -11,6 +11,7 @@ import SellerProfilePage from "./pages/SellerProfilePage";
 import SavedSearchesPage from "./pages/SavedSearchesPage";
 import SavedListingsPage from "./pages/SavedListingsPage";
 import AuctionsPage from "./pages/Auctions/AuctionsPage";
+import StartAuctionPage from "./pages/Auctions/StartAuctionPage";
 import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
 import UpgradePage from "./pages/UpgradePage";
@@ -37,6 +38,11 @@ function renderPage(pathname, search, clearSearch) {
   const auctionMatch = pathname.match(/^\/auctions\/(\d+)$/);
   if (auctionMatch) return <AuctionRedirectPage key={auctionMatch[1]} auctionId={Number(auctionMatch[1])} />;
   if (pathname === "/auctions") return <AuctionsPage />;
+  if (pathname === "/auctions/new") {
+    if (!isLoggedIn()) return <RedirectToSignIn />;
+    const params = new URLSearchParams(window.location.search);
+    return <StartAuctionPage listingId={Number(params.get("listing"))} category={params.get("category") === "equipment" ? "equipment" : "live_animal"} />;
+  }
   if (pathname === "/postinput") {
     if (!isLoggedIn()) return <RedirectToSignIn />;
     const params = new URLSearchParams(window.location.search);

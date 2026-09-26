@@ -69,6 +69,19 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
             raise PermissionDenied(str(error))
         serializer.save()
 
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def rules(self, request):
+        """The auction settings the "start an auction" form explains and checks early (the API enforces them)."""
+        return Response({
+            'currency': settings.AUCTION_CURRENCY,
+            'min_duration_hours': settings.AUCTION_MIN_DURATION_HOURS,
+            'max_duration_days': settings.AUCTION_MAX_DURATION_DAYS,
+            'deposit_rate': str(settings.AUCTION_DEPOSIT_RATE),
+            'min_deposit': str(settings.AUCTION_MIN_DEPOSIT),
+            'bond_required': orders.bond_required(),
+            'bond_amount': str(settings.SELLER_BOND_AMOUNT),
+        })
+
     @action(detail=False, methods=['get', 'post'], url_path='seller-bond', permission_classes=[permissions.IsAuthenticated],
             throttle_classes=[ScopedRateThrottle], throttle_scope='payments')
     def seller_bond(self, request):
