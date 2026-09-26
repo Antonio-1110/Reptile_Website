@@ -26,6 +26,16 @@ class PostLimitSerializerMixin:
                 'gallery': _('Image limit exceeded. This account allows %(count)s images per post.') % {'count': account.max_images_per_post}
             })
 
+        # Bidders are paying deposits on a running auction, so the listing can't be marked reserved or
+        # sold under them; the auction decides who gets it.
+        new_status = attrs.get('status')
+        if self.instance is not None and new_status and new_status != self.instance.Status.AVAILABLE:
+            from auction.models import Auction
+            if self.instance.auctions.filter(status=Auction.Status.ACTIVE).exists():
+                raise serializers.ValidationError({
+                    'status': _("This listing has a running auction. It can't be marked reserved or sold until the auction ends.")
+                })
+
         return attrs
 
 class OwnerOnlyContactInfoMixin:
@@ -139,7 +149,7 @@ class EquipmentPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMixi
     class Meta:
         model = EquipmentPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
             'seller', 'seller_id', 'seller_name', 'seller_rating', 'posted_days'
         ]
@@ -171,7 +181,7 @@ class LiveAnimalPostSerializer(OwnerOnlyContactInfoMixin, PostLimitSerializerMix
     class Meta:
         model = LiveAnimalPost
         fields = [
-            'id', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
+            'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'species', 'species_name', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
             'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',

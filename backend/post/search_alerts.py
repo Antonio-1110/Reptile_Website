@@ -48,8 +48,10 @@ def _stable_urlencode(params):
 def matching_listings(saved_search, since):
     """Listings created after `since` that match the saved search, other than the user's own."""
     params = QueryDict(saved_search.query)
-    # Hidden (moderated) listings are left out, as they are from the marketplace itself.
-    queryset = LiveAnimalPost.objects.filter(created_at__gt=since, is_hidden=False).exclude(account=saved_search.account)
+    # Hidden (moderated) and sold listings are left out, as they are from the marketplace itself.
+    queryset = LiveAnimalPost.objects.filter(created_at__gt=since, is_hidden=False).exclude(
+        status=LiveAnimalPost.Status.SOLD,
+    ).exclude(account=saved_search.account)
     queryset = LiveAnimalPostFilter(data=params, queryset=queryset).qs
     for term in params.get('search', '').split():
         queryset = queryset.filter(reduce(operator.or_, (Q(**{f'{field}__icontains': term}) for field in SEARCH_FIELDS)))

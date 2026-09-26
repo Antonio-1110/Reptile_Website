@@ -16,17 +16,22 @@ export default function ListingCard({ animal }) {
     // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
     // The title link stretches over the whole card instead (see .card-title-link::after).
     <article className="card-container">
-      {animal.image ? (
-        <img
-          src={animal.image}
-          alt={animal.title}
-          className="card-image"
-          loading="lazy"
-          decoding="async"
-        />
-      ) : (
-        <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
-      )}
+      <div className="card-media">
+        {animal.image ? (
+          <img
+            src={animal.image}
+            alt={animal.title}
+            className="card-image"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
+        )}
+        {animal.status && animal.status !== 'available' && (
+          <span className={`card-status card-status--${animal.status}`}>{t(`listingStatus.${animal.status}`)}</span>
+        )}
+      </div>
 
       <div className="card-content">
         <div className="card-header">

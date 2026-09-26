@@ -300,6 +300,10 @@ real login flows.
   list of the final photos, cover first, where each entry is one of the listing's current photo URLs
   (kept) or `new:<n>` (the n-th file in `photos`). Current photos left out are removed, and uploaded
   files among them are deleted. The account's image limit applies to the total.
+- Listings have a `status`: `available` (default), `reserved` or `sold`, set by the owner with `PATCH`.
+  List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
+  listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
+  listing sold.
 - `GET`/`POST /saved-searches/`, `PATCH`/`DELETE /saved-searches/<id>/` (signed in) — the user's saved
   marketplace searches: `query` is the live-animals list query (e.g. `search=pied&sex=1.0`), checked
   against the real filters and stored sorted; `name` defaults to the search text. Up to

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 16:27+0800\n"
+"POT-Creation-Date: 2026-09-26 16:44+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -565,11 +565,11 @@ msgstr "這場競標沒有其他人出價。"
 msgid "There is no offer to decline."
 msgstr "沒有可以婉拒的邀請。"
 
-#: auction/orders.py:395
+#: auction/orders.py:399
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:397 auction/services.py:292 auction/views.py:21
+#: auction/orders.py:401 auction/services.py:292 auction/views.py:21
 msgid ""
 "Auctions are available to paid commercial accounts. Upgrade your account to "
 "start one."
@@ -583,24 +583,28 @@ msgstr "請選擇一項要上架競標的刊登。"
 msgid "You can only auction your own listings."
 msgstr "你只能將自己的刊登上架競標。"
 
-#: auction/serializers.py:194
+#: auction/serializers.py:192
+msgid "A sold listing can't be auctioned."
+msgstr "已售出的刊登無法競標。"
+
+#: auction/serializers.py:196
 msgid "This listing already has an active auction."
 msgstr "這則刊登已有進行中的競標。"
 
-#: auction/serializers.py:200
+#: auction/serializers.py:202
 msgid "The buy-now price must be higher than the starting price."
 msgstr "直接購買價必須高於起標價。"
 
-#: auction/serializers.py:207
+#: auction/serializers.py:209
 msgid "An auction can't start in the past."
 msgstr "競標開始時間不能早於現在。"
 
-#: auction/serializers.py:210
+#: auction/serializers.py:212
 #, python-format
 msgid "An auction must run for at least %(hours)s hours."
 msgstr "競標時間至少需要 %(hours)s 小時。"
 
-#: auction/serializers.py:214
+#: auction/serializers.py:216
 #, python-format
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
@@ -671,22 +675,22 @@ msgstr "電子信箱"
 msgid "Phone"
 msgstr "電話"
 
-#: post/search_alerts.py:78
+#: post/search_alerts.py:80
 #, python-format
 msgid "New listings match your saved search \"%(name)s\":"
 msgstr "有新刊登符合你儲存的搜尋「%(name)s」："
 
-#: post/search_alerts.py:79
+#: post/search_alerts.py:81
 #, python-format
 msgid "…and %(more)s more."
 msgstr "……還有另外 %(more)s 則。"
 
-#: post/search_alerts.py:80
+#: post/search_alerts.py:82
 #, python-format
 msgid "Manage your saved searches: %(url)s"
 msgstr "管理你儲存的搜尋：%(url)s"
 
-#: post/search_alerts.py:82
+#: post/search_alerts.py:84
 #, python-format
 msgid "%(count)s new listing for \"%(name)s\""
 msgid_plural "%(count)s new listings for \"%(name)s\""
@@ -697,48 +701,54 @@ msgstr[0] "「%(name)s」有 %(count)s 則新刊登"
 msgid "Post limit reached. This account allows %(count)s posts."
 msgstr "已達刊登上限，此帳號最多可發布 %(count)s 則刊登。"
 
-#: post/serializer.py:26 post/serializer.py:79
+#: post/serializer.py:26 post/serializer.py:89
 #, python-format
 msgid "Image limit exceeded. This account allows %(count)s images per post."
 msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
 
-#: post/serializer.py:62
+#: post/serializer.py:36
+msgid ""
+"This listing has a running auction. It can't be marked reserved or sold "
+"until the auction ends."
+msgstr "這則刊登正在競標中，競標結束前無法標記為保留或已售出。"
+
+#: post/serializer.py:72
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
-#: post/serializer.py:69
+#: post/serializer.py:79
 msgid "Add at least one photo."
 msgstr "請至少加入一張照片。"
 
-#: post/serializer.py:71
+#: post/serializer.py:81
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/serializer.py:94
+#: post/serializer.py:104
 msgid "Photo order refers to a file that was not uploaded."
 msgstr "照片順序中包含未上傳的檔案。"
 
-#: post/serializer.py:97
+#: post/serializer.py:107
 msgid "Photo order refers to a photo this listing does not have."
 msgstr "照片順序中包含這則刊登沒有的照片。"
 
-#: post/serializer.py:99
+#: post/serializer.py:109
 msgid "Each photo must appear in the order exactly once."
 msgstr "每張照片在順序中只能出現一次。"
 
-#: post/serializer.py:213
+#: post/serializer.py:223
 #, python-format
 msgid "This search has filters that can't be saved: %(names)s."
 msgstr "這個搜尋包含無法儲存的篩選條件：%(names)s。"
 
-#: post/serializer.py:222
+#: post/serializer.py:232
 #, python-format
 msgid ""
 "You can keep up to %(count)s saved searches. Delete one to save another."
 msgstr "你最多可儲存 %(count)s 個搜尋。請先刪除一個再儲存新的。"
 
-#: post/serializer.py:225
+#: post/serializer.py:235
 msgid "Marketplace search"
 msgstr "市集搜尋"
 
@@ -764,22 +774,26 @@ msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:85
+#: post/views.py:76
+msgid "This listing has been sold."
+msgstr "這則刊登已售出。"
+
+#: post/views.py:88
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with "
 "you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:103
+#: post/views.py:106
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:116
+#: post/views.py:119
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:149
+#: post/views.py:152
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
 
