@@ -1,9 +1,10 @@
 from django.shortcuts import render
-from rest_framework.generics import RetrieveUpdateAPIView
+from django.db.models import Count, Q
+from rest_framework.generics import RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.views import APIView
 from rest_framework import permissions
 from rest_framework.response import Response
-from .serializers import AccountSerializer, ProfileAccountSerializer
+from .serializers import AccountSerializer, ProfileAccountSerializer, SellerProfileSerializer
 from .models import Account
 
 # Create your views here.
@@ -52,3 +53,18 @@ class AccountPlans(APIView):
             })
         return Response(plans)
 
+
+
+class SellerProfile(RetrieveAPIView):
+    """
+    A seller's public profile. Only accounts that have listed something have one: otherwise any
+    account id would reveal a buyer's name.
+    """
+    serializer_class = SellerProfileSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return Account.objects.filter(is_active=True).annotate(
+            live_animal_count=Count('liveanimalpost_posts', distinct=True),
+            equipment_count=Count('equipmentpost_posts', distinct=True),
+        ).filter(Q(live_animal_count__gt=0) | Q(equipment_count__gt=0))

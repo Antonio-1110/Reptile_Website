@@ -7,6 +7,7 @@ import AccountSettingsPage from "./pages/AccountSettingsPage";
 import ListingDetailPage from "./pages/ListingDetail/ListingDetailPage";
 import MyListingsPage from "./pages/MyListingsPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
+import SellerProfilePage from "./pages/SellerProfilePage";
 import SavedSearchesPage from "./pages/SavedSearchesPage";
 import SavedListingsPage from "./pages/SavedListingsPage";
 import AuctionsPage from "./pages/Auctions/AuctionsPage";
@@ -31,6 +32,8 @@ function renderPage(pathname, search, clearSearch) {
   if (detailMatch) return <ListingDetailPage key={`animal-${detailMatch[1]}`} listingId={Number(detailMatch[1])} />;
   const equipmentMatch = pathname.match(/^\/equipment\/(\d+)$/);
   if (equipmentMatch) return <ListingDetailPage key={`equipment-${equipmentMatch[1]}`} listingId={Number(equipmentMatch[1])} category="equipment" />;
+  const sellerMatch = pathname.match(/^\/sellers\/(\d+)$/);
+  if (sellerMatch) return <SellerProfilePage key={sellerMatch[1]} sellerId={Number(sellerMatch[1])} />;
   const auctionMatch = pathname.match(/^\/auctions\/(\d+)$/);
   if (auctionMatch) return <AuctionRedirectPage key={auctionMatch[1]} auctionId={Number(auctionMatch[1])} />;
   if (pathname === "/auctions") return <AuctionsPage />;

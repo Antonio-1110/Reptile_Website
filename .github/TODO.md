@@ -76,7 +76,7 @@ a problem outside your task, add it here rather than fixing it in passing. How t
       the post page (`?category=equipment`), with equipment type, condition, price, location,
       shipping and posting-date filters
 - [x] Add listing detail pages
-- [ ] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
+- [x] Add seller profile pages (`/sellers/<id>`) with bio, rating, verified badge and active listings
 - [x] Add saved favorites or watchlist functionality (optional price-drop alerts)
 - [x] Listing status: available / reserved / sold, so sold items aren't deleted
 - [ ] Reviews that update `seller_rating` / `total_reviews`, allowed only after a `ContactRequest`

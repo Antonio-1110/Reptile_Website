@@ -19,6 +19,7 @@ function normalizeListing(item) {
     species: item.species_name,
     seller: item.seller_name || item.seller?.display_name || item.seller?.username,
     sellerTag: item.seller?.username,
+    sellerId: item.seller_id ?? item.seller?.id,
     rating: item.seller_rating ?? item.seller?.seller_rating ?? 0,
     location: getLocationKey(item.location) || item.location,
     lifeStage: item.life_stage,
@@ -220,11 +221,12 @@ export async function getMyListings() {
 
 // Marketplace sidebar state → query params understood by backend/post/filters.py. Only the filters
 // that exist for the chosen category are sent; the others keep their values for switching back.
-function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {} }) {
+function buildListingParams({ category = "live_animal", search = "", tags = [], filters = {}, seller = null }) {
   const params = new URLSearchParams();
   const set = (key, value) => {
     if (value !== "" && value != null) params.set(key, value);
   };
+  set("seller", seller);
   const setList = (key, values) => {
     if (values?.length) params.set(key, values.join(","));
   };
@@ -293,6 +295,29 @@ export async function getListingsPage({ page = 1, ...query } = {}) {
     count: payload.count,
     hasMore: Boolean(payload.next),
   };
+}
+
+// A seller's public profile (/api/sellers/<id>/): name, badges, rating, bio, listing counts.
+export async function getSellerProfile(id) {
+  const profile = await request(`/sellers/${id}/`);
+  return {
+    id: profile.id,
+    username: profile.username,
+    displayName: profile.display_name,
+    isCommercial: profile.is_commercial,
+    verified: profile.verified_seller,
+    rating: profile.seller_rating,
+    totalReviews: profile.total_reviews,
+    bio: profile.bio || "",
+    memberSince: new Date(profile.member_since),
+    liveAnimalCount: profile.live_animal_count,
+    equipmentCount: profile.equipment_count,
+  };
+}
+
+// Where a seller's name links to.
+export function sellerPagePath(sellerId) {
+  return `/sellers/${sellerId}`;
 }
 
 // Save (on = true) or unsave a listing for the signed-in user. Returns the new state.

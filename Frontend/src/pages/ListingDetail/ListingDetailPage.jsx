@@ -13,7 +13,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import Skeleton from '../../components/ui/Skeleton';
 import Toast from '../../components/ui/Toast';
 import FavoriteButton from '../../components/listings/FavoriteButton';
-import { getListing, getSexKey, isLoggedIn, reportListing } from '../../api/listingsApi';
+import { getListing, getSexKey, isLoggedIn, reportListing, sellerPagePath } from '../../api/listingsApi';
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
 import useNow from '../../hooks/useNow';
@@ -162,7 +162,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
           <a href={showAuction ? '/auctions' : buildMarketplaceUrl('', [], category)} className="listing-detail-back">
             {showAuction ? t('auctions.detail.back') : t('listingDetail.back')}
           </a>
-          <div className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</div>
+          <a href={sellerPagePath(listing.sellerId)} className="listing-detail-seller-tag">{listing.sellerTag || listing.seller}</a>
         </div>
 
         <div className="listing-detail-layout">
@@ -300,7 +300,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             )}
 
             <a
-              href={buildMarketplaceUrl(listing.sellerTag || listing.seller, [], category)}
+              href={sellerPagePath(listing.sellerId)}
               className="listing-detail-more-link"
             >
               {t('listingDetail.moreFromSeller')}

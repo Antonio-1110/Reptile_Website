@@ -53,6 +53,7 @@ Frontend/src/
     │   └── components/        # BidPanel, BuyNowPanel, OrderPanel (after a sale), ContactSellerPanel, AuctionHistoryCard
     ├── MyListingsPage         # /my-listings
     ├── MyOrdersPage           # /orders — the user's orders as buyer and seller
+    ├── SellerProfilePage      # /sellers/:id — a seller's public profile and listings
     ├── SavedSearchesPage      # /saved-searches — searches the user is emailed about (saved from the marketplace)
     ├── SavedListingsPage      # /saved — animals the user saved with ♡
     ├── AccountSettingsPage    # /settings

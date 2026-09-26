@@ -334,6 +334,13 @@ and each `*_exclude` variant inverts its counterpart:
   `transport`, `other`)
 - `condition` (`2` new, `1` used, `0` not functional; comma-separated)
 
+### Sellers (`/api/sellers/`)
+
+- `GET /<id>/` — public profile: display name, username, account type, verified badge, rating, review
+  count, bio, member since and listing counts. No contact details. Only accounts that have listed
+  something have one (404 otherwise), so account ids don't reveal buyers' names. Their listings come
+  from `GET /api/posts/live-animals/?seller=<id>` (and `equipment/?seller=<id>`).
+
 ### Auctions (`/api/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
