@@ -1,7 +1,7 @@
 import './AuctionCard.css';
 import { useTranslation } from 'react-i18next';
 import AuctionCountdown from '../../../components/auctions/AuctionCountdown';
-import { getSexKey } from '../../../api/listingsApi';
+import { getSexKey, listingPagePath } from '../../../api/listingsApi';
 import { getSpeciesLabel } from '../../../constants/species';
 import { formatMoney, getAuctionPhase, getHeadlinePrice } from '../../../utils/auctionFormat';
 
@@ -15,8 +15,8 @@ export default function AuctionCard({ auction, now }) {
   const extraGenes = listing.genes.length - MAX_GENES;
   const money = (amount) => formatMoney(amount, auction.currency, i18n.resolvedLanguage);
   const showBuyNow = (phase === 'live' || phase === 'upcoming') && auction.buyNowAvailable;
-  // The auction is shown on the animal's own page; /auctions/:id covers listings without one.
-  const href = listing.category === 'live_animal' ? `/posts/${listing.id}` : `/auctions/${auction.id}`;
+  // The auction is shown on the listing's own page (animal or equipment).
+  const href = listingPagePath(listing.id, listing.category);
 
   return (
     <a href={href} className="auction-card">

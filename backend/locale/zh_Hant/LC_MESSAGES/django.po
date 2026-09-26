@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 12:24+0800\n"
+"POT-Creation-Date: 2026-09-26 16:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -467,7 +467,7 @@ msgstr "沒有可以婉拒的邀請。"
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:376 auction/services.py:290 auction/views.py:20
+#: auction/orders.py:376 auction/services.py:290 auction/views.py:21
 msgid ""
 "Auctions are available to paid commercial accounts. Upgrade your account to "
 "start one."
@@ -549,7 +549,7 @@ msgstr "這場競標已無法直接購買。"
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
 
-#: auction/views.py:97
+#: auction/views.py:98
 msgid "Only the seller can cancel this auction."
 msgstr "只有賣家可以取消此競標。"
 
@@ -570,66 +570,87 @@ msgstr "電話"
 msgid "Post limit reached. This account allows %(count)s posts."
 msgstr "已達刊登上限，此帳號最多可發布 %(count)s 則刊登。"
 
-#: post/serializer.py:26 post/serializer.py:54
+#: post/serializer.py:26 post/serializer.py:79
 #, python-format
 msgid "Image limit exceeded. This account allows %(count)s images per post."
 msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
 
-#: post/serializer.py:58
+#: post/serializer.py:62
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
-#: post/serializer.py:63
+#: post/serializer.py:69
+msgid "Add at least one photo."
+msgstr "請至少加入一張照片。"
+
+#: post/serializer.py:71
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/views.py:40
+#: post/serializer.py:94
+msgid "Photo order refers to a file that was not uploaded."
+msgstr "照片順序中包含未上傳的檔案。"
+
+#: post/serializer.py:97
+msgid "Photo order refers to a photo this listing does not have."
+msgstr "照片順序中包含這則刊登沒有的照片。"
+
+#: post/serializer.py:99
+msgid "Each photo must appear in the order exactly once."
+msgstr "每張照片在順序中只能出現一次。"
+
+#: post/views.py:41
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
 msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:42
+#: post/views.py:43
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on the Reptile "
 "Marketplace and asked us to pass on their contact details:"
 msgstr "%(name)s 對你在爬蟲市集上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方式："
 
-#: post/views.py:44
+#: post/views.py:45
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:61
+#: post/views.py:62
 #, python-format
+#| msgid "Sale completed: \"%(title)s\""
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 
-#: post/views.py:62
+#: post/views.py:63
 #, python-format
 msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
 msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
 
-#: post/views.py:128
+#: post/views.py:129
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:142
+#: post/views.py:143
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with "
 "you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:160
+#: post/views.py:161
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:172
+#: post/views.py:173
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
+
+#: post/views.py:192
+msgid "Send the photo order as a JSON list."
+msgstr "請以 JSON 陣列傳送照片順序。"
 
 #~ msgid ""
 #~ "Only the buyer and the seller can see the contact details for this sale."
