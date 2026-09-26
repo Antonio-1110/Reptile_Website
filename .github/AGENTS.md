@@ -68,6 +68,7 @@ cd backend
 cd Frontend
 npm run lint
 npm test               # Vitest + React Testing Library (src/**/*.test.js[x])
+npm run e2e            # Playwright: starts its own backend (:8001, throwaway DB) + Vite (:5174)
 npm run build          # also catches import/JSX errors lint misses
 npm run dev
 ```
@@ -222,7 +223,7 @@ Match the surrounding code; when in doubt, copy the nearest similar thing.
 
 ### Verify before declaring done
 CI (`.github/workflows/ci.yml`) runs on every PR: backend `check`, `makemigrations --check`, the test
-suite (with `DEBUG` off), and frontend `lint`, `test` + `build`. Run the same locally before pushing; CI green
+suite (with `DEBUG` off), frontend `lint`, `test` + `build`, and the Playwright end-to-end flows. Run the same locally before pushing; CI green
 is the floor, not the bar.
 
 Tests passing is necessary, not sufficient, for web work. Pick what fits the change:
