@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import "./ListingFormSection.css";
 import "./BasicDetailsSection.css";
 import { LISTING_LIMITS } from "../../../constants/listingLimits";
+import { EQUIPMENT_CATEGORIES, EQUIPMENT_CONDITIONS } from "../../../constants/equipment";
 
 const species = ["ballPythons", "crestedGeckos", "leopardGeckos"];
 
@@ -65,6 +66,22 @@ export default function BasicDetailsSection({ formData, onChange, onSpeciesChang
           </div>
         )}
       </div>
+      {formData.category !== "live_animal" && (
+        <div className="listing-form-grid listing-form-grid--2">
+          <div>
+            <label htmlFor="listing-equipment-type" className="listing-form-label">{t("createListing.equipment.type")}</label>
+            <select id="listing-equipment-type" name="equipmentCategory" value={formData.equipmentCategory} onChange={onChange} className="listing-form-input listing-form-input--fixed">
+              {EQUIPMENT_CATEGORIES.map((key) => <option key={key} value={key}>{t(`createListing.equipment.types.${key}`)}</option>)}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="listing-condition" className="listing-form-label">{t("createListing.equipment.condition")}</label>
+            <select id="listing-condition" name="condition" value={formData.condition} onChange={onChange} className="listing-form-input listing-form-input--fixed">
+              {EQUIPMENT_CONDITIONS.map((code) => <option key={code} value={String(code)}>{t(`createListing.equipment.conditions.${code}`)}</option>)}
+            </select>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

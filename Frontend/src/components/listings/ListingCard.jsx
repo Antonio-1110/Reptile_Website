@@ -9,7 +9,9 @@ export default function ListingCard({ animal }) {
   const locationName = getLocationLabel(t, animal.location);
 
   return (
-    <a href={`/posts/${animal.id}`} className="card-container">
+    // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
+    // The title link stretches over the whole card instead (see .card-title-link::after).
+    <article className="card-container">
       <div className="card-media">
         <img
           src={animal.image}
@@ -25,7 +27,9 @@ export default function ListingCard({ animal }) {
 
       <div className="card-content">
         <div className="card-header">
-          <h3 className="card-title">{animal.title}</h3>
+          <h3 className="card-title">
+            <a href={`/posts/${animal.id}`} className="card-title-link">{animal.title}</a>
+          </h3>
           <span className="card-sex">
             {t(`createListing.sex.${getSexKey(animal.sex)}`)}
           </span>
@@ -47,14 +51,11 @@ export default function ListingCard({ animal }) {
 
         <div className="card-seller-row">
           <span>{t('listings.seller')}</span>
-          <a
-            href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}
-            onClick={(event) => event.stopPropagation()}
-          >
+          <a href={`/marketplace?search=${encodeURIComponent(animal.sellerTag || animal.seller)}`}>
             {animal.sellerTag || animal.seller}
           </a>
         </div>
       </div>
-    </a>
+    </article>
   );
 }

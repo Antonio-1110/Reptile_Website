@@ -65,8 +65,18 @@ class EquipmentPost(BasePost):
         NOT_FUNCTIONAL = 0, 'Not Functional'
         USED = 1, 'Used'
         NEW = 2, 'New'
-    
+
+    class CategoryChoices(models.TextChoices):
+        ENCLOSURE = 'enclosure', 'Enclosure'
+        HEATING = 'heating', 'Heating'
+        LIGHTING = 'lighting', 'Lighting / UVB'
+        CLIMATE = 'climate', 'Thermostats & monitoring'
+        SUBSTRATE_DECOR = 'substrateDecor', 'Substrate & decor'
+        TRANSPORT = 'transport', 'Carriers & transport'
+        OTHER = 'other', 'Other'
+
     condition = models.IntegerField(choices=ConditionChoices.choices, default=ConditionChoices.USED)
+    category = models.CharField(max_length=20, choices=CategoryChoices.choices, default=CategoryChoices.OTHER)
     
     class Meta:
         verbose_name = 'Equipment Post'

@@ -482,6 +482,73 @@ class LiveAnimalFilterTests(APITestCase):
 		self.assertIsNone(response.data['next'])
 
 
+class EquipmentFilterTests(APITestCase):
+	def setUp(self):
+		from datetime import timedelta
+		from django.utils import timezone
+		seller = Account.objects.create_user(
+			username='gear-seller', email='gear@example.com', password='pass12345',
+			account_type=Account.AccountType.COMMERCIAL, is_paid_account=True,
+		)
+
+		def make(title, **fields):
+			days_old = fields.pop('days_old', 0)
+			post = EquipmentPost.objects.create(account=seller, title=title, description='d', contact_info='{}', **fields)
+			EquipmentPost.objects.filter(pk=post.pk).update(created_at=timezone.now() - timedelta(days=days_old, hours=1))
+			return post
+
+		make('Glass Terrarium', category='enclosure', condition=2, location='TPE', price=4000,
+			shipping_methods=['localPickup'], days_old=20)
+		make('UVB Kit', category='lighting', condition=1, location='KHH', price=2500,
+			shipping_methods=['localPickup', 'shipping'], days_old=1)
+		make('Broken Heat Mat', category='heating', condition=0, location='TPE', price=100,
+			shipping_methods=['shipping'], days_old=5)
+
+	def titles(self, **params):
+		response = self.client.get(reverse('equipment-list'), params)
+		self.assertEqual(response.status_code, 200)
+		return sorted(item['title'] for item in response.data['results'])
+
+	def test_category_and_condition_filters(self):
+		self.assertEqual(self.titles(category='enclosure,lighting'), ['Glass Terrarium', 'UVB Kit'])
+		self.assertEqual(self.titles(category_exclude='enclosure'), ['Broken Heat Mat', 'UVB Kit'])
+		self.assertEqual(self.titles(condition='1,2'), ['Glass Terrarium', 'UVB Kit'])
+
+	def test_shared_listing_filters(self):
+		self.assertEqual(self.titles(price_min=1000, price_max=3000), ['UVB Kit'])
+		self.assertEqual(self.titles(location_exclude='TPE'), ['UVB Kit'])
+		self.assertEqual(self.titles(shipping='shipping'), ['Broken Heat Mat', 'UVB Kit'])
+		self.assertEqual(self.titles(posted_days_min=3), ['Broken Heat Mat', 'Glass Terrarium'])
+		self.assertEqual(self.titles(search='terrarium'), ['Glass Terrarium'])
+
+	def test_unknown_category_is_rejected_on_create(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Mystery', 'description': 'd', 'contact_info': '{}', 'category': 'spaceship',
+		}, format='json')
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('category', response.data)
+
+	def test_equipment_accepts_contact_info_object_like_the_editor_sends(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Heat Lamp', 'description': 'd', 'contact_info': {}, 'category': 'heating',
+		}, format='json')
+		self.assertEqual(response.status_code, 201, response.data)
+
+	def test_category_is_saved_and_returned(self):
+		seller = Account.objects.get(username='gear-seller')
+		self.client.force_authenticate(seller)
+		response = self.client.post(reverse('equipment-list'), {
+			'title': 'Carrier', 'description': 'd', 'contact_info': '{}', 'category': 'transport', 'condition': 2,
+		}, format='json')
+		self.assertEqual(response.status_code, 201, response.data)
+		self.assertEqual(response.data['category'], 'transport')
+		self.assertEqual(EquipmentPost.objects.get(pk=response.data['id']).category, 'transport')
+
+
 class SellerInquiryEmailTests(APITestCase):
 	def test_inquiry_email_is_sent_in_every_supported_language(self):
 		seller = Account.objects.create_user(username='email-seller', email='seller@example.com', password='pass12345')
