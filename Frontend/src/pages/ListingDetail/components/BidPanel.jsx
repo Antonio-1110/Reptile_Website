@@ -225,6 +225,11 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
       )}
       {errorLine}
       <p className="bid-panel-hint">{t('auctions.deposit.held', { amount: money(auction.depositAmount) })}</p>
+      {auction.extendWindowMinutes > 0 && (
+        <p className="bid-panel-hint">
+          {t('auctions.bid.extendHint', { window: auction.extendWindowMinutes, by: auction.extendByMinutes })}
+        </p>
+      )}
     </Panel>
   );
 }

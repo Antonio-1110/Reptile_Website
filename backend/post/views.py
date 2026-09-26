@@ -11,7 +11,7 @@ from .serializer import (
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
-from .filters import LiveAnimalPostFilter
+from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Report
@@ -206,10 +206,10 @@ class EquipmentViewSet(HiddenListingsMixin, ContactSellerMixin, ReportListingMix
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['condition', 'location']
+    filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
     ordering_fields = ['price', 'created_at']
-    ordering = ['-created_at']
+    ordering = ['-created_at', '-id']
     contact_request_field = 'equipment_post'
     report_request_field = 'equipment_post'
     

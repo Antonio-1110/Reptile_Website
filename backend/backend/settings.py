@@ -183,6 +183,10 @@ AUCTION_DEPOSIT_RATE = Decimal('0.10')
 AUCTION_MIN_DEPOSIT = Decimal('100.00')
 AUCTION_MIN_DURATION_HOURS = 1
 AUCTION_MAX_DURATION_DAYS = 30
+# Anti-sniping: a bid in the last AUCTION_EXTEND_WINDOW_MINUTES pushes the end time to at least
+# AUCTION_EXTEND_BY_MINUTES from that bid, so others get a chance to answer it. 0 turns it off.
+AUCTION_EXTEND_WINDOW_MINUTES = env_int('AUCTION_EXTEND_WINDOW_MINUTES', 5)
+AUCTION_EXTEND_BY_MINUTES = env_int('AUCTION_EXTEND_BY_MINUTES', 5)
 # Where deposits and buy-now payments go; see auction/payments.py. In DEBUG payments count as paid
 # instantly so the flows can be tried locally; otherwise staff confirm them in the admin until a
 # processor is wired up.
