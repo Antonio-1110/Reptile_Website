@@ -12,7 +12,7 @@ import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
 import UpgradePage from "./pages/UpgradePage";
 import { isLoggedIn } from "./api/authApi";
-import { buildMarketplaceUrl, readMarketplaceSearch } from "./utils/marketplaceSearch";
+import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
 
 // Sends a signed-out visitor to sign in, then back to the page (query included) they asked for.
 // The backend enforces auth regardless; this just avoids showing a form they can't submit.
@@ -26,7 +26,9 @@ function RedirectToSignIn() {
 
 function renderPage(pathname, search, clearSearch) {
   const detailMatch = pathname.match(/^\/posts\/(\d+)$/);
-  if (detailMatch) return <ListingDetailPage listingId={Number(detailMatch[1])} />;
+  if (detailMatch) return <ListingDetailPage key={`animal-${detailMatch[1]}`} listingId={Number(detailMatch[1])} />;
+  const equipmentMatch = pathname.match(/^\/equipment\/(\d+)$/);
+  if (equipmentMatch) return <ListingDetailPage key={`equipment-${equipmentMatch[1]}`} listingId={Number(equipmentMatch[1])} category="equipment" />;
   const auctionMatch = pathname.match(/^\/auctions\/(\d+)$/);
   if (auctionMatch) return <AuctionRedirectPage key={auctionMatch[1]} auctionId={Number(auctionMatch[1])} />;
   if (pathname === "/auctions") return <AuctionsPage />;
@@ -60,7 +62,9 @@ export default function App() {
   // On the marketplace a header search just updates the results (and the URL); anywhere else it
   // navigates to the marketplace with the search applied.
   const handleHeaderSearch = (term, tags) => {
-    const url = buildMarketplaceUrl(term, tags);
+    // Searching from the marketplace keeps what's being browsed (animals or equipment).
+    const category = pathname === "/marketplace" ? readMarketplaceCategory() : "live_animal";
+    const url = buildMarketplaceUrl(term, tags, category);
     if (pathname !== "/marketplace") {
       window.location.href = url;
       return;
