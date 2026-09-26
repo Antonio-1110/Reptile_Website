@@ -13,9 +13,9 @@ export default {
   featuredHeading: "Fresh from the community",
   featuredIntro: "A random handful of the newest listings.",
   refresh: "Shuffle",
-  storyKicker: "Why MorphMarket",
+  storyKicker: "Why Reptilian",
   storyHeading: "Built for good keeping, not quick flips.",
-  storyBody: "MorphMarket is for people who take reptile keeping seriously: a calmer place to find healthy animals, compare morphs and deal with people who look after their animals properly.",
+  storyBody: "Reptilian is for people who take reptile keeping seriously: a calmer place to find healthy animals, compare morphs and deal with people who look after their animals properly.",
   points: {
     privacy: {
       title: "Your details stay private",
@@ -23,7 +23,7 @@ export default {
     },
     payments: {
       title: "Auctions you can trust",
-      body: "Bidders pay a refundable deposit, and auction payments go through MorphMarket, so both sides are covered until the handover.",
+      body: "Bidders pay a refundable deposit, and auction payments go through Reptilian, so both sides are covered until the handover.",
     },
     reports: {
       title: "Listings that get checked",

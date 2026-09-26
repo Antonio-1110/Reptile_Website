@@ -7,7 +7,7 @@ load nothing else.
 
 ## Essentials
 
-- Reptile marketplace: React 19 + Vite frontend in `Frontend/`, Django 5 + DRF backend in `backend/`
+- Reptilian (reptile marketplace): React 19 + Vite frontend in `Frontend/`, Django 5 + DRF backend in `backend/`
   (apps: `account`, `authentication` (JWT, used by the frontend), `post`, `auction`, `common`).
 - Python virtualenv is `.venv/` at the repo root. Test with
   `cd backend && ../.venv/bin/python manage.py test`; lint and build with

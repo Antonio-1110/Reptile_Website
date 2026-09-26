@@ -1,4 +1,4 @@
-# Backend — Reptile Marketplace API
+# Backend — Reptilian API
 
 Django + Django REST Framework API powering authentication, listings, and seller logic.
 

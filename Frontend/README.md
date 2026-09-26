@@ -1,4 +1,4 @@
-# Frontend — Reptile Marketplace UI
+# Frontend — Reptilian UI
 
 React + Vite single-page app for browsing listings, posting animals/equipment, and managing seller
 accounts.
