@@ -27,6 +27,30 @@
   transform: translateY(-1px);
 }
 
+.card-media {
+  position: relative;
+}
+
+/* "Reserved" / "Sold" on the photo, so it's seen before the title. */
+.card-status {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  color: #1c1400;
+  background: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.card-status--sold {
+  color: #fff;
+  background: #dc2626;
+}
+
 /* The keyboard focus ring goes around the whole card, since the whole card is the link's hit area. */
 .card-container:has(.card-title-link:focus-visible) {
   outline: 2px solid var(--card-accent);
@@ -47,6 +71,18 @@
   content: '';
   position: absolute;
   inset: 0;
+}
+
+.card-media {
+  position: relative;
+}
+
+/* Above the stretched title link, so it saves instead of opening the listing. */
+.card-favorite {
+  position: absolute;
+  z-index: 1;
+  top: 0.6rem;
+  right: 0.6rem;
 }
 
 .card-image {

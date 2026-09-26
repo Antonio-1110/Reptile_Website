@@ -1,5 +1,5 @@
 import './Header.css';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { isLoggedIn, logout } from '../../api/authApi';
@@ -22,6 +22,28 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   const { t } = useTranslation();
   const [draftTerm, setDraftTerm] = useState(searchTerm);
   const [draftTags, setDraftTags] = useState(selectedSearchTags);
+  // On narrow screens the links live in a drop-down menu (see Header.css); wide screens ignore this.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const menuButtonRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key !== 'Escape') return;
+      setMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    const closeOnOutsideClick = (event) => {
+      if (!menuRef.current?.contains(event.target) && !menuButtonRef.current?.contains(event.target)) setMenuOpen(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+    };
+  }, [menuOpen]);
   // Species tags keep the backend name as their value but are shown (and matched) in the UI language.
   const tagLabel = (tag) => (tag.type === 'species' ? getSpeciesLabel(t, tag.value) : tag.value);
   const query = draftTerm.trim().toLowerCase();
@@ -57,6 +79,19 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
         <LanguageSwitcher />
       </div>
 
+      <button
+        ref={menuButtonRef}
+        type="button"
+        className="headerMenuToggle"
+        aria-expanded={menuOpen}
+        aria-controls="header-menu"
+        aria-label={menuOpen ? t('navigation.closeMenu') : t('navigation.menu')}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
+        <span className="headerMenuToggleLabel">{t('navigation.menu')}</span>
+      </button>
+
       <div className="middleSection">
         <form className="searchForm" onSubmit={(event) => { event.preventDefault(); commitSearch(); }}>
           <div className="searchInputWrapper">
@@ -83,7 +118,7 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
         </form>
       </div>
 
-      <div className="rightSection">
+      <nav id="header-menu" ref={menuRef} className={`rightSection${menuOpen ? ' is-open' : ''}`}>
         <a href="/auctions" className="headerLink">{t('navigation.auctions')}</a>
         <button type="button" className="headerLink">{t('navigation.community')}</button>
         {isLoggedIn() ? (
@@ -99,7 +134,7 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
             <a href={signInHref} className="headerButton">{t('navigation.signIn')}</a>
           </>
         )}
-      </div>
+      </nav>
     </header>
   );
 }

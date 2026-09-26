@@ -30,6 +30,7 @@ class ListingFilter(django_filters.FilterSet):
     each `*_exclude` param inverts its counterpart.
     """
 
+    status = CommaListFilter(field_name='status', lookup_expr='in')
     seller = django_filters.NumberFilter(field_name='account')  # a seller's page lists their listings
     location = CommaListFilter(field_name='location', lookup_expr='in')
     location_exclude = CommaListFilter(field_name='location', lookup_expr='in', exclude=True)

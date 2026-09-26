@@ -8,6 +8,8 @@ import ListingDetailPage from "./pages/ListingDetail/ListingDetailPage";
 import MyListingsPage from "./pages/MyListingsPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import SellerProfilePage from "./pages/SellerProfilePage";
+import SavedSearchesPage from "./pages/SavedSearchesPage";
+import SavedListingsPage from "./pages/SavedListingsPage";
 import AuctionsPage from "./pages/Auctions/AuctionsPage";
 import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
@@ -43,6 +45,8 @@ function renderPage(pathname, search, clearSearch) {
   if (pathname === "/signin") return <SignInPage />;
   if (pathname === "/my-listings") return <MyListingsPage />;
   if (pathname === "/orders") return <MyOrdersPage />;
+  if (pathname === "/saved-searches") return <SavedSearchesPage />;
+  if (pathname === "/saved") return <SavedListingsPage />;
   if (pathname === "/settings") return isLoggedIn() ? <AccountSettingsPage /> : <RedirectToSignIn />;
   if (pathname === "/upgrade") return isLoggedIn() ? <UpgradePage /> : <RedirectToSignIn />;
   if (pathname === "/marketplace") return <MarketplacePage searchTerm={search.term} searchTags={search.tags} onClearSearch={clearSearch} />;

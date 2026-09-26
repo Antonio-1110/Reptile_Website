@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import './ListingCard.css';
 import { getLocationLabel } from '../../constants/locations';
 import { getSexKey, listingPagePath, sellerPagePath } from '../../api/listingsApi';
+import FavoriteButton from './FavoriteButton';
 
 // Draws a live animal or (animal.kind === "equipment") a piece of equipment.
 export default function ListingCard({ animal }) {
@@ -16,17 +17,28 @@ export default function ListingCard({ animal }) {
     // Not a link itself: the seller link inside would be an <a> within an <a>, which is invalid HTML.
     // The title link stretches over the whole card instead (see .card-title-link::after).
     <article className="card-container">
-      {animal.image ? (
-        <img
-          src={animal.image}
-          alt={animal.title}
-          className="card-image"
-          loading="lazy"
-          decoding="async"
+      <div className="card-media">
+        {animal.image ? (
+          <img
+            src={animal.image}
+            alt={animal.title}
+            className="card-image"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
+        )}
+        {animal.status && animal.status !== 'available' && (
+          <span className={`card-status card-status--${animal.status}`}>{t(`listingStatus.${animal.status}`)}</span>
+        )}
+        <FavoriteButton
+          listingId={animal.id}
+          category={isEquipment ? 'equipment' : 'live_animal'}
+          initial={animal.isFavorite}
+          className="card-favorite"
         />
-      ) : (
-        <div className="card-image card-image--empty" aria-hidden="true">{isEquipment ? '🧰' : '🦎'}</div>
-      )}
+      </div>
 
       <div className="card-content">
         <div className="card-header">

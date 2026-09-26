@@ -3,7 +3,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 
 from . import moderation
-from .models import Species, LiveAnimalPost, EquipmentPost, ContactRequest, Report
+from .models import Species, LiveAnimalPost, EquipmentPost, ContactRequest, Favorite, Report
 
 
 @admin.register(Species)
@@ -91,3 +91,8 @@ class ReportAdmin(admin.ModelAdmin):
         if change and 'status' in form.changed_data and obj.status != Report.Status.PENDING:
             obj.reviewed_by, obj.reviewed_at = request.user, timezone.now()
         super().save_model(request, obj, form, change)
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'account', 'post', 'created_at')

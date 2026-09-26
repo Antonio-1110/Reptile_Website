@@ -339,6 +339,10 @@ def _complete(order):
     order.status = Order.Status.COMPLETED
     order.completed_at = timezone.now()
     order.save(update_fields=['status', 'completed_at', 'updated_at'])
+    # The buyer has it: the listing is sold (it stays visible, but out of the marketplace list).
+    post = order.auction.post
+    post.status = post.Status.SOLD
+    post.save(update_fields=['status', 'updated_at'])
     transaction.on_commit(lambda: notifications.order_completed(order))
 
 

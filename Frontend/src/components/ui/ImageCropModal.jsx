@@ -1,10 +1,15 @@
-import { useCallback, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import { useTranslation } from "react-i18next";
+import useDialogFocus from "../../hooks/useDialogFocus";
 import { getCroppedImg } from "../../utils/cropImage";
 import "./ImageCropModal.css";
 
 export const COVER_ASPECT_RATIO = 4 / 3;
+
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 3;
+const ZOOM_STEP = 0.1;
 
 export default function ImageCropModal({ imageSrc, fileName, aspect = COVER_ASPECT_RATIO, onCancel, onSave }) {
   const { t } = useTranslation();
@@ -13,6 +18,22 @@ export default function ImageCropModal({ imageSrc, fileName, aspect = COVER_ASPE
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const dialogRef = useRef(null);
+  const zoomRef = useRef(null);
+  const titleId = useId();
+  const hintId = useId();
+  // Escape cancels (not while saving); focus starts on the zoom slider, and Tab stays in the dialog.
+  useDialogFocus(dialogRef, () => !saving && onCancel(), zoomRef);
+
+  // + / − zoom from anywhere in the dialog, so the crop can be set without a mouse (the arrow keys
+  // already move the photo when the crop area has focus).
+  const handleKeyDown = (event) => {
+    if (event.target.id === "crop-zoom") return; // the slider handles its own keys
+    const change = { "+": ZOOM_STEP, "=": ZOOM_STEP, "-": -ZOOM_STEP, _: -ZOOM_STEP }[event.key];
+    if (change === undefined) return;
+    event.preventDefault();
+    setZoom((current) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, current + change)));
+  };
 
   const handleCropComplete = useCallback((_croppedArea, pixels) => {
     setCroppedAreaPixels(pixels);
@@ -34,15 +55,19 @@ export default function ImageCropModal({ imageSrc, fileName, aspect = COVER_ASPE
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("createListing.media.crop.title")}
-      className="crop-modal-overlay"
-    >
-      <div className="crop-modal">
+    <div className="crop-modal-overlay">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={hintId}
+        tabIndex={-1}
+        className="crop-modal"
+        onKeyDown={handleKeyDown}
+      >
         <div className="crop-modal-header">
-          <h2 className="crop-modal-title">{t("createListing.media.crop.title")}</h2>
+          <h2 id={titleId} className="crop-modal-title">{t("createListing.media.crop.title")}</h2>
           <button
             type="button"
             onClick={onCancel}
@@ -63,18 +88,23 @@ export default function ImageCropModal({ imageSrc, fileName, aspect = COVER_ASPE
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={handleCropComplete}
+            minZoom={MIN_ZOOM}
+            maxZoom={MAX_ZOOM}
+            cropperProps={{ "aria-label": t("createListing.media.crop.area"), "aria-describedby": hintId, role: "group" }}
           />
         </div>
+        <p id={hintId} className="crop-modal-hint">{t("createListing.media.crop.keyboardHint")}</p>
 
         <div>
           <label htmlFor="crop-zoom" className="crop-modal-zoom-label">
             {t("createListing.media.crop.zoom")}
           </label>
           <input
+            ref={zoomRef}
             id="crop-zoom"
             type="range"
-            min={1}
-            max={3}
+            min={MIN_ZOOM}
+            max={MAX_ZOOM}
             step={0.05}
             value={zoom}
             onChange={(event) => setZoom(Number(event.target.value))}
