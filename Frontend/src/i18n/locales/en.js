@@ -10,6 +10,8 @@ const en = {
     signOut: "Sign out",
     myListings: "My listings",
     account: "Account",
+    menu: "Menu",
+    closeMenu: "Close menu",
   },
   auth: {
     signIn: "Sign in",

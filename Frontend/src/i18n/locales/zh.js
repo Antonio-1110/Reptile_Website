@@ -10,6 +10,8 @@ const zh = {
     signOut: "登出",
     myListings: "我的刊登",
     account: "帳號",
+    menu: "選單",
+    closeMenu: "關閉選單",
   },
   auth: {
     signIn: "登入",
