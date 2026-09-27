@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 // Keys of Account.contact_details() on the backend, in display order.
-const CONTACT_FIELDS = ['name', 'email', 'phone', 'line', 'instagram', 'facebook'];
+const CONTACT_FIELDS = ['username', 'name', 'email', 'phone', 'line', 'instagram', 'facebook'];
 
 // A person's contact details as "Label: value" lines (the buyer's own, or the other side of a sale).
 export default function ContactLines({ contact }) {

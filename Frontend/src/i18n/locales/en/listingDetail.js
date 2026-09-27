@@ -29,7 +29,7 @@ export default {
   moreFromSeller: "More listings from this seller",
   contactSeller: "Contact seller",
   loginToContact: "Log in to contact the seller.",
-  contactFields: { name: "Name", phone: "Phone", email: "Email", line: "LINE", instagram: "Instagram", facebook: "Facebook" },
+  contactFields: { username: "Username", name: "Display name", phone: "Phone", email: "Email", line: "LINE", instagram: "Instagram", facebook: "Facebook" },
   about: "About this listing",
   care: "Care and logistics",
   quickFacts: "Quick facts",

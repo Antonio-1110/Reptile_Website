@@ -29,7 +29,7 @@ export default {
   moreFromSeller: "想看這位賣家的其他刊登嗎？",
   contactSeller: "聯絡賣家",
   loginToContact: "登入後即可聯絡賣家。",
-  contactFields: { name: "姓名", phone: "電話", email: "電子信箱", line: "LINE", instagram: "Instagram", facebook: "Facebook" },
+  contactFields: { username: "使用者名稱", name: "顯示名稱", phone: "電話", email: "電子信箱", line: "LINE", instagram: "Instagram", facebook: "Facebook" },
   about: "刊登介紹",
   care: "照護與運送",
   quickFacts: "基本資料",
