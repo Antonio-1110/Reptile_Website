@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 19:03+0800\n"
+"POT-Creation-Date: 2026-09-27 19:19+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -922,12 +922,12 @@ msgstr "請編輯刊登並從清單中選擇物種，即可上架：%(url)s"
 msgid "Choose a different species for your listing: %(title)s"
 msgstr "請為你的刊登選擇其他物種：%(title)s"
 
-#: post/views.py:48
+#: post/views.py:59
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
 msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:50
+#: post/views.py:61
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on Reptilian and asked "
@@ -936,48 +936,94 @@ msgstr ""
 "%(name)s 對你在 Reptilian 上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡"
 "方式："
 
-#: post/views.py:52
+#: post/views.py:63
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:70
+#: post/views.py:64 post/views.py:83 post/views.py:100
+#, python-format
+msgid "The listing: %(url)s"
+msgstr "刊登頁面：%(url)s"
+
+#: post/views.py:65
+#, python-format
+msgid ""
+"Once you have been in touch, mark the inquiry as replied so the buyer knows "
+"to look out for your message: %(url)s"
+msgstr "聯絡買家後，請將這則詢問標記為已回覆，買家就會知道要留意你的訊息：%(url)s"
+
+#: post/views.py:79
+#, python-format
+msgid "Your details were sent to the seller: %(title)s"
+msgstr "你的聯絡資料已傳給賣家：%(title)s"
+
+#: post/views.py:81
+#, python-format
+msgid ""
+"We sent your contact details to %(seller)s about \"%(title)s\". They will "
+"get in touch with you directly; the seller's own details stay private until "
+"then."
+msgstr "我們已將你的聯絡方式轉交給 %(seller)s，詢問「%(title)s」。賣家會直接與你聯繫；在那之前，賣家的聯絡方式不會公開。"
+
+#: post/views.py:84
+#, python-format
+msgid "Your inquiries: %(url)s"
+msgstr "你的詢問：%(url)s"
+
+#: post/views.py:97
+#, python-format
+msgid "The seller got back to you: %(title)s"
+msgstr "賣家已回覆你：%(title)s"
+
+#: post/views.py:99
+#, python-format
+msgid ""
+"%(seller)s says they have contacted you about \"%(title)s\". Look for their "
+"message by email, phone, LINE or social media, using the details you sent "
+"them."
+msgstr "%(seller)s 表示已就「%(title)s」與你聯繫。請留意你提供的電子信箱、電話、LINE 或社群帳號是否收到對方的訊息。"
+
+#: post/views.py:118
 #, python-format
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 
-#: post/views.py:71
+#: post/views.py:119
 #, python-format
 msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
 msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
 
-#: post/views.py:137
+#: post/views.py:185
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:142
+#: post/views.py:190
 msgid "This listing has been sold."
 msgstr "這則刊登已售出。"
 
-#: post/views.py:154
+#: post/views.py:203
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:172
+#: post/views.py:221
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:185
+#: post/views.py:234
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:222
+#: post/views.py:271
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
 
+#: post/views.py:415
+msgid "Only the seller can mark an inquiry as replied."
+msgstr "只有賣家可以將詢問標記為已回覆。"
 #: common/passwords.py:16 common/passwords.py:21
 msgid "Your password must contain both English letters and numbers."
 msgstr "密碼必須同時包含英文字母和數字。"

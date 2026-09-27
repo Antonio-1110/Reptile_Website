@@ -156,7 +156,7 @@ admin.site.register(EquipmentPost, ListingAdmin)
 
 @admin.register(ContactRequest)
 class ContactRequestAdmin(admin.ModelAdmin):
-    list_display = ('id', 'requester', 'post', 'created_at')
+    list_display = ('id', 'requester', 'post', 'created_at', 'replied_at')
 
 
 @admin.register(Report)

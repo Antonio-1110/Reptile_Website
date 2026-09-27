@@ -15,14 +15,14 @@ from rest_framework.test import APITestCase
 from account.models import Account
 from auction import services
 from auction.models import Auction, Order
-from post.models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
+from post.models import ContactRequest, EquipmentPost, LiveAnimalPost, SavedSearch, Species
 
 # Who may call a route with a method:
 #   public     anyone, signed in or not
 #   signed_in  any signed-in account (the view may still refuse for business reasons)
 #   owner      only the object's owner; anyone else is refused or can't see it
 #   not_owner  any signed-in account except the owner (contacting, reporting, bidding on your own thing)
-#   party      only the buyer or seller of an order
+#   party      only the buyer or seller of an order or inquiry
 ACCESS = {
     'profile': {'GET': 'signed_in', 'PUT': 'signed_in', 'PATCH': 'signed_in'},
     'account-plans': {'GET': 'public'},
@@ -49,6 +49,9 @@ ACCESS = {
     'species-detail': {'GET': 'public'},
     'saved-search-list': {'GET': 'signed_in', 'POST': 'signed_in'},
     'saved-search-detail': {'GET': 'owner', 'PATCH': 'owner', 'DELETE': 'owner'},
+    'inquiry-list': {'GET': 'signed_in'},
+    'inquiry-detail': {'GET': 'party'},
+    'inquiry-replied': {'POST': 'owner'},  # the listing's seller
 
     'auction-list': {'GET': 'public', 'POST': 'signed_in'},
     'auction-detail': {'GET': 'public'},
@@ -141,6 +144,7 @@ class AccessFixtures(APITestCase):
             account=self.owner, name='Pythons', query='category=live_animal', last_alerted_at=timezone.now(),
         )
         self.auction = self.make_auction(live_animal_post=self.live_post, buy_now_price=Decimal('9000.00'))
+        self.inquiry = ContactRequest.objects.create(requester=self.buyer, live_animal_post=self.live_post)
 
         # A second auction, won by the buyer, for the order routes.
         sold_listing = LiveAnimalPost.objects.create(
@@ -179,6 +183,8 @@ class AccessFixtures(APITestCase):
             return self.saved_search
         if name.startswith('order-'):
             return self.order
+        if name.startswith('inquiry-'):
+            return self.inquiry
         if name.startswith('seller-'):
             return self.owner
         return self.auction
@@ -245,14 +251,17 @@ class PermissionSweepTests(AccessFixtures):
                 self.assertGreaterEqual(self.call(self.owner, method, url).status_code, 400)
 
     def test_owners_and_parties_get_past_the_permission_checks(self):
+        # Parties first: deleting the owner's listing below also deletes its inquiry.
+        for user in (self.owner, self.buyer):
+            response = self.call(user, 'GET', reverse('order-detail', kwargs={'pk': self.order.pk}))
+            self.assertEqual(response.status_code, 200)
+            response = self.call(user, 'GET', reverse('inquiry-detail', kwargs={'pk': self.inquiry.pk}))
+            self.assertEqual(response.status_code, 200)
         # Deletes go last so the objects are still there for everything else.
         checks = sorted(self.routes_with('owner'), key=lambda check: check[1] == 'DELETE')
         for name, method, url in checks:
             with self.subTest(route=name, method=method):
                 self.assertNotIn(self.call(self.owner, method, url).status_code, REFUSED)
-        for user in (self.owner, self.buyer):
-            response = self.call(user, 'GET', reverse('order-detail', kwargs={'pk': self.order.pk}))
-            self.assertEqual(response.status_code, 200)
 
 
 class PublicPrivacySweepTests(AccessFixtures):

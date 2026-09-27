@@ -59,6 +59,11 @@ export default function ContactSellerPanel({ listingId, category, onToast }) {
       </div>
       <p>{sent ? t('listingDetail.contact.sentIntro') : t('listingDetail.contact.previewIntro')}</p>
       <ContactLines contact={preview} />
+      {sent && (
+        <p className="action-panel-small">
+          <Link to="/inquiries?role=buyer">{t('inquiries.viewSent')}</Link>
+        </p>
+      )}
       {!sent && (
         <>
           <p className="action-panel-small">

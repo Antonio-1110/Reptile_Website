@@ -12,7 +12,7 @@ describe('AccountMenu', () => {
     openMenu();
     expect(screen.getByRole('button', { name: /My account/ })).toHaveAttribute('aria-expanded', 'true');
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-    expect(hrefs).toEqual(['/my-listings', '/orders', '/saved', '/saved-searches', '/settings']);
+    expect(hrefs).toEqual(['/my-listings', '/orders', '/inquiries', '/saved', '/saved-searches', '/settings']);
   });
 
   it('signs out from the menu', () => {
