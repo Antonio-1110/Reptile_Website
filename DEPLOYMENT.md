@@ -135,7 +135,9 @@ which can take from a few minutes to an hour.
 ## 5. Email (before real users sign up)
 
 Until this is done the site "sends" emails only to the Heroku logs, so contact requests, auction and
-order emails, and saved-search alerts never arrive. Resend is the simplest option:
+order emails, and saved-search alerts never arrive. New accounts also can't confirm their email address
+(so they can't post, contact sellers or bid) and nobody can reset a forgotten password. Resend is the
+simplest option (its free plan is enough to start):
 
 1. Create a Resend account, add the domain `reptilian.app`, and add the DNS records it lists (step 4's
    registrar page). Wait for it to show **Verified**.

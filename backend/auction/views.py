@@ -9,6 +9,8 @@ from rest_framework.throttling import ScopedRateThrottle
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 
+from authentication.permissions import HasVerifiedEmail
+
 from . import orders, services
 from .models import Auction, BuyNowPurchase, Deposit, Order, SellerBond
 from .serializers import (
@@ -28,7 +30,7 @@ class CanStartAuction(permissions.BasePermission):
 
 class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = AuctionSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, CanStartAuction]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, CanStartAuction]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['status', 'seller', 'live_animal_post', 'equipment_post']
     ordering_fields = ['ends_at', 'created_at', 'starting_price']
@@ -85,7 +87,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
             'bond_amount': str(settings.SELLER_BOND_AMOUNT),
         })
 
-    @action(detail=False, methods=['get', 'post'], url_path='seller-bond', permission_classes=[permissions.IsAuthenticated],
+    @action(detail=False, methods=['get', 'post'], url_path='seller-bond', permission_classes=[permissions.IsAuthenticated, HasVerifiedEmail],
             throttle_classes=[ScopedRateThrottle], throttle_scope='payments')
     def seller_bond(self, request):
         """GET: whether a bond is required and the seller's current one. POST: start paying it."""
@@ -121,7 +123,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         services.cancel_auction(auction)
         return Response(self.get_serializer(self.get_object()).data)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated],
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, HasVerifiedEmail],
             throttle_classes=[ScopedRateThrottle], throttle_scope='payments')
     def deposit(self, request, pk=None):
         """Start paying the deposit that's required before bidding. Safe to call repeatedly."""
@@ -145,7 +147,7 @@ class AuctionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.Cr
         bid = services.place_bid(auction, request.user, serializer.validated_data['amount'])
         return Response(BidSerializer(bid, context=self.get_serializer_context()).data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post'], url_path='buy-now', permission_classes=[permissions.IsAuthenticated],
+    @action(detail=True, methods=['post'], url_path='buy-now', permission_classes=[permissions.IsAuthenticated, HasVerifiedEmail],
             throttle_classes=[ScopedRateThrottle], throttle_scope='payments')
     def buy_now(self, request, pk=None):
         """

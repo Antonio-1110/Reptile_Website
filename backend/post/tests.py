@@ -844,6 +844,16 @@ class FavoritesTests(APITestCase):
 		self.assertIn('8,000', mail.outbox[0].body)
 		self.assertIn('10,000', mail.outbox[0].body)
 
+	def test_price_drop_skips_savers_who_have_not_confirmed_their_email(self):
+		Account.objects.filter(pk=self.other.pk).update(email_verified=False)
+		for user in (self.buyer, self.other):
+			Favorite.objects.create(account=user, live_animal_post=self.post)
+		self.client.force_authenticate(self.seller)
+		with self.captureOnCommitCallbacks(execute=True):
+			self.client.patch(reverse('live-animal-detail', args=[self.post.id]), {'price': 8000}, format='json')
+
+		self.assertEqual([message.to[0] for message in mail.outbox], ['buyer@example.com'])
+
 	@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
 	def test_repeated_price_drops_email_savers_once_a_day(self):
 		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)

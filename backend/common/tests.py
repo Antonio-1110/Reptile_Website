@@ -9,7 +9,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from account.models import Account
 from post.models import LiveAnimalPost, Species
 
-LOW_RATES = {'auth': '2/minute', 'contact': '2/hour', 'report': '2/hour', 'payments': '2/hour'}
+LOW_RATES = {'auth': '2/minute', 'contact': '2/hour', 'report': '2/hour', 'payments': '2/hour', 'email': '2/hour'}
 
 
 # The test settings use a cache that stores nothing (so limits never trip elsewhere in the suite);

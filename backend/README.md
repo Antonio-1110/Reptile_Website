@@ -258,7 +258,16 @@ Each refresh token works once: `refresh/` returns a new pair and retires the old
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
 - `POST /refresh/` — `refresh` → new `access` and `refresh` (the old refresh token stops working)
 - `POST /logout/` — `refresh`; retires it (401 if it's invalid or already retired)
-- `GET /me/` (auth required) — `id`, `username`, `email`, `verified_seller`
+- `GET /me/` (auth required) — `id`, `username`, `email`, `email_verified`, `verified_seller`
+- `POST /verify-email/` — `uid`, `token` from the sign-up email; confirms the address (no sign-in needed)
+- `POST /verify-email/resend/` (auth required) — emails a new confirmation link
+- `POST /password-reset/` — `email`; emails a reset link to accounts using it (same answer either way)
+- `POST /password-reset/confirm/` — `uid`, `token`, `password`; sets it, confirms the email and signs
+  the account out everywhere
+
+New accounts start with `email_verified: false` and get 403 on posting, contacting sellers, reporting,
+bidding and paying until they open the emailed link (`authentication/permissions.py`). Changing the email
+on the profile needs a new confirmation. Staff, seeded and pre-existing accounts count as verified.
 
 Send the access token as `Authorization: Bearer <access>`.
 

@@ -1,0 +1,18 @@
+export default {
+  forgotLink: "忘記密碼？",
+  forgotTitle: "重設密碼",
+  forgotSubtitle: "輸入帳號使用的電子郵件地址，我們會寄給你設定新密碼的連結。",
+  sendLink: "寄送連結",
+  backToSignIn: "返回登入",
+  resetTitle: "設定新密碼",
+  newPassword: "新密碼",
+  savePassword: "儲存密碼",
+  incompleteLink: "這個連結不完整。請從信件中重新開啟，或重新申請連結。",
+  askForNewLink: "重新申請連結",
+  verifyTitle: "確認電子郵件",
+  verifying: "正在確認你的電子郵件地址…",
+  goToMarketplace: "前往市集",
+  bannerText: "請確認你的電子郵件地址。確認之前你仍可瀏覽，但無法發布刊登、聯絡賣家或出價。確認連結在我們寄給你的信中。",
+  resend: "重新寄送連結",
+  sending: "寄送中…",
+};

@@ -152,3 +152,20 @@ export async function logout() {
 export async function getMe() {
   return authFetch("/auth/me/", { method: "GET" });
 }
+
+// The links in sign-up and password-reset emails carry a uid and token that go straight back to the API.
+export async function verifyEmail({ uid, token }) {
+  return postJson("/verify-email/", { uid, token });
+}
+
+export async function resendVerificationEmail() {
+  return authFetch("/auth/verify-email/resend/", { method: "POST" });
+}
+
+export async function requestPasswordReset(email) {
+  return postJson("/password-reset/", { email });
+}
+
+export async function resetPassword({ uid, token, password }) {
+  return postJson("/password-reset/confirm/", { uid, token, password });
+}

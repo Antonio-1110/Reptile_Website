@@ -1,6 +1,7 @@
 import './SignInPage.css';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { login, register } from '../api/authApi';
 
 // Only allow same-site relative redirects, so ?next= can't send users off-site.
@@ -116,6 +117,7 @@ export default function SignInPage() {
           {field('username', t('auth.username'), 'text', 'username')}
           {isRegister && field('email', t('auth.email'), 'email', 'email')}
           {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password')}
+          {!isRegister && <p className="authForgot"><Link to="/forgot-password">{t('accountEmail.forgotLink')}</Link></p>}
           {isRegister && field('confirmPassword', t('auth.confirmPassword'), 'password', 'new-password')}
 
           {errors.form && <p className="authFormError" role="alert">{errors.form}</p>}

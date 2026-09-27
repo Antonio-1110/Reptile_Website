@@ -11,6 +11,7 @@ from django.db.models import Exists, OuterRef
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
+from authentication.permissions import HasVerifiedEmail
 from common.money import format_money
 from common.notifications import contact_lines, send_notification
 from .serializer import (
@@ -61,7 +62,8 @@ def notify_price_drop(post, old_price, favorite_field):
     if not cache.add(f'price-drop:{favorite_field}:{post.pk}', True, timeout=settings.PRICE_DROP_EMAIL_HOURS * 3600):
         return
     values = {'title': post.title, 'old': format_money(old_price), 'new': format_money(post.price)}
-    savers = Favorite.objects.filter(**{favorite_field: post}).exclude(account=post.account)
+    # Only confirmed addresses: otherwise an account made with a stranger's address would mail them.
+    savers = Favorite.objects.filter(**{favorite_field: post}, account__email_verified=True).exclude(account=post.account)
     # One email each: a shared To: line would show every saver's address to the others.
     for email in savers.values_list('account__email', flat=True).distinct():
         send_notification([email], lambda: (
@@ -124,7 +126,7 @@ class ContactSellerMixin:
     contact_request_field = None  # set by subclass to 'live_animal_post' or 'equipment_post'
     throttle_scope = None  # set per action (DRF only accepts action options that exist on the class)
 
-    @action(detail=True, methods=['get', 'post'], permission_classes=[permissions.IsAuthenticated],
+    @action(detail=True, methods=['get', 'post'], permission_classes=[permissions.IsAuthenticated, HasVerifiedEmail],
             throttle_classes=[ScopedRateThrottle], throttle_scope='contact')
     def contact(self, request, pk=None):
         post = self.get_object()
@@ -159,7 +161,7 @@ class ReportListingMixin:
     report_request_field = None  # set by subclass to 'live_animal_post' or 'equipment_post'
     throttle_scope = None  # set per action
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated],
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, HasVerifiedEmail],
             throttle_classes=[ScopedRateThrottle], throttle_scope='report')
     def report(self, request, pk=None):
         post = self.get_object()
@@ -284,7 +286,7 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
     queryset = LiveAnimalPost.objects.select_related('account', 'species', 'species_request').all()
     serializer_class = LiveAnimalPostSerializer
     published = LiveAnimalPost.PUBLISHED
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = LiveAnimalPostFilter
     search_fields = LIVE_ANIMAL_SEARCH_FIELDS
@@ -306,7 +308,7 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
 class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsPostOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
