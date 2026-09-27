@@ -82,6 +82,9 @@ async function refreshAccessToken() {
       return true;
     })
     .catch(() => {
+      // Each refresh token works once. If another tab used it first, that tab has already stored
+      // the new pair, which this tab can use; only a token nobody replaced means the session is over.
+      if (readStorage(REFRESH_KEY) !== refresh) return true;
       clearTokens();
       return false;
     })
@@ -137,8 +140,13 @@ export async function register({ username, email, password }) {
   }
 }
 
-export function logout() {
+// Forgets the tokens here and retires the refresh token on the server, so a copy of it can't be used
+// to stay signed in. Signing out still succeeds locally if that request fails.
+export async function logout() {
+  const refresh = readStorage(REFRESH_KEY);
   clearTokens();
+  if (!refresh) return;
+  await postJson("/logout/", { refresh }).catch(() => {});
 }
 
 export async function getMe() {

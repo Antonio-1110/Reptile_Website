@@ -59,6 +59,34 @@ class LoginAndTokenTests(APITestCase):
         self.assertIn('access', response.data)
 
 
+class LogoutAndRotationTests(APITestCase):
+    def setUp(self):
+        Account.objects.create_user(username='seller', email='seller@example.com', password='pass12345')
+        self.tokens = self.client.post(reverse('jwt-login'), {'username': 'seller', 'password': 'pass12345'}).data
+
+    def test_logout_retires_the_refresh_token(self):
+        response = self.client.post(reverse('jwt-logout'), {'refresh': self.tokens['refresh']})
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(reverse('jwt-refresh'), {'refresh': self.tokens['refresh']})
+        self.assertEqual(response.status_code, 401)
+
+    def test_logout_rejects_an_invalid_token(self):
+        response = self.client.post(reverse('jwt-logout'), {'refresh': 'not-a-token'})
+        self.assertEqual(response.status_code, 401)
+
+    def test_refresh_hands_out_a_new_refresh_token_and_retires_the_old_one(self):
+        response = self.client.post(reverse('jwt-refresh'), {'refresh': self.tokens['refresh']})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.data['refresh'], self.tokens['refresh'])
+
+        reused = self.client.post(reverse('jwt-refresh'), {'refresh': self.tokens['refresh']})
+        self.assertEqual(reused.status_code, 401)
+
+        rotated = self.client.post(reverse('jwt-refresh'), {'refresh': response.data['refresh']})
+        self.assertEqual(rotated.status_code, 200)
+
+
 class MeEndpointTests(APITestCase):
     def setUp(self):
         self.user = Account.objects.create_user(

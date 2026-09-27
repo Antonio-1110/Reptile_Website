@@ -107,7 +107,7 @@ Conventions every endpoint follows:
 
 ### Authentication (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/`, `GET /me/`
+- `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
 
 ### Account (`/api/v1/account/`)
 

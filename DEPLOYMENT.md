@@ -92,9 +92,10 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    `master` branch, tick **Wait for CI to pass**, and **Enable Automatic Deploys**. Then press
    **Deploy Branch** once. Each deploy compiles the translations, collects the admin's static files,
    and runs the database migrations before the new version goes live.
-5. **Scheduler** (open it from Resources) → add two jobs, so auctions settle and order deadlines apply:
+5. **Scheduler** (open it from Resources) → add these jobs, so auctions settle and order deadlines apply:
    - Every 10 minutes: `cd backend && python manage.py close_auctions && python manage.py process_orders`
    - Every hour: `cd backend && python manage.py send_search_alerts`
+   - Every day: `cd backend && python manage.py flushexpiredtokens` (clears old sign-in records)
 6. **Create your staff account**:
    `heroku run -a reptilian-api "cd backend && python manage.py createsuperuser"`
 7. **Custom domain**: Settings → Domains → **Add domain** `api.reptilian.app`. Heroku shows a DNS
