@@ -17,7 +17,8 @@ jobs:
   backend:
     # Twice: on SQLite (local dev) and on PostgreSQL (production). Postgres is where row locks really
     # happen, so the race tests in auction/test_races.py only run there.
-    name: backend (${{ matrix.database }})
+    # The SQLite run keeps the plain name "backend": master's ruleset requires a check by that name.
+    name: ${{ matrix.database == 'sqlite' && 'backend' || format('backend ({0})', matrix.database) }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
