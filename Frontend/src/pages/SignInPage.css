@@ -180,3 +180,25 @@
   font-size: 0.85rem;
   text-align: right;
 }
+
+.authPasswordRules {
+  margin-top: -6px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.authPasswordRules p { margin: 0 0 4px; }
+.authPasswordRules ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.authPasswordRules li { display: flex; gap: 6px; }
+.authPasswordRules li > span[aria-hidden] { flex: 0 0 1em; text-align: center; }
+.authPasswordRules li.is-met { color: #4ade80; }
+
+/* Visually hidden, read by screen readers. */
+.authSr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

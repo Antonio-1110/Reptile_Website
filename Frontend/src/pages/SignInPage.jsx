@@ -119,6 +119,7 @@ export default function SignInPage() {
           {field('username', t('auth.username'), 'text', 'username')}
           {isRegister && field('email', t('auth.email'), 'email', 'email')}
           {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password', isRegister ? 'password-rules' : undefined)}
+          {!isRegister && <p className="authForgot"><Link to="/forgot-password">{t('accountEmail.forgotLink')}</Link></p>}
           {isRegister && (
             // Shown up front rather than only after a rejected attempt; the server still has the final say.
             <div id="password-rules" className="authPasswordRules">

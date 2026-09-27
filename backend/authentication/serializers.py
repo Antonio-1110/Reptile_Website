@@ -84,7 +84,7 @@ class PasswordResetConfirmSerializer(EmailLinkSerializer):
     def validate(self, attrs):
         attrs = super().validate(attrs)
         try:
-            validate_password(attrs['password'], attrs['user'])
+            password_validation.validate_password(attrs['password'], attrs['user'])
         except DjangoValidationError as error:
             raise serializers.ValidationError({'password': list(error.messages)})
         return attrs
