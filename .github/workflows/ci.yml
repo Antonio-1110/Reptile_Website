@@ -125,7 +125,8 @@ jobs:
           cache-dependency-path: Frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npm test
+      # The unit tests, with a coverage summary in the log.
+      - run: npm run test:coverage
       - run: npm run build
 
   e2e:

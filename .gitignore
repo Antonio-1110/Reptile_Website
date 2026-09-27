@@ -35,6 +35,7 @@ backend/media/
 backend/.e2e/
 Frontend/test-results/
 Frontend/playwright-report/
+Frontend/coverage/
 backend/staticfiles/
 # Compiled translations: built from the .po files by compilemessages (start-dev.sh, tests, CI)
 backend/locale/*/LC_MESSAGES/*.mo
