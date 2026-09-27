@@ -142,6 +142,12 @@ Post and image constraints are enforced in backend serializer logic (`PostLimitS
 only on the frontend, so the rules remain consistent across all clients. The frontend mirrors these
 limits for immediate user feedback but is never the enforcement authority.
 
+## Deployment
+
+Production runs the frontend on Vercel (`reptilian.app`), the API on Heroku with Postgres
+(`api.reptilian.app`) and uploaded photos on S3. [DEPLOYMENT.md](DEPLOYMENT.md) lists the one-time
+setup and every environment variable.
+
 ## Contributor notes
 
 - Keep frontend and backend responsibilities separated; treat the backend as the source of truth for

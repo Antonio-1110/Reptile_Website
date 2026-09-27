@@ -666,6 +666,18 @@ class ListingPhotoUploadTests(APITestCase):
 		self.assertEqual(len(self.post.gallery), 1)
 		self.assertEqual(len(self.stored_files()), 1)
 
+	def test_reupload_deletes_previous_uploads_when_media_lives_on_another_host(self):
+		# Production stores photos on S3, so MEDIA_URL is an absolute URL on the bucket's host.
+		with override_settings(MEDIA_URL='https://photos.example.com/media/'):
+			self.client.force_authenticate(self.seller)
+			self.upload([make_image('a.png')])
+			self.post.refresh_from_db()
+			self.assertTrue(self.post.image.startswith('https://photos.example.com/media/listings/'))
+
+			self.upload([make_image('b.png')])
+
+		self.assertEqual(len(self.stored_files()), 1)
+
 	def test_equipment_listing_accepts_photos(self):
 		tank = EquipmentPost.objects.create(account=self.seller, title='Tank', description='d', contact_info='')
 		self.client.force_authenticate(self.seller)
