@@ -426,3 +426,33 @@ export async function reportListing(id, category = "live_animal") {
 export function listingPagePath(id, category = "live_animal") {
   return category === "equipment" ? `/equipment/${id}` : `/posts/${id}`;
 }
+
+// --- Inquiries (contact requests) ----------------------------------------------------------------
+
+function normalizeInquiry(item) {
+  return {
+    id: item.id,
+    role: item.role,
+    listing: item.listing,
+    listingPath: `${item.listing.category === "equipment" ? "/equipment" : "/posts"}/${item.listing.id}`,
+    seller: { id: item.seller.id, displayName: item.seller.display_name },
+    // Only on inquiries the viewer received: the details the buyer chose to send them.
+    buyer: item.buyer,
+    createdAt: new Date(item.created_at),
+    repliedAt: item.replied_at ? new Date(item.replied_at) : null,
+  };
+}
+
+// One page of the signed-in user's inquiries, newest first; `role` is "buyer" (sent), "seller"
+// (received) or "" (both).
+export async function getInquiriesPage({ role = "", page = 1 } = {}) {
+  const params = new URLSearchParams({ page });
+  if (role) params.set("role", role);
+  const payload = await requestWithAuth(`/posts/inquiries/?${params}`, { method: "GET" });
+  return { results: payload.results.map(normalizeInquiry), count: payload.count, hasMore: Boolean(payload.next) };
+}
+
+// Seller: they've been in touch. The API emails the buyer (only the first time).
+export async function markInquiryReplied(id) {
+  return normalizeInquiry(await requestWithAuth(`/posts/inquiries/${id}/replied/`, { method: "POST" }));
+}

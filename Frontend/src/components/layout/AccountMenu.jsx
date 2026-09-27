@@ -42,6 +42,7 @@ export default function AccountMenu({ onSignOut }) {
   const links = [
     ['/my-listings', t('navigation.myListings')],
     ['/orders', t('myOrders.title')],
+    ['/inquiries', t('inquiries.title')],
     ['/saved', t('accountMenu.savedListings')],
     ['/saved-searches', t('savedSearches.title')],
     ['/settings', t('accountSettings.title')],
