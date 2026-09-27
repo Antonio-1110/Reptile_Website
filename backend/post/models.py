@@ -185,11 +185,16 @@ class LiveAnimalPost(BasePost):
 
 
 class ContactRequest(models.Model):
-    """Records that a buyer sent their contact details to a seller, so a listing is only emailed once."""
+    """
+    An inquiry: a buyer sent their contact details to a seller about a listing (so a listing is only
+    emailed once per buyer). The seller marks it replied once they've reached out, which tells the buyer.
+    """
     requester = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contact_requests_sent')
     live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='contact_requests')
     equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='contact_requests')
     created_at = models.DateTimeField(auto_now_add=True)
+    # When the seller said they'd got in touch; null while the buyer is still waiting.
+    replied_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Contact Request'

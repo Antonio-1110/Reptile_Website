@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 from . import species as species_catalog
-from .models import EquipmentPost, LiveAnimalPost, SavedSearch, Species
+from .models import ContactRequest, EquipmentPost, LiveAnimalPost, SavedSearch, Species
 from account.serializers import PublicSellerSerializer
 
 
@@ -313,3 +313,40 @@ class SavedSearchSerializer(serializers.ModelSerializer):
             query = attrs['query'] if 'query' in attrs else self.instance.query
             attrs['name'] = QueryDict(query).get('search') or _('Marketplace search')
         return attrs
+
+
+class InquirySerializer(serializers.ModelSerializer):
+    """
+    A contact request as its buyer or seller sees it (`role` says which the viewer is). The seller gets
+    the buyer's details, which the buyer chose to send them; the buyer only ever sees the seller's public
+    profile, as on the listing.
+    """
+    role = serializers.SerializerMethodField()
+    listing = serializers.SerializerMethodField()
+    seller = PublicSellerSerializer(source='post.account', read_only=True)
+    buyer = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ContactRequest
+        fields = ['id', 'role', 'listing', 'seller', 'buyer', 'created_at', 'replied_at']
+        read_only_fields = fields
+
+    def _is_seller(self, inquiry):
+        return inquiry.post.account_id == self.context['request'].user.id
+
+    def get_role(self, inquiry):
+        return 'seller' if self._is_seller(inquiry) else 'buyer'
+
+    def get_listing(self, inquiry):
+        post = inquiry.post
+        return {
+            'id': post.id,
+            'category': 'live_animal' if inquiry.live_animal_post_id else 'equipment',
+            'title': post.title,
+            'image': post.image,
+        }
+
+    def get_buyer(self, inquiry):
+        if not self._is_seller(inquiry):
+            return None
+        return inquiry.requester.contact_details()

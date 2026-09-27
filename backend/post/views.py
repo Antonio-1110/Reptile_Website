@@ -15,7 +15,7 @@ from authentication.permissions import HasVerifiedEmail
 from common.money import format_money
 from common.notifications import contact_lines, send_notification
 from .serializer import (
-    SavedSearchSerializer,
+    InquirySerializer, SavedSearchSerializer,
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
     ListingPhotoUploadSerializer,
 )
@@ -40,20 +40,68 @@ class IsPostOwnerOrReadOnly(permissions.BasePermission):
         return obj.account == request.user
 
 
+def listing_url(post):
+    """The listing's page on the website, for links in emails."""
+    path = 'posts' if isinstance(post, LiveAnimalPost) else 'equipment'
+    return f'{settings.FRONTEND_URL}/{path}/{post.id}'
+
+
+def inquiries_url(role):
+    return f'{settings.FRONTEND_URL}/inquiries?role={role}'
+
+
 def send_inquiry_to_seller(requester, post):
     """Email the seller the interested buyer's contact details, so the seller can reach out."""
     values = {'name': requester.get_display_name(), 'title': post.title}
+    details = requester.contact_details()
 
     def build():
         subject = _('New inquiry about your listing: %(title)s') % values
         body = (
             _('%(name)s is interested in your listing "%(title)s" on Reptilian and asked us to pass on their contact details:') % values
-            + '\n\n' + contact_lines(requester.contact_details()) + '\n\n'
+            + '\n\n' + contact_lines(details) + '\n\n'
             + _('Please contact them directly. We never share your own contact details with buyers who ask.')
+            + '\n\n' + _('The listing: %(url)s') % {'url': listing_url(post)}
+            + '\n' + _('Once you have been in touch, mark the inquiry as replied so the buyer knows to look out for your message: %(url)s') % {'url': inquiries_url('seller')}
         )
         return subject, body
 
-    send_notification([post.account.email], build)
+    # "Reply" in the seller's mail app goes to the buyer. The seller's address is only revealed if they
+    # choose to answer that way, the same as any other way they contact the buyer.
+    send_notification([post.account.email], build, reply_to=details.get('email'))
+
+
+def confirm_inquiry_to_buyer(requester, post):
+    """Tell the buyer what was sent and to whom, so they know to expect the seller's message."""
+    values = {'seller': post.account.get_display_name(), 'title': post.title}
+
+    def build():
+        subject = _('Your details were sent to the seller: %(title)s') % values
+        body = (
+            _('We sent your contact details to %(seller)s about "%(title)s". They will get in touch with you directly; the seller\'s own details stay private until then.') % values
+            + '\n\n' + contact_lines(requester.contact_details()) + '\n\n'
+            + _('The listing: %(url)s') % {'url': listing_url(post)}
+            + '\n' + _('Your inquiries: %(url)s') % {'url': inquiries_url('buyer')}
+        )
+        return subject, body
+
+    send_notification([requester.email], build)
+
+
+def notify_buyer_of_reply(inquiry):
+    """The seller says they've contacted the buyer: tell the buyer where to look."""
+    post = inquiry.post
+    values = {'seller': post.account.get_display_name(), 'title': post.title}
+
+    def build():
+        subject = _('The seller got back to you: %(title)s') % values
+        body = (
+            _('%(seller)s says they have contacted you about "%(title)s". Look for their message by email, phone, LINE or social media, using the details you sent them.') % values
+            + '\n\n' + _('The listing: %(url)s') % {'url': listing_url(post)}
+        )
+        return subject, body
+
+    send_notification([inquiry.requester.email], build)
 
 
 def notify_price_drop(post, old_price, favorite_field):
@@ -149,6 +197,7 @@ class ContactSellerMixin:
         if not requests.exists():
             ContactRequest.objects.create(requester=requester, **{self.contact_request_field: post})
             send_inquiry_to_seller(requester, post)
+            confirm_inquiry_to_buyer(requester, post)
 
         return Response({
             'detail': _("We've sent your contact details to the seller. They'll get in touch with you."),
@@ -336,3 +385,39 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Alerts cover listings posted from now on, not everything that already matches.
         serializer.save(account=self.request.user, last_alerted_at=timezone.now())
+
+
+class InquiryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Contact requests the signed-in user sent (as buyer) or received (as seller), newest first;
+    `?role=buyer|seller` narrows to one side. The seller marks one replied with POST `<id>/replied/`,
+    which emails the buyer.
+    """
+    serializer_class = InquirySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        received = Q(live_animal_post__account=user) | Q(equipment_post__account=user)
+        role = self.request.query_params.get('role')
+        scope = {'buyer': Q(requester=user), 'seller': received}.get(role, Q(requester=user) | received)
+        return (
+            ContactRequest.objects.filter(scope)
+            .select_related('requester', 'live_animal_post__account', 'equipment_post__account')
+            .order_by('-created_at', '-id')
+        )
+
+    @action(detail=True, methods=['post'])
+    def replied(self, request, pk=None):
+        inquiry = self.get_object()
+        if inquiry.post.account_id != request.user.id:
+            return Response(
+                {'detail': _('Only the seller can mark an inquiry as replied.')},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        # Only the first time emails the buyer, so repeat clicks can't spam them.
+        if inquiry.replied_at is None:
+            inquiry.replied_at = timezone.now()
+            inquiry.save(update_fields=['replied_at'])
+            notify_buyer_of_reply(inquiry)
+        return Response(self.get_serializer(inquiry).data)
