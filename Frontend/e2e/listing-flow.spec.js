@@ -49,10 +49,12 @@ test('seller lists an animal with a photo; a buyer views it and contacts the sel
   // Seller: the inquiry waits in their inbox with the buyer's details; they mark it replied.
   await signOut(page);
   await signIn(page, 'kevin_chen', '/inquiries');
+  // No email goes out (#91): the account menu tells the seller an inquiry is waiting.
+  await expect(page.getByRole('button', { name: /inquir(y|ies) waiting for your reply/ })).toBeVisible();
   const received = page.getByRole('listitem').filter({ hasText: title });
   await expect(received.getByText('buyer_hsu', { exact: true })).toBeVisible();
   await received.getByRole('button', { name: 'Mark as replied' }).click();
-  await expect(received.getByText("We've let the buyer know.")).toBeVisible();
+  await expect(received.getByText(/Marked as replied\. The buyer sees it/)).toBeVisible();
 
   // Buyer: sees that the seller got back to them.
   await signOut(page);

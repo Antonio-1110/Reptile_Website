@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { getInquiriesPage, isLoggedIn, markInquiryReplied } from '../../api/listingsApi';
+import { INQUIRIES_CHANGED } from '../../components/layout/AccountMenu';
 import { formatDateTime } from '../../utils/auctionFormat';
 import { errorText, toErrorState } from '../../utils/errorState';
 import ContactLines from '../ListingDetail/components/ContactLines';
@@ -50,6 +51,7 @@ export default function InquiriesPage() {
         inquiries: current.inquiries.map((item) => (item.id === updated.id ? updated : item)),
       }));
       setRowMessage((current) => ({ ...current, [inquiry.id]: { ok: true } }));
+      window.dispatchEvent(new Event(INQUIRIES_CHANGED));
     } catch {
       setRowMessage((current) => ({ ...current, [inquiry.id]: { ok: false } }));
     } finally {

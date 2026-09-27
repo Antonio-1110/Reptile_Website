@@ -13,7 +13,7 @@ from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
 from authentication.permissions import HasVerifiedEmail
 from common.money import format_money
-from common.notifications import contact_lines, send_notification
+from common.notifications import send_notification
 from .serializer import (
     InquirySerializer, SavedSearchSerializer,
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
@@ -38,70 +38,6 @@ class IsPostOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.account == request.user
-
-
-def listing_url(post):
-    """The listing's page on the website, for links in emails."""
-    path = 'posts' if isinstance(post, LiveAnimalPost) else 'equipment'
-    return f'{settings.FRONTEND_URL}/{path}/{post.id}'
-
-
-def inquiries_url(role):
-    return f'{settings.FRONTEND_URL}/inquiries?role={role}'
-
-
-def send_inquiry_to_seller(requester, post):
-    """Email the seller the interested buyer's contact details, so the seller can reach out."""
-    values = {'name': requester.get_display_name(), 'title': post.title}
-    details = requester.contact_details()
-
-    def build():
-        subject = _('New inquiry about your listing: %(title)s') % values
-        body = (
-            _('%(name)s is interested in your listing "%(title)s" on Reptilian and asked us to pass on their contact details:') % values
-            + '\n\n' + contact_lines(details) + '\n\n'
-            + _('Please contact them directly. We never share your own contact details with buyers who ask.')
-            + '\n\n' + _('The listing: %(url)s') % {'url': listing_url(post)}
-            + '\n' + _('Once you have been in touch, mark the inquiry as replied so the buyer knows to look out for your message: %(url)s') % {'url': inquiries_url('seller')}
-        )
-        return subject, body
-
-    # "Reply" in the seller's mail app goes to the buyer. The seller's address is only revealed if they
-    # choose to answer that way, the same as any other way they contact the buyer.
-    send_notification([post.account.email], build, reply_to=details.get('email'))
-
-
-def confirm_inquiry_to_buyer(requester, post):
-    """Tell the buyer what was sent and to whom, so they know to expect the seller's message."""
-    values = {'seller': post.account.get_display_name(), 'title': post.title}
-
-    def build():
-        subject = _('Your details were sent to the seller: %(title)s') % values
-        body = (
-            _('We sent your contact details to %(seller)s about "%(title)s". They will get in touch with you directly; the seller\'s own details stay private until then.') % values
-            + '\n\n' + contact_lines(requester.contact_details()) + '\n\n'
-            + _('The listing: %(url)s') % {'url': listing_url(post)}
-            + '\n' + _('Your inquiries: %(url)s') % {'url': inquiries_url('buyer')}
-        )
-        return subject, body
-
-    send_notification([requester.email], build)
-
-
-def notify_buyer_of_reply(inquiry):
-    """The seller says they've contacted the buyer: tell the buyer where to look."""
-    post = inquiry.post
-    values = {'seller': post.account.get_display_name(), 'title': post.title}
-
-    def build():
-        subject = _('The seller got back to you: %(title)s') % values
-        body = (
-            _('%(seller)s says they have contacted you about "%(title)s". Look for their message by email, phone, LINE or social media, using the details you sent them.') % values
-            + '\n\n' + _('The listing: %(url)s') % {'url': listing_url(post)}
-        )
-        return subject, body
-
-    send_notification([inquiry.requester.email], build)
 
 
 def notify_price_drop(post, old_price, favorite_field):
@@ -167,7 +103,8 @@ class FavoritesMixin:
 class ContactSellerMixin:
     """
     Adds a `/contact/` action that passes the requester's contact details on to the seller, who then
-    gets in touch. The seller's own details are never revealed here (that would let anyone with an
+    gets in touch. The details reach the seller on their Inquiries page (InquiryViewSet), not by email:
+    email costs money per message and the site already shows them. The seller's own details are never revealed here (that would let anyone with an
     account harvest them); they're only shared with a buyer who has paid (see auction.services).
     GET previews exactly what would be sent; POST sends it.
     """
@@ -193,11 +130,9 @@ class ContactSellerMixin:
         if request.method == 'GET':
             return Response({'contact': requester.contact_details(), 'already_sent': requests.exists()})
 
-        # Only the first request per buyer/listing emails the seller, so repeat clicks can't spam them.
+        # One inquiry per buyer and listing, so repeat clicks can't flood the seller's inbox.
         if not requests.exists():
             ContactRequest.objects.create(requester=requester, **{self.contact_request_field: post})
-            send_inquiry_to_seller(requester, post)
-            confirm_inquiry_to_buyer(requester, post)
 
         return Response({
             'detail': _("We've sent your contact details to the seller. They'll get in touch with you."),
@@ -391,7 +326,8 @@ class InquiryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     Contact requests the signed-in user sent (as buyer) or received (as seller), newest first;
     `?role=buyer|seller` narrows to one side. The seller marks one replied with POST `<id>/replied/`,
-    which emails the buyer.
+    which the buyer sees on their own Inquiries page. `waiting/` counts received inquiries not yet
+    marked replied, for the badge in the account menu.
     """
     serializer_class = InquirySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -415,9 +351,14 @@ class InquiryViewSet(viewsets.ReadOnlyModelViewSet):
                 {'detail': _('Only the seller can mark an inquiry as replied.')},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        # Only the first time emails the buyer, so repeat clicks can't spam them.
+        # The first time counts: repeat clicks keep the original date.
         if inquiry.replied_at is None:
             inquiry.replied_at = timezone.now()
             inquiry.save(update_fields=['replied_at'])
-            notify_buyer_of_reply(inquiry)
         return Response(self.get_serializer(inquiry).data)
+
+    @action(detail=False, methods=['get'])
+    def waiting(self, request):
+        user = request.user
+        received = Q(live_animal_post__account=user) | Q(equipment_post__account=user)
+        return Response({'count': ContactRequest.objects.filter(received, replied_at__isnull=True).count()})
