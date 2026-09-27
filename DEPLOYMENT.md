@@ -75,7 +75,7 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    | Name | Value |
    | --- | --- |
    | `DJANGO_SECRET_KEY` | a long random string: run `python -c "import secrets; print(secrets.token_urlsafe(50))"` |
-   | `DJANGO_ALLOWED_HOSTS` | `api.reptilian.app,reptilian-api.herokuapp.com` (use your app's real herokuapp name) |
+   | `DJANGO_ALLOWED_HOSTS` | `api.reptilian.app,reptilian-api.herokuapp.com` (bare host names, no `https://`; use your app's real herokuapp name) |
    | `DJANGO_CORS_ALLOWED_ORIGINS` | `https://reptilian.app,https://www.reptilian.app` |
    | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://api.reptilian.app` |
    | `DJANGO_FRONTEND_URL` | `https://reptilian.app` |
@@ -101,7 +101,7 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    target like `something.herokudns.com`; copy it for step 4. Under **SSL Certificates**, choose
    **Automatic Certificate Management**.
 
-Check: `https://reptilian-api.herokuapp.com/api/posts/species/` returns JSON, and
+Check: `https://reptilian-api.herokuapp.com/api/v1/posts/species/` returns JSON, and
 `/admin/` shows a styled login page.
 
 ## 3. Vercel project for the frontend
