@@ -159,20 +159,15 @@ else:
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+# The whole policy: 8+ characters with both letters and numbers. The sign-up and reset forms list the
+# same rules (Frontend/src/constants/passwordRules.js); keep them in step.
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js); keep it in step.
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': 8},
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'common.passwords.LettersAndNumbersValidator',
     },
 ]
 

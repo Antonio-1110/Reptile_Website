@@ -29,9 +29,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        # Run with the new account's username and email: as a bare field validator, "too similar to
-        # your username or email" was silently skipped. Still per-field, so these errors come back
-        # together with any username or email errors.
+        # Given the new account's username and email, so any validator that compares against them
+        # works. Still per-field, so these errors come back together with any username or email errors.
         user = Account(username=self.initial_data.get('username', ''), email=self.initial_data.get('email', ''))
         try:
             password_validation.validate_password(value, user=user)
