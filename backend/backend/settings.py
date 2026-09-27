@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     'post',
@@ -378,6 +379,10 @@ if not DEBUG:
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': False,
+    # Each refresh hands out a new refresh token and retires the old one, and signing out retires the
+    # current one (auth/logout/), so a copied token stops working instead of lasting its full lifetime.
+    # Expired entries pile up in the blacklist tables: `manage.py flushexpiredtokens` clears them.
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }

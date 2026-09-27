@@ -34,6 +34,25 @@ describe('authFetch', () => {
     expect(fetchMock.mock.calls[2][1].headers.Authorization).toBe('Bearer new');
   });
 
+  it('keeps the session when another tab already used the refresh token', async () => {
+    localStorage.setItem('accessToken', 'old');
+    localStorage.setItem('refreshToken', 'used-elsewhere');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(json({ detail: 'expired' }, 401))
+      .mockImplementationOnce(async () => {
+        // The other tab finished its refresh while this one was waiting.
+        localStorage.setItem('accessToken', 'from-other-tab');
+        localStorage.setItem('refreshToken', 'rotated');
+        return json({ detail: 'Token is blacklisted' }, 401);
+      })
+      .mockResolvedValueOnce(json({ ok: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(authFetch('/x/')).resolves.toEqual({ ok: true });
+    expect(fetchMock.mock.calls[2][1].headers.Authorization).toBe('Bearer from-other-tab');
+    expect(localStorage.getItem('refreshToken')).toBe('rotated');
+  });
+
   it('does not set a JSON content type on FormData uploads', async () => {
     const fetchMock = vi.fn(async () => json({}));
     vi.stubGlobal('fetch', fetchMock);
@@ -49,8 +68,26 @@ describe('login / logout', () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ access: 'a', refresh: 'r' })));
     await login('user', 'pass');
     expect(isLoggedIn()).toBe(true);
-    logout();
+    await logout();
     expect(isLoggedIn()).toBe(false);
     expect(localStorage.getItem('refreshToken')).toBeNull();
+  });
+
+  it('retires the refresh token on the server when logging out', async () => {
+    localStorage.setItem('accessToken', 'a');
+    localStorage.setItem('refreshToken', 'r');
+    const fetchMock = vi.fn(async () => json({}));
+    vi.stubGlobal('fetch', fetchMock);
+    await logout();
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/auth\/logout\/$/);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ refresh: 'r' });
+  });
+
+  it('still logs out locally when the server cannot be reached', async () => {
+    localStorage.setItem('accessToken', 'a');
+    localStorage.setItem('refreshToken', 'r');
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    await logout();
+    expect(isLoggedIn()).toBe(false);
   });
 });

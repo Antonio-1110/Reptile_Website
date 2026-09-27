@@ -251,11 +251,13 @@ object (`PublicSellerSerializer`: public standing only, no contact details or pl
 ### Auth (`/api/v1/auth/`, JWT)
 
 The only authentication is JWT (SimpleJWT); the old token endpoints under `/api/auth/` were retired.
-Log out by discarding the tokens on the client.
+Each refresh token works once: `refresh/` returns a new pair and retires the old refresh token, and
+`logout/` retires the current one.
 
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
 - `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
-- `POST /refresh/` — `refresh` → new `access`
+- `POST /refresh/` — `refresh` → new `access` and `refresh` (the old refresh token stops working)
+- `POST /logout/` — `refresh`; retires it (401 if it's invalid or already retired)
 - `GET /me/` (auth required) — `id`, `username`, `email`, `verified_seller`
 
 Send the access token as `Authorization: Bearer <access>`.

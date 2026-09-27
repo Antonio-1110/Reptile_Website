@@ -64,8 +64,8 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   const currentPath = `${location.pathname}${location.search}`;
   const signInHref = location.pathname === '/signin' ? currentPath : `/signin?next=${encodeURIComponent(currentPath)}`;
   // Signing out reloads the app rather than navigating, so nothing from the old session lingers.
-  const handleSignOut = () => {
-    logout();
+  const handleSignOut = async () => {
+    await logout();
     window.location.href = '/marketplace';
   };
   const selectSuggestion = (option) => {
