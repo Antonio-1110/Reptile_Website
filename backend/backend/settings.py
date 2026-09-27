@@ -339,6 +339,11 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY': 'detail',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    # How many proxies sit in front of Django and append to X-Forwarded-For. Rate limits key anonymous
+    # callers by IP; with this unset DRF would key them by the whole header, which the caller writes
+    # themselves, so a changing fake value would dodge every limit. Heroku's router is one proxy (it
+    # appends the real client address); without the header (local dev) the socket address is used.
+    'NUM_PROXIES': env_int('DJANGO_NUM_PROXIES', 1),
     # Rate limits for endpoints that invite abuse (views opt in with ScopedRateThrottle + throttle_scope).
     # Counted per signed-in user, or per IP address for anonymous requests.
     'DEFAULT_THROTTLE_RATES': {

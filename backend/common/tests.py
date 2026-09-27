@@ -48,6 +48,27 @@ class RateLimitTests(APITestCase):
         self.client.force_authenticate(other)
         self.assertEqual(self.client.post(url).status_code, 200)
 
+    def test_a_faked_forwarded_for_header_does_not_dodge_the_limit(self):
+        # Heroku's router appends the real client address to whatever X-Forwarded-For the caller sent.
+        url = reverse('jwt-login')
+        codes = [
+            self.client.post(
+                url, {'username': 'buyer', 'password': 'wrong'},
+                HTTP_X_FORWARDED_FOR=f'10.0.0.{n}, 203.0.113.7', REMOTE_ADDR='10.1.1.1',
+            ).status_code
+            for n in range(3)
+        ]
+        self.assertEqual(codes, [401, 401, 429])
+
+    def test_limits_are_per_client_address_behind_the_proxy(self):
+        url = reverse('jwt-login')
+        for _ in range(2):
+            self.client.post(url, {'username': 'buyer', 'password': 'wrong'}, HTTP_X_FORWARDED_FOR='203.0.113.7')
+        response = self.client.post(
+            url, {'username': 'buyer', 'password': 'wrong'}, HTTP_X_FORWARDED_FOR='198.51.100.9',
+        )
+        self.assertEqual(response.status_code, 401)
+
 
 class ApiConventionTests(APITestCase):
     """The conventions every endpoint follows (see common/exceptions.py and the root urls.py)."""
