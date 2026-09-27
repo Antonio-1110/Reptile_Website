@@ -27,8 +27,9 @@ class RegisterTests(APITestCase):
         self.assertTrue(user.check_password('S3curePass!23'))
 
     def test_register_enforces_the_password_rules_the_form_lists(self):
-        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js).
-        for password in ['Ab1!xyz', '8675309123', 'newuser99', 'password123']:
+        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js): 8+ characters,
+        # with both English letters and numbers.
+        for password in ['abc1234', '8675309123', 'onlyletters', '!!!!!!!!']:
             with self.subTest(password=password):
                 response = self.client.post(reverse('jwt-register'), {
                     'username': 'newuser99', 'email': 'someone@example.com', 'password': password,
@@ -36,6 +37,15 @@ class RegisterTests(APITestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertIn('password', response.data)
         self.assertFalse(Account.objects.filter(username='newuser99').exists())
+
+    def test_register_accepts_any_password_with_8_characters_letters_and_numbers(self):
+        # No similarity or common-password checks any more (the owner's call).
+        for number, password in enumerate(['abcd1234', 'newuser99', 'password1']):
+            with self.subTest(password=password):
+                response = self.client.post(reverse('jwt-register'), {
+                    'username': f'newuser9{number}', 'email': f'user{number}@example.com', 'password': password,
+                })
+                self.assertEqual(response.status_code, 201, response.data)
 
     def test_register_rejects_duplicate_username(self):
         Account.objects.create_user(username='taken', email='taken@example.com', password='pass12345')
@@ -176,14 +186,14 @@ class ApiLanguageTests(APITestCase):
         response = self.register()
 
         self.assertEqual(response.data['username'], ['A user with that username already exists.'])
-        self.assertIn('This password is too common.', response.data['password'])
+        self.assertIn('Your password must contain both English letters and numbers.', response.data['password'])
 
     def test_messages_follow_accept_language(self):
         response = self.register(HTTP_ACCEPT_LANGUAGE='zh-Hant')
 
-        # Django's built-in model/password-validator messages come back translated.
+        # Django's built-in model messages and our password rule come back translated.
         self.assertEqual(response.data['username'], ['一個相同名稱的使用者已經存在。'])
-        self.assertIn('這個密碼太常見了。', response.data['password'])
+        self.assertIn('密碼必須同時包含英文字母和數字。', response.data['password'])
         self.assertEqual(response['Content-Language'], 'zh-hant')
 
     def test_our_own_messages_are_translated(self):

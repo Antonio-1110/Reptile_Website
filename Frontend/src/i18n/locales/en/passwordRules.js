@@ -1,9 +1,7 @@
 export default {
   heading: "Your password must:",
   minLength: "Be at least {{count}} characters long",
-  notNumeric: "Not be only numbers",
-  notSimilar: "Not be too similar to your username or email",
-  notCommon: "Not be a commonly used password",
+  lettersAndNumbers: "Contain both English letters and numbers",
   met: "Done",
   notMet: "Not yet",
 };
