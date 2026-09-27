@@ -1,6 +1,8 @@
 Django==5.2.8
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.5.1
+# RS256 signature checks for Google sign-in ID tokens (PyJWT, already installed with SimpleJWT, needs it)
+cryptography==50.0.1
 django-cors-headers==4.3.1
 django-filter==24.1
 Pillow==11.3.0

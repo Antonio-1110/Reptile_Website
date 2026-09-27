@@ -61,6 +61,11 @@ class LoginSerializer(TokenObtainPairSerializer):
         return super().validate(attrs)
 
 
+class GoogleSignInSerializer(serializers.Serializer):
+    """`credential`: the ID token Google Identity Services hands the browser."""
+    credential = serializers.CharField()
+
+
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account

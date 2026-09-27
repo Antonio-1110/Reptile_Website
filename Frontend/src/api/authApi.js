@@ -130,6 +130,11 @@ export async function login(username, password) {
   writeTokens(await postJson("/login/", { username, password }));
 }
 
+// `credential` is the ID token from Google's sign-in button; the answer is the same token pair as login.
+export async function googleSignIn(credential) {
+  writeTokens(await postJson("/google/", { credential }));
+}
+
 export async function register({ username, email, password }) {
   await postJson("/register/", { username, email, password });
   try {

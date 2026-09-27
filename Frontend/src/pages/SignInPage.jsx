@@ -2,8 +2,9 @@ import './SignInPage.css';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { login, register } from '../api/authApi';
+import { googleSignIn, login, register } from '../api/authApi';
 import PasswordRules from '../components/ui/PasswordRules';
+import GoogleSignInButton from './SignIn/GoogleSignInButton';
 
 // Only allow same-site relative redirects, so ?next= can't send users off-site.
 function getNextPath() {
@@ -82,6 +83,18 @@ export default function SignInPage() {
     }
   };
 
+  const handleGoogleCredential = async (credential) => {
+    setSubmitting(true);
+    setErrors({});
+    try {
+      await googleSignIn(credential);
+      window.location.href = getNextPath();
+    } catch (error) {
+      setSubmitting(false);
+      setErrors({ form: error.message || t('auth.genericError') });
+    }
+  };
+
   const field = (name, label, type = 'text', autoComplete = undefined, describedBy = undefined) => (
     <label className="authField">
       <span>{label}</span>
@@ -129,6 +142,8 @@ export default function SignInPage() {
             {submitting ? t('auth.pleaseWait') : (isRegister ? t('auth.createAccount') : t('auth.signIn'))}
           </button>
         </form>
+
+        <GoogleSignInButton onCredential={handleGoogleCredential} disabled={submitting} />
 
         <p className="authSwitch">
           {isRegister ? t('auth.haveAccount') : t('auth.noAccount')}{' '}

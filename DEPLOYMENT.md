@@ -155,10 +155,32 @@ simplest option (its free plan is enough to start):
 
 Amazon SES works the same way with its own SMTP host and credentials.
 
-## 6. Final check
+## 6. Google sign-in (optional, free)
+
+The "Continue with Google" button appears once both apps know your Google OAuth client ID. Only the
+client ID is used: it isn't secret (every visitor's browser sees it), and the client secret Google also
+shows you isn't needed anywhere.
+
+1. At <https://console.cloud.google.com>, create a project (e.g. `Reptilian`).
+2. **Google Auth Platform → Branding**: app name `Reptilian`, your support email, and under
+   **Audience** choose **External**.
+3. **Clients → Create client**: type **Web application**. Under **Authorized JavaScript origins** add
+   `https://reptilian.app`, `https://www.reptilian.app` and, for local testing, `http://localhost:5173`
+   and `http://localhost`. No redirect URIs are needed. Copy the **Client ID** (it ends in
+   `.apps.googleusercontent.com`).
+4. **Audience → Publish app**, so any Google account can sign in, not just test users. The site asks
+   only for name and email, so Google doesn't need to review it.
+5. Heroku config var `DJANGO_GOOGLE_CLIENT_ID` = the client ID.
+6. Vercel environment variable `VITE_GOOGLE_CLIENT_ID` = the same client ID, then redeploy.
+
+Vercel preview links aren't in the list of origins, so the Google button won't work on them.
+
+## 7. Final check
 
 - `https://reptilian.app` loads, a listing page opens directly (e.g. after a refresh), and both
   languages work.
 - Register, sign in, create a listing with a photo: the photo URL starts with your bucket's address.
+- With step 6 done, "Continue with Google" on the sign-in page signs you in (a new Google user gets an
+  account with a username made from their email address).
 - `https://api.reptilian.app/<your DJANGO_ADMIN_URL>` lets the staff account in, and `/admin/` is a 404.
 - `http://api.reptilian.app/…` redirects to `https://`.

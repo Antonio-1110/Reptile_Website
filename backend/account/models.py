@@ -39,6 +39,8 @@ class Account(AbstractUser):
     # address) sets it to False; accounts made by staff, the seed data and existing accounts count as
     # verified. Unverified accounts can't post, contact sellers or bid (authentication.permissions).
     email_verified = models.BooleanField(default=True)
+    # The Google account ("sub" claim) linked by signing in with Google (authentication/google.py).
+    google_id = models.CharField(max_length=255, unique=True, null=True, blank=True, editable=False)
     is_paid_account = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

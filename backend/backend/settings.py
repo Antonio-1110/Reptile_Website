@@ -381,6 +381,10 @@ ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/') + '/'
 LOGIN_LOCKOUT_FAILURES = env_int('LOGIN_LOCKOUT_FAILURES', 5)
 LOGIN_LOCKOUT_MINUTES = env_int('LOGIN_LOCKOUT_MINUTES', 15)
 
+# The OAuth client ID from Google Cloud Console (not a secret: the browser sees it too). Empty turns
+# Google sign-in off. The frontend needs the same value as VITE_GOOGLE_CLIENT_ID.
+GOOGLE_CLIENT_ID = os.environ.get('DJANGO_GOOGLE_CLIENT_ID', '').strip()
+
 # SimpleJWT Configuration
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
