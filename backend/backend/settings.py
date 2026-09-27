@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 import sys
 from pathlib import Path
+
+import dj_database_url
 from datetime import timedelta
 from decimal import Decimal
 
@@ -38,6 +40,11 @@ def env_list(name, default=''):
     return [item.strip() for item in os.environ.get(name, default).split(',') if item.strip()]
 
 
+def env_bool(name, default):
+    value = os.environ.get(name)
+    return default if value is None else value.lower() in ('1', 'true', 'yes')
+
+
 def env_int(name, default):
     return int(os.environ.get(name, default))
 
@@ -47,6 +54,9 @@ def env_decimal(name, default):
 
 
 load_env_file(BASE_DIR / '.env')
+
+# `manage.py test` talks plain HTTP through the test client and must not share throttle counts.
+TESTING = sys.argv[1:2] == ['test']
 
 
 # Quick-start development settings - unsuitable for production
@@ -86,6 +96,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    # Serves the admin's CSS/JS from STATIC_ROOT in production, where nothing else serves /static/.
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Picks the response language from the frontend's Accept-Language header (see LANGUAGES below).
     'django.middleware.locale.LocaleMiddleware',
@@ -122,13 +134,25 @@ AUTH_USER_MODEL = 'account.Account'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        # DJANGO_SQLITE_PATH lets the end-to-end tests run on a throwaway database.
-        'NAME': Path(os.environ.get('DJANGO_SQLITE_PATH', BASE_DIR / 'db.sqlite3')),
+# Production uses PostgreSQL from DATABASE_URL (Heroku Postgres sets it); without it, SQLite.
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ['DATABASE_URL'],
+            conn_max_age=600,
+            conn_health_checks=True,
+            # Heroku Postgres requires TLS; DJANGO_DATABASE_SSL=0 allows a local server without it.
+            ssl_require=env_bool('DJANGO_DATABASE_SSL', not DEBUG),
+        ),
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            # DJANGO_SQLITE_PATH lets the end-to-end tests run on a throwaway database.
+            'NAME': Path(os.environ.get('DJANGO_SQLITE_PATH', BASE_DIR / 'db.sqlite3')),
+        }
+    }
 
 
 # Password validation
@@ -175,6 +199,13 @@ USE_TZ = True
 # Email
 # Prints "sent" emails to the console in dev; swap for a real backend in production.
 EMAIL_BACKEND = os.environ.get('DJANGO_EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+# SMTP server for the smtp backend (any provider's SMTP relay, e.g. Resend or Amazon SES).
+EMAIL_HOST = os.environ.get('DJANGO_EMAIL_HOST', 'localhost')
+EMAIL_PORT = env_int('DJANGO_EMAIL_PORT', 587)
+EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('DJANGO_EMAIL_USE_TLS', True)
+EMAIL_TIMEOUT = 10  # a stuck mail server shouldn't hold a web request forever
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'no-reply@reptile-marketplace.local')
 # Staff addresses that get alerts (e.g. a buyer reporting a problem with an order), comma-separated.
 ADMINS = [('Staff', address) for address in env_list('DJANGO_ADMINS')]
@@ -233,10 +264,43 @@ PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# User-uploaded listing photos. Served by Django only when DEBUG is on; in production point your web
-# server (or object storage) at MEDIA_ROOT.
+# User-uploaded listing photos. Locally they're files in MEDIA_ROOT, served by Django when DEBUG is
+# on. With DJANGO_S3_BUCKET set they go to S3 instead, since Heroku's disk is wiped on every restart.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media'))
+
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    # Compressed but not hashed names: hashing needs collectstatic to have run, which tests don't do.
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
+
+S3_BUCKET = os.environ.get('DJANGO_S3_BUCKET')
+if S3_BUCKET:
+    S3_REGION = os.environ.get('DJANGO_S3_REGION')
+    if not S3_REGION:
+        raise ImproperlyConfigured('Set DJANGO_S3_REGION (e.g. ap-northeast-1) along with DJANGO_S3_BUCKET.')
+    S3_DOMAIN = os.environ.get('DJANGO_S3_CUSTOM_DOMAIN') or f'{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com'
+    S3_LOCATION = 'media'
+    # Credentials come from AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, which boto3 reads itself.
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'bucket_name': S3_BUCKET,
+            'region_name': S3_REGION,
+            'custom_domain': S3_DOMAIN,
+            'location': S3_LOCATION,
+            # Listings store the photo URLs, so they must be plain public URLs that never expire; the
+            # bucket policy grants public read (new buckets have ACLs switched off).
+            'querystring_auth': False,
+            'default_acl': None,
+            'file_overwrite': False,
+            # Upload names are random and never reused, so browsers may cache photos for good.
+            'object_parameters': {'CacheControl': 'public, max-age=31536000, immutable'},
+        },
+    }
+    # Stored photo URLs start with this, which is how ListingPhotosMixin recognises its own uploads.
+    MEDIA_URL = f'https://{S3_DOMAIN}/{S3_LOCATION}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -289,13 +353,21 @@ REST_FRAMEWORK = {
 # a single server; with several workers, point CACHES at a shared cache (e.g. Redis) for exact limits.
 # The test suite reuses user ids across tests, so counts would leak between them: tests get a cache
 # that stores nothing (the throttle tests switch a real one back on).
-if sys.argv[1:2] == ['test']:
+if TESTING:
     CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # Heroku's router terminates TLS and tells us the original scheme in X-Forwarded-Proto.
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Redirect plain HTTP to HTTPS; the test client speaks plain HTTP, so tests leave it off.
+    SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', not TESTING)
+    # Every .app domain is already HTTPS-only in browsers (the TLD is on the HSTS preload list), so a
+    # year of HSTS on this host and its subdomains costs nothing. Set 0 on a host that isn't ready.
+    SECURE_HSTS_SECONDS = env_int('DJANGO_SECURE_HSTS_SECONDS', 31536000)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # SimpleJWT Configuration
 SIMPLE_JWT = {

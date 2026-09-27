@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Heroku's Python buildpack runs this at the end of every build. Anything written here ends up in the
+# slug; the release phase runs on a throwaway dyno, so build-time files can't be made there.
+set -euo pipefail
+cd backend
+
+# django.mo isn't committed and Heroku has no GNU msgfmt, so compile the .po files with polib.
+python - <<'PY'
+from pathlib import Path
+
+import polib
+
+for po in Path('locale').rglob('*.po'):
+    polib.pofile(str(po)).save_as_mofile(str(po.with_suffix('.mo')))
+    print(f'Compiled {po}')
+PY
+
+# The admin's CSS/JS, served by WhiteNoise. DISABLE_COLLECTSTATIC=1 skips the buildpack's own run.
+python manage.py collectstatic --noinput

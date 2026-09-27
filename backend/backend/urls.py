@@ -33,6 +33,6 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
 ]
 
-# Uploaded listing photos; in production the web server serves MEDIA_ROOT instead.
+# Uploaded listing photos in local development; in production they live on S3 (see STORAGES).
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

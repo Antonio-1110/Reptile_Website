@@ -330,7 +330,9 @@ def _confirm_window_passed(order):
 # --- Helpers --------------------------------------------------------------------------------------
 
 def _lock(order):
-    return Order.objects.select_for_update().select_related(
+    # Only the order row is locked: PostgreSQL can't lock the nullable side of the outer joins that
+    # `deposit` and `purchase` need, and the order row is what concurrent updates contend for.
+    return Order.objects.select_for_update(of=('self',)).select_related(
         'auction__seller', 'buyer', 'deposit', 'purchase',
     ).get(pk=order.pk)
 
