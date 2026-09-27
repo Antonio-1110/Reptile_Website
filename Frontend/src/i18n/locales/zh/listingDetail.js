@@ -25,6 +25,7 @@ export default {
   postedToday: "今天",
   notProvided: "—",
   listSeparator: "、",
+  sellerRating: "賣家評價",
   moreFromSeller: "想看這位賣家的其他刊登嗎？",
   contactSeller: "聯絡賣家",
   loginToContact: "登入後即可聯絡賣家。",

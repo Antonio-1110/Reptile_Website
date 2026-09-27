@@ -16,5 +16,6 @@ export default {
   empty: "尚無評價。",
   yours: "你",
   showMore: "顯示更多評價",
+  loading: "正在載入評價…",
   loadError: "無法載入評價。",
 };

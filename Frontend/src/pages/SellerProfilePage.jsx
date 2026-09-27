@@ -5,7 +5,7 @@ import BackLink from '../components/ui/BackLink';
 import ListingCard from '../components/listings/ListingCard';
 import ListingGrid from '../components/listings/ListingGrid';
 import { getListingsPage, getSellerProfile } from '../api/listingsApi';
-import SellerReviews from './SellerReviews';
+import { SellerReviewForm, SellerReviewList } from './SellerReviews';
 import { intlLocale } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
 import { Link, useLocation, useNavigate } from 'react-router';
@@ -23,6 +23,7 @@ export default function SellerProfilePage({ sellerId }) {
   const [profile, setProfile] = useState(null); // null loading, false not found
   const [profileError, setProfileError] = useState(null);
   const [feed, setFeed] = useState({ listings: [], nextPage: 1, loading: true, error: null });
+  const [reviewsVersion, setReviewsVersion] = useState(0);
 
   const loadListings = useCallback((page) => {
     setFeed((current) => ({ ...current, loading: true, error: null }));
@@ -80,58 +81,72 @@ export default function SellerProfilePage({ sellerId }) {
     <div className="seller-page">
       <div className="seller-page-inner">
         <BackLink to="/marketplace">{t('navigation.backToMarketplace')}</BackLink>
-        <section className="seller-card">
-          <div className="seller-avatar" aria-hidden="true">{(profile.displayName || profile.username).slice(0, 1).toUpperCase()}</div>
-          <div className="seller-card-body">
-            <h1>{profile.displayName}</h1>
-            <p className="seller-username">@{profile.username}</p>
-            <div className="seller-badges">
-              {profile.verified && <span className="seller-badge seller-badge--verified">✓ {t('sellerProfile.verified')}</span>}
-              <span className="seller-badge">{t(profile.isCommercial ? 'sellerProfile.commercial' : 'sellerProfile.hobbyist')}</span>
-              <span className="seller-badge">
-                {profile.totalReviews > 0
-                  ? t('sellerProfile.rating', { rating: profile.rating.toFixed(1), count: profile.totalReviews })
-                  : t('sellerProfile.noReviews')}
-              </span>
+        {/* Profile and the "rate this seller" panel side by side, then listings beside the reviews, so a
+            long review history doesn't push the listings down the page. */}
+        <div className="seller-top">
+          <section className="seller-card">
+            <div className="seller-avatar" aria-hidden="true">{(profile.displayName || profile.username).slice(0, 1).toUpperCase()}</div>
+            <div className="seller-card-body">
+              <h1>{profile.displayName}</h1>
+              <p className="seller-username">@{profile.username}</p>
+              <div className="seller-badges">
+                {profile.verified && <span className="seller-badge seller-badge--verified">✓ {t('sellerProfile.verified')}</span>}
+                <span className="seller-badge">{t(profile.isCommercial ? 'sellerProfile.commercial' : 'sellerProfile.hobbyist')}</span>
+                <span className="seller-badge">
+                  {profile.totalReviews > 0
+                    ? t('sellerProfile.rating', { rating: profile.rating.toFixed(1), count: profile.totalReviews })
+                    : t('sellerProfile.noReviews')}
+                </span>
+              </div>
+              <p className="seller-since">{t('sellerProfile.memberSince', { date: since })}</p>
+              {profile.bio && <p className="seller-bio">{profile.bio}</p>}
             </div>
-            <p className="seller-since">{t('sellerProfile.memberSince', { date: since })}</p>
-            {profile.bio && <p className="seller-bio">{profile.bio}</p>}
-          </div>
-        </section>
+          </section>
+          {/* Refreshing the profile after a review updates the rating badge; the list reloads too. */}
+          <SellerReviewForm
+            profile={profile}
+            onChanged={() => {
+              loadProfile();
+              setReviewsVersion((version) => version + 1);
+            }}
+          />
+        </div>
 
-        {/* Refreshing the profile after a review updates the rating badge above. */}
-        <SellerReviews profile={profile} onRatingChanged={loadProfile} />
-
-        <h2 className="seller-listings-heading">{t('sellerProfile.listingsHeading')}</h2>
-        <CategorySwitch
-          className="seller-category"
-          labelClassName="seller-category-label"
-          label={t('sellerProfile.categoryLabel')}
-          options={MARKETPLACE_CATEGORIES.map((value) => ({
-            value,
-            label: t(`sellerProfile.categoryTabs.${value}`, { count: value === 'equipment' ? profile.equipmentCount : profile.liveAnimalCount }),
-          }))}
-          value={category}
-          onChange={changeCategory}
-        />
-        {feed.error && (
-          <p role="alert" className="seller-page-error">
-            {errorText(t, feed.error)}{' '}
-            <button type="button" className="seller-page-retry" onClick={() => loadListings(feed.nextPage || 1)}>{t('listings.retry')}</button>
-          </p>
-        )}
-        {feed.loading && feed.listings.length === 0 && <p className="seller-page-status">{t('listings.loading')}</p>}
-        {!feed.loading && !feed.error && feed.listings.length === 0 && <p className="seller-page-empty">{t(category === 'equipment' ? 'sellerProfile.noEquipment' : 'sellerProfile.noListings')}</p>}
-        {feed.listings.length > 0 && (
-          <ListingGrid>
-            {feed.listings.map((listing) => <ListingCard key={listing.id} animal={listing} />)}
-          </ListingGrid>
-        )}
-        {feed.nextPage && feed.listings.length > 0 && !feed.error && (
-          <button type="button" className="seller-page-more" disabled={feed.loading} onClick={() => loadListings(feed.nextPage)}>
-            {feed.loading ? t('listings.loadingMore') : t('sellerProfile.showMore')}
-          </button>
-        )}
+        <div className="seller-columns">
+          <section className="seller-listings" aria-labelledby="seller-listings-heading">
+            <h2 id="seller-listings-heading" className="seller-listings-heading">{t('sellerProfile.listingsHeading')}</h2>
+            <CategorySwitch
+              className="seller-category"
+              labelClassName="seller-category-label"
+              label={t('sellerProfile.categoryLabel')}
+              options={MARKETPLACE_CATEGORIES.map((value) => ({
+                value,
+                label: t(`sellerProfile.categoryTabs.${value}`, { count: value === 'equipment' ? profile.equipmentCount : profile.liveAnimalCount }),
+              }))}
+              value={category}
+              onChange={changeCategory}
+            />
+            {feed.error && (
+              <p role="alert" className="seller-page-error">
+                {errorText(t, feed.error)}{' '}
+                <button type="button" className="seller-page-retry" onClick={() => loadListings(feed.nextPage || 1)}>{t('listings.retry')}</button>
+              </p>
+            )}
+            {feed.loading && feed.listings.length === 0 && <p className="seller-page-status">{t('listings.loading')}</p>}
+            {!feed.loading && !feed.error && feed.listings.length === 0 && <p className="seller-page-empty">{t(category === 'equipment' ? 'sellerProfile.noEquipment' : 'sellerProfile.noListings')}</p>}
+            {feed.listings.length > 0 && (
+              <ListingGrid>
+                {feed.listings.map((listing) => <ListingCard key={listing.id} animal={listing} />)}
+              </ListingGrid>
+            )}
+            {feed.nextPage && feed.listings.length > 0 && !feed.error && (
+              <button type="button" className="seller-page-more" disabled={feed.loading} onClick={() => loadListings(feed.nextPage)}>
+                {feed.loading ? t('listings.loadingMore') : t('sellerProfile.showMore')}
+              </button>
+            )}
+          </section>
+          <SellerReviewList sellerId={profile.id} totalReviews={profile.totalReviews} version={reviewsVersion} />
+        </div>
       </div>
     </div>
   );

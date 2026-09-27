@@ -104,3 +104,19 @@
 
 .seller-category { max-width: 420px; }
 .seller-category-label { margin: 0 0 8px; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 700; }
+
+.seller-top,
+.seller-columns {
+  display: grid;
+  gap: 16px;
+}
+
+/* The profile and the review panel share a row height; listings and reviews each keep their own. */
+.seller-columns { align-items: start; }
+
+.seller-listings { display: grid; gap: 16px; min-width: 0; }
+
+@media (min-width: 900px) {
+  .seller-top { grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); }
+  .seller-columns { grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); }
+}

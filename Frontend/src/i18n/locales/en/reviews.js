@@ -18,5 +18,6 @@ export default {
   empty: "No reviews yet.",
   yours: "You",
   showMore: "Show more reviews",
+  loading: "Loading reviews…",
   loadError: "Unable to load reviews.",
 };

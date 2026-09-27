@@ -25,6 +25,7 @@ export default {
   postedToday: "Today",
   notProvided: "—",
   listSeparator: ", ",
+  sellerRating: "Seller rating",
   moreFromSeller: "More listings from this seller",
   contactSeller: "Contact seller",
   loginToContact: "Log in to contact the seller.",
