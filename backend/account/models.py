@@ -96,7 +96,10 @@ class Account(AbstractUser):
         buyer's inquiry, or the two sides of a paid sale). Never exposed publicly. Empty fields are left out.
         """
         details = {
-            'name': self.get_display_name(),
+            # The username always identifies them on the site; a name only when they set one in
+            # their profile, since get_display_name() falls back to the username.
+            'username': self.username,
+            'name': self.get_display_name() if self.first_name else '',
             'email': self.contact_email or self.email,
             'phone': self.phone_number,
             'line': self.line_id,

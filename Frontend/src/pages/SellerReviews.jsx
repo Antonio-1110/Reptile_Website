@@ -12,38 +12,14 @@ function Stars({ rating }) {
   return <span className="review-stars" aria-hidden="true">{'★'.repeat(rating)}{'☆'.repeat(5 - rating)}</span>;
 }
 
-// Reviews on a seller's page, and the form for buyers who may leave one (the API decides who can:
-// someone who contacted the seller about a listing, or bought from them at auction).
-export default function SellerReviews({ profile, onRatingChanged }) {
-  const { t, i18n } = useTranslation();
-  const [feed, setFeed] = useState({ reviews: [], count: 0, nextPage: 1, loading: true, error: null });
+// The "rate this seller" panel, shown next to the seller's profile. The API decides who may review:
+// someone who contacted the seller about a listing, or bought from them at auction.
+export function SellerReviewForm({ profile, onChanged }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState({ rating: profile.myReview?.rating || 0, comment: profile.myReview?.comment || '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [savedMessage, setSavedMessage] = useState('');
-
-  const load = useCallback((page) => {
-    setFeed((current) => ({ ...current, loading: true, error: null }));
-    getSellerReviews(profile.id, page)
-      .then(({ results, count, hasMore }) => setFeed((current) => ({
-        reviews: page === 1 ? results : [...current.reviews, ...results],
-        count,
-        nextPage: hasMore ? page + 1 : null,
-        loading: false,
-        error: null,
-      })))
-      .catch((error) => setFeed((current) => ({ ...current, loading: false, error: toErrorState(error, 'reviews.loadError') })));
-  }, [profile.id]);
-
-  useEffect(() => {
-    load(1);
-  }, [load]);
-
-  const afterChange = (message) => {
-    setSavedMessage(message);
-    load(1);
-    onRatingChanged();
-  };
 
   const submit = async (event) => {
     event.preventDefault();
@@ -56,7 +32,8 @@ export default function SellerReviews({ profile, onRatingChanged }) {
     setSavedMessage('');
     try {
       await saveSellerReview(profile.id, draft.rating, draft.comment.trim());
-      afterChange(t('reviews.saved'));
+      setSavedMessage(t('reviews.saved'));
+      onChanged();
     } catch (error) {
       setFormError(error.message);
     } finally {
@@ -70,7 +47,8 @@ export default function SellerReviews({ profile, onRatingChanged }) {
     try {
       await deleteSellerReview(profile.id);
       setDraft({ rating: 0, comment: '' });
-      afterChange(t('reviews.deleted'));
+      setSavedMessage(t('reviews.deleted'));
+      onChanged();
     } catch (error) {
       setFormError(error.message);
     } finally {
@@ -78,9 +56,20 @@ export default function SellerReviews({ profile, onRatingChanged }) {
     }
   };
 
-  let formArea;
-  if (profile.canReview) {
-    formArea = (
+  if (!profile.canReview) {
+    const next = encodeURIComponent(window.location.pathname);
+    return (
+      <section className="seller-review-panel" aria-labelledby="seller-review-form-heading">
+        <h2 id="seller-review-form-heading">{t('reviews.writeHeading')}</h2>
+        {isLoggedIn()
+          ? <p className="review-hint">{t('reviews.notEligible')}</p>
+          : <p className="review-hint"><Link to={`/signin?next=${next}`}>{t('reviews.signIn')}</Link></p>}
+      </section>
+    );
+  }
+
+  return (
+    <section className="seller-review-panel">
       <form className="review-form" onSubmit={submit}>
         <fieldset className="review-form-stars">
           <legend>{profile.myReview ? t('reviews.editHeading') : t('reviews.writeHeading')}</legend>
@@ -118,19 +107,40 @@ export default function SellerReviews({ profile, onRatingChanged }) {
           )}
         </div>
       </form>
-    );
-  } else if (!isLoggedIn()) {
-    const next = encodeURIComponent(window.location.pathname);
-    formArea = <p className="review-hint"><Link to={`/signin?next=${next}`}>{t('reviews.signIn')}</Link></p>;
-  } else {
-    formArea = <p className="review-hint">{t('reviews.notEligible')}</p>;
-  }
+    </section>
+  );
+}
 
+// The seller's reviews, newest first. `version` changes after the viewer saves or deletes a review,
+// which reloads the first page.
+export function SellerReviewList({ sellerId, totalReviews, version }) {
+  const { t, i18n } = useTranslation();
+  const [feed, setFeed] = useState({ reviews: [], count: null, nextPage: 1, loading: true, error: null });
+
+  const load = useCallback((page) => {
+    setFeed((current) => ({ ...current, loading: true, error: null }));
+    getSellerReviews(sellerId, page)
+      .then(({ results, count, hasMore }) => setFeed((current) => ({
+        reviews: page === 1 ? results : [...current.reviews, ...results],
+        count,
+        nextPage: hasMore ? page + 1 : null,
+        loading: false,
+        error: null,
+      })))
+      .catch((error) => setFeed((current) => ({ ...current, loading: false, error: toErrorState(error, 'reviews.loadError') })));
+  }, [sellerId]);
+
+  useEffect(() => {
+    load(1);
+  }, [load, version]);
+
+  // Until the list arrives, the heading uses the profile's count so it never reads "0 reviews" first.
+  const count = feed.count ?? totalReviews;
   return (
-    <section className="seller-reviews" aria-labelledby="seller-reviews-heading">
-      <h2 id="seller-reviews-heading">{t('reviews.heading', { count: feed.count })}</h2>
-      {formArea}
+    <section id="reviews" className="seller-reviews" aria-labelledby="seller-reviews-heading">
+      <h2 id="seller-reviews-heading">{t('reviews.heading', { count })}</h2>
       {feed.error && <p role="alert" className="review-error">{errorText(t, feed.error)}</p>}
+      {feed.loading && feed.reviews.length === 0 && <p className="review-hint">{t('reviews.loading')}</p>}
       {!feed.loading && !feed.error && feed.reviews.length === 0 && <p className="review-hint">{t('reviews.empty')}</p>}
       <ul className="review-list">
         {feed.reviews.map((review) => (

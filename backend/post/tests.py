@@ -281,6 +281,21 @@ class ContactAndReportTests(APITestCase):
 		self.assertFalse(response.data['already_sent'])
 		self.assertEqual(len(mail.outbox), 0)
 
+	def test_shared_details_label_the_username_and_a_real_name_separately(self):
+		# A buyer who never set a name is shown by username, not passed off as their name.
+		self.client.force_authenticate(self.buyer)
+		contact = self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['contact']
+		self.assertEqual(contact['username'], self.buyer.username)
+		self.assertNotIn('name', contact)
+
+		self.buyer.first_name = 'Mei'
+		self.buyer.save()
+		contact = self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['contact']
+		self.assertEqual(contact['name'], 'Mei')
+		self.client.post(reverse('live-animal-contact', args=[self.post.id]))
+		self.assertIn(f'Username: {self.buyer.username}', mail.outbox[0].body)
+		self.assertIn('Display name: Mei', mail.outbox[0].body)
+
 	def test_contact_sends_the_buyers_details_and_never_reveals_the_sellers(self):
 		self.buyer.phone_number = '0987654321'
 		self.buyer.save()
