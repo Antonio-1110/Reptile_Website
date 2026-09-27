@@ -52,6 +52,7 @@ ACCESS = {
     'inquiry-list': {'GET': 'signed_in'},
     'inquiry-detail': {'GET': 'party'},
     'inquiry-replied': {'POST': 'owner'},  # the listing's seller
+    'inquiry-waiting': {'GET': 'signed_in'},
 
     'auction-list': {'GET': 'public', 'POST': 'signed_in'},
     'auction-detail': {'GET': 'public'},

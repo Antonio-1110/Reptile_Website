@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import AccountMenu from './AccountMenu';
+import AccountMenu, { INQUIRIES_CHANGED } from './AccountMenu';
+import { getWaitingInquiryCount } from '../../api/listingsApi';
+
+vi.mock('../../api/listingsApi', () => ({ getWaitingInquiryCount: vi.fn(() => Promise.resolve(0)) }));
 
 const openMenu = () => fireEvent.click(screen.getByRole('button', { name: /My account/ }));
 
@@ -31,5 +34,22 @@ describe('AccountMenu', () => {
     openMenu();
     fireEvent.click(screen.getByRole('link', { name: 'My orders' }));
     expect(screen.queryByRole('link', { name: 'My orders' })).not.toBeInTheDocument();
+  });
+
+  it('shows how many inquiries are waiting for a reply, and updates when one is marked replied', async () => {
+    getWaitingInquiryCount.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
+    render(<AccountMenu onSignOut={() => {}} />, { wrapper: MemoryRouter });
+    expect(await screen.findByRole('button', { name: /My account.*2 inquiries waiting for your reply/ })).toBeInTheDocument();
+    openMenu();
+    expect(screen.getByRole('link', { name: /Inquiries.*2 inquiries waiting/ })).toHaveAttribute('href', '/inquiries');
+
+    window.dispatchEvent(new Event(INQUIRIES_CHANGED));
+    expect(await screen.findByRole('link', { name: /Inquiries.*1 inquiry waiting for your reply/ })).toBeInTheDocument();
+  });
+
+  it('shows no badge when nothing is waiting', async () => {
+    render(<AccountMenu onSignOut={() => {}} />, { wrapper: MemoryRouter });
+    await vi.waitFor(() => expect(getWaitingInquiryCount).toHaveBeenCalled());
+    expect(screen.getByRole('button', { name: /My account/ }).textContent).not.toMatch(/\d/);
   });
 });

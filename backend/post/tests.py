@@ -292,9 +292,6 @@ class ContactAndReportTests(APITestCase):
 		self.buyer.save()
 		contact = self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['contact']
 		self.assertEqual(contact['name'], 'Mei')
-		self.client.post(reverse('live-animal-contact', args=[self.post.id]))
-		self.assertIn(f'Username: {self.buyer.username}', mail.outbox[0].body)
-		self.assertIn('Display name: Mei', mail.outbox[0].body)
 
 	def test_contact_sends_the_buyers_details_and_never_reveals_the_sellers(self):
 		self.buyer.phone_number = '0987654321'
@@ -306,22 +303,16 @@ class ContactAndReportTests(APITestCase):
 		self.assertNotIn('0912345678', str(response.data))
 		self.assertNotIn('contact_info', response.data)
 		self.assertEqual(response.data['contact']['phone'], '0987654321')
-		self.assertEqual([email.to for email in mail.outbox], [['seller@example.com'], ['buyer@example.com']])
-		self.assertIn('0987654321', mail.outbox[0].body)
-		self.assertIn('buyer@example.com', mail.outbox[0].body)
-		# The buyer's copy says what went out, and never carries the seller's details.
-		self.assertIn('0987654321', mail.outbox[1].body)
-		self.assertNotIn('0912345678', mail.outbox[1].body)
-		self.assertNotIn('seller@example.com', mail.outbox[1].body)
+		# The details wait in the seller's Inquiries page; nothing is emailed to either side (#91).
+		self.assertEqual(mail.outbox, [])
 		self.assertEqual(ContactRequest.objects.filter(requester=self.buyer, live_animal_post=self.post).count(), 1)
 
-	def test_repeated_contact_request_does_not_resend_email(self):
+	def test_repeated_contact_request_is_recorded_once(self):
 		self.client.force_authenticate(self.buyer)
 		self.client.post(reverse('live-animal-contact', args=[self.post.id]))
 		response = self.client.post(reverse('live-animal-contact', args=[self.post.id]))
 
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual(len(mail.outbox), 2)  # the seller's email and the buyer's copy, once
 		self.assertEqual(ContactRequest.objects.filter(requester=self.buyer, live_animal_post=self.post).count(), 1)
 		self.assertTrue(self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['already_sent'])
 
@@ -575,25 +566,6 @@ class EquipmentFilterTests(APITestCase):
 		self.assertEqual(EquipmentPost.objects.get(pk=response.data['id']).category, 'transport')
 
 
-class SellerInquiryEmailTests(APITestCase):
-	def test_inquiry_email_is_sent_in_every_supported_language(self):
-		seller = Account.objects.create_user(username='email-seller', email='seller@example.com', password='pass12345')
-		buyer = Account.objects.create_user(username='email-buyer', email='buyer@example.com', password='pass12345')
-		species = Species.objects.create(name='Email Species')
-		post = LiveAnimalPost.objects.create(account=seller, species=species, title='Pied', description='d', contact_info='{}')
-		self.client.force_authenticate(buyer)
-
-		# The buyer's UI language must not decide the seller's email language.
-		self.client.post(reverse('live-animal-contact', args=[post.id]), HTTP_ACCEPT_LANGUAGE='zh-Hant')
-
-		self.assertEqual(len(mail.outbox), 2)
-		email = mail.outbox[0]
-		self.assertIn('New inquiry about your listing: Pied', email.subject)
-		self.assertIn('你的刊登有新的詢問：Pied', email.subject)
-		self.assertIn('is interested in your listing "Pied"', email.body)
-		self.assertIn('對你在 Reptilian 上的刊登「Pied」有興趣', email.body)
-
-
 class InquiryTests(APITestCase):
 	def setUp(self):
 		self.seller = Account.objects.create_user(username='seller', email='seller@example.com', password='pass1234', first_name='Lin')
@@ -612,26 +584,7 @@ class InquiryTests(APITestCase):
 	def send_inquiry(self, post=None, category='live-animal'):
 		self.client.force_authenticate(self.buyer)
 		self.client.post(reverse(f'{category}-contact', args=[(post or self.post).id]))
-		mail.outbox.clear()
 		return ContactRequest.objects.latest('id')
-
-	@override_settings(FRONTEND_URL='https://reptilian.test')
-	def test_inquiry_emails_link_back_to_the_listing_and_the_inquiries_page(self):
-		self.client.force_authenticate(self.buyer)
-		self.client.post(reverse('equipment-contact', args=[self.gear.id]))
-
-		to_seller, to_buyer = mail.outbox
-		self.assertIn(f'https://reptilian.test/equipment/{self.gear.id}', to_seller.body)
-		self.assertIn('https://reptilian.test/inquiries?role=seller', to_seller.body)
-		self.assertIn(f'https://reptilian.test/equipment/{self.gear.id}', to_buyer.body)
-		self.assertIn('https://reptilian.test/inquiries?role=buyer', to_buyer.body)
-		self.assertIn('你的聯絡資料已傳給賣家', to_buyer.subject)
-
-	def test_seller_can_reply_to_the_inquiry_email_to_reach_the_buyer(self):
-		self.client.force_authenticate(self.buyer)
-		self.client.post(reverse('live-animal-contact', args=[self.post.id]))
-		self.assertEqual(mail.outbox[0].reply_to, ['buyer.contact@example.com'])
-		self.assertEqual(mail.outbox[1].reply_to, [])
 
 	def test_seller_sees_received_inquiries_with_the_buyers_details(self):
 		inquiry = self.send_inquiry()
@@ -670,22 +623,34 @@ class InquiryTests(APITestCase):
 	def test_anonymous_user_cannot_see_inquiries(self):
 		self.assertEqual(self.client.get(reverse('inquiry-list')).status_code, 401)
 
-	def test_marking_replied_emails_the_buyer_once(self):
+	def test_marking_replied_shows_on_the_buyers_side_without_email(self):
 		inquiry = self.send_inquiry()
 		self.client.force_authenticate(self.seller)
 		url = reverse('inquiry-replied', args=[inquiry.id])
 
 		response = self.client.post(url)
 		self.assertEqual(response.status_code, 200)
-		self.assertIsNotNone(response.data['replied_at'])
-		self.assertEqual(len(mail.outbox), 1)
-		self.assertEqual(mail.outbox[0].to, ['buyer@example.com'])
-		self.assertIn('Friendly Ball Python', mail.outbox[0].subject)
-		self.assertIn('賣家已回覆你', mail.outbox[0].subject)
-		self.assertNotIn('0912345678', mail.outbox[0].body)
+		replied_at = response.data['replied_at']
+		self.assertIsNotNone(replied_at)
+		self.assertEqual(self.client.post(url).data['replied_at'], replied_at)  # a second click keeps the date
+		self.assertEqual(mail.outbox, [])
 
-		self.assertEqual(self.client.post(url).status_code, 200)
-		self.assertEqual(len(mail.outbox), 1)
+		self.client.force_authenticate(self.buyer)
+		row = self.client.get(reverse('inquiry-list'), {'role': 'buyer'}).data['results'][0]
+		self.assertEqual(row['replied_at'], replied_at)
+
+	def test_waiting_counts_received_inquiries_not_yet_replied(self):
+		first = self.send_inquiry()
+		self.send_inquiry(self.gear, 'equipment')
+		self.assertEqual(self.client.get(reverse('inquiry-waiting')).data, {'count': 0})  # the buyer received none
+
+		self.client.force_authenticate(self.seller)
+		self.assertEqual(self.client.get(reverse('inquiry-waiting')).data, {'count': 2})
+		self.client.post(reverse('inquiry-replied', args=[first.id]))
+		self.assertEqual(self.client.get(reverse('inquiry-waiting')).data, {'count': 1})
+
+	def test_anonymous_user_cannot_see_the_waiting_count(self):
+		self.assertEqual(self.client.get(reverse('inquiry-waiting')).status_code, 401)
 
 	def test_only_the_seller_can_mark_an_inquiry_replied(self):
 		inquiry = self.send_inquiry()
@@ -697,7 +662,6 @@ class InquiryTests(APITestCase):
 		self.assertEqual(self.client.post(url).status_code, 404)
 		inquiry.refresh_from_db()
 		self.assertIsNone(inquiry.replied_at)
-		self.assertEqual(len(mail.outbox), 0)
 
 
 class ContactPrivacyTests(APITestCase):

@@ -186,8 +186,9 @@ class LiveAnimalPost(BasePost):
 
 class ContactRequest(models.Model):
     """
-    An inquiry: a buyer sent their contact details to a seller about a listing (so a listing is only
-    emailed once per buyer). The seller marks it replied once they've reached out, which tells the buyer.
+    An inquiry: a buyer sent their contact details to a seller about a listing (once per buyer and
+    listing). The seller reads it on their Inquiries page and marks it replied once they've reached out,
+    which the buyer sees on theirs. Nothing is emailed.
     """
     requester = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='contact_requests_sent')
     live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='contact_requests')

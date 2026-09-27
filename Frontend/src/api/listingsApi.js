@@ -452,7 +452,13 @@ export async function getInquiriesPage({ role = "", page = 1 } = {}) {
   return { results: payload.results.map(normalizeInquiry), count: payload.count, hasMore: Boolean(payload.next) };
 }
 
-// Seller: they've been in touch. The API emails the buyer (only the first time).
+// Seller: they've been in touch. The buyer sees it on their own Inquiries page (nothing is emailed).
 export async function markInquiryReplied(id) {
   return normalizeInquiry(await requestWithAuth(`/posts/inquiries/${id}/replied/`, { method: "POST" }));
+}
+
+// How many received inquiries the seller hasn't marked replied yet, for the account menu.
+export async function getWaitingInquiryCount() {
+  const payload = await requestWithAuth("/posts/inquiries/waiting/", { method: "GET" });
+  return payload.count;
 }

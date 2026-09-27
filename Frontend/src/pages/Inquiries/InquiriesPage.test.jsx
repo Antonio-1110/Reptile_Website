@@ -36,7 +36,7 @@ describe('InquiriesPage', () => {
     expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('role')).toBe('seller');
 
     fireEvent.click(screen.getByRole('button', { name: 'Mark as replied' }));
-    expect(await screen.findByRole('status')).toHaveTextContent("We've let the buyer know.");
+    expect(await screen.findByRole('status')).toHaveTextContent("Marked as replied. The buyer sees it on their Inquiries page.");
     expect(fetchMock.mock.calls[1][0]).toMatch(/\/posts\/inquiries\/7\/replied\/$/);
     expect(screen.queryByRole('button', { name: 'Mark as replied' })).not.toBeInTheDocument();
   });

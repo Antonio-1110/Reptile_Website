@@ -8,7 +8,7 @@ export default {
   loadMore: "Show more",
   loadError: "Unable to load your inquiries.",
   empty: {
-    seller: "No one has asked about your listings yet. When a buyer sends you their details, they appear here and in your email.",
+    seller: "No one has asked about your listings yet. When a buyer sends you their details, they appear here.",
     buyer: "You haven't contacted any sellers yet. Use \"Contact seller\" on a listing and it appears here.",
   },
   browse: "Browse the marketplace",
@@ -20,8 +20,11 @@ export default {
   repliedSeller: "Marked as replied {{date}}",
   repliedBuyer: "The seller got back to you {{date}}. Check your email, phone and messages.",
   markReplied: "Mark as replied",
-  markRepliedHint: "Once you've contacted the buyer, we'll email them to look out for your message.",
+  markRepliedHint: "Once you've contacted the buyer, mark it so they know to look out for your message.",
   markRepliedError: "Couldn't update this inquiry. Please try again.",
-  repliedToast: "We've let the buyer know.",
+  repliedToast: "Marked as replied. The buyer sees it on their Inquiries page.",
   viewSent: "See your inquiries",
+  // The account menu's count of received inquiries still waiting for the seller to get in touch.
+  waitingCount_one: "{{count}} inquiry waiting for your reply",
+  waitingCount_other: "{{count}} inquiries waiting for your reply",
 };

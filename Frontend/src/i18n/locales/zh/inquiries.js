@@ -8,7 +8,7 @@ export default {
   loadMore: "顯示更多",
   loadError: "無法載入你的詢問。",
   empty: {
-    seller: "目前還沒有人詢問你的刊登。買家傳送聯絡資料給你後，會顯示在這裡並寄到你的信箱。",
+    seller: "目前還沒有人詢問你的刊登。買家傳送聯絡資料給你後，會顯示在這裡。",
     buyer: "你還沒有聯絡過任何賣家。在刊登頁面使用「聯絡賣家」後，就會顯示在這裡。",
   },
   browse: "瀏覽市集",
@@ -20,8 +20,9 @@ export default {
   repliedSeller: "已於 {{date}} 標記為已回覆",
   repliedBuyer: "賣家已於 {{date}} 回覆你，請留意你的信箱、電話和訊息。",
   markReplied: "標記為已回覆",
-  markRepliedHint: "聯絡買家後，我們會寄信提醒對方留意你的訊息。",
+  markRepliedHint: "聯絡買家後請標記為已回覆，讓對方知道要留意你的訊息。",
   markRepliedError: "無法更新這則詢問，請再試一次。",
-  repliedToast: "已通知買家。",
+  repliedToast: "已標記為已回覆，買家可在自己的詢問頁面看到。",
   viewSent: "查看你的詢問",
+  waitingCount_other: "{{count}} 則詢問等待你回覆",
 };
