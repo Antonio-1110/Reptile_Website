@@ -15,13 +15,36 @@ permissions:
 
 jobs:
   backend:
+    # Twice: on SQLite (local dev) and on PostgreSQL (production). Postgres is where row locks really
+    # happen, so the race tests in auction/test_races.py only run there.
+    # The SQLite run keeps the plain name "backend": master's ruleset requires a check by that name.
+    name: ${{ matrix.database == 'sqlite' && 'backend' || format('backend ({0})', matrix.database) }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: sqlite
+            database_url: ''
+          - database: postgres
+            database_url: postgres://postgres:postgres@localhost:5432/reptilian
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:
         working-directory: backend
     env:
       # Production-like settings: DEBUG off (so the dev auth bypass is inert) with a throwaway key.
       DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+      # Empty means SQLite. The CI database has no TLS.
+      DATABASE_URL: ${{ matrix.database_url }}
+      DJANGO_DATABASE_SSL: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +59,57 @@ jobs:
       # Fails when a model change ships without its migration.
       - run: python manage.py makemigrations --check --dry-run
       - run: python manage.py test
+
+  deploy-settings:
+    # What Heroku runs, with production-shaped config vars (fake values), so a settings change that
+    # would break the build, the release phase or the security checks fails here instead of in a deploy.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          # The release phase migrates an existing database; tests create their own, so only this job needs it.
+          POSTGRES_DB: reptilian
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-deploy-check-3f9a1c7e5b2d8f6a4c0e9b7d5f3a1c8e6b4d2f0a9c7e5b3d
+      DJANGO_ALLOWED_HOSTS: api.reptilian.app
+      DJANGO_CORS_ALLOWED_ORIGINS: https://reptilian.app,https://www.reptilian.app
+      DJANGO_CSRF_TRUSTED_ORIGINS: https://api.reptilian.app
+      DJANGO_FRONTEND_URL: https://reptilian.app
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/reptilian
+      DJANGO_DATABASE_SSL: '0'
+      DJANGO_S3_BUCKET: ci-example-bucket
+      DJANGO_S3_REGION: ap-northeast-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      # The root requirements.txt, as Heroku installs it.
+      - run: pip install -r requirements.txt
+      # Heroku's build hook: compile translations without gettext, then collectstatic.
+      - run: bin/post_compile
+      - run: python manage.py check --deploy --fail-level WARNING
+        working-directory: backend
+      # The release phase, on an empty Postgres database.
+      - run: python manage.py migrate --noinput
+        working-directory: backend
+      - name: Photos go to the S3 bucket as public URLs
+        working-directory: backend
+        run: |
+          python manage.py shell -c "
+          from django.core.files.storage import default_storage
+          url = default_storage.url('listing_photos/x.jpg')
+          assert url == 'https://ci-example-bucket.s3.ap-northeast-1.amazonaws.com/media/listing_photos/x.jpg', url
+          "
+      # gunicorn imports the app the same way the web dyno does.
+      - run: gunicorn --check-config --chdir backend backend.wsgi
 
   frontend:
     runs-on: ubuntu-latest

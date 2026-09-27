@@ -39,6 +39,9 @@ def request_deposit(auction, account):
         raise AuctionError(_('This auction is no longer accepting bids.'))
 
     with transaction.atomic():
+        # Lock the auction, not just the deposit: when the bidder has no deposit yet there is no row to
+        # lock, and a double-click would insert two and hit the one-deposit-per-bidder constraint.
+        Auction.objects.select_for_update().get(pk=auction.pk)
         deposit = Deposit.objects.select_for_update().filter(auction=auction, account=account).first()
         if deposit and deposit.status in (Deposit.Status.PENDING, Deposit.Status.HELD):
             return deposit, {}
@@ -62,7 +65,11 @@ def request_deposit(auction, account):
 def confirm_deposit(deposit, provider_reference=None):
     """The gateway (or staff) reports the deposit as paid."""
     with transaction.atomic():
-        deposit = Deposit.objects.select_for_update().select_related('auction').get(pk=deposit.pk)
+        # Auction first, then deposit: the same order settle_auction takes them in, so a payment arriving
+        # as the auction closes waits its turn instead of deadlocking.
+        auction = Auction.objects.select_for_update().get(pk=deposit.auction_id)
+        deposit = Deposit.objects.select_for_update().get(pk=deposit.pk)
+        deposit.auction = auction
         if deposit.status != Deposit.Status.PENDING:
             return deposit
         deposit.status = Deposit.Status.HELD
