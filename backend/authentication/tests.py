@@ -27,8 +27,9 @@ class RegisterTests(APITestCase):
         self.assertTrue(user.check_password('S3curePass!23'))
 
     def test_register_enforces_the_password_rules_the_form_lists(self):
-        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js).
-        for password in ['Ab1!xyz', '8675309123', 'newuser99', 'password123']:
+        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js): 8+ characters,
+        # with both English letters and numbers.
+        for password in ['abc1234', '8675309123', 'onlyletters', '!!!!!!!!']:
             with self.subTest(password=password):
                 response = self.client.post(reverse('jwt-register'), {
                     'username': 'newuser99', 'email': 'someone@example.com', 'password': password,
@@ -36,6 +37,15 @@ class RegisterTests(APITestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertIn('password', response.data)
         self.assertFalse(Account.objects.filter(username='newuser99').exists())
+
+    def test_register_accepts_any_password_with_8_characters_letters_and_numbers(self):
+        # No similarity or common-password checks any more (the owner's call).
+        for number, password in enumerate(['abcd1234', 'newuser99', 'password1']):
+            with self.subTest(password=password):
+                response = self.client.post(reverse('jwt-register'), {
+                    'username': f'newuser9{number}', 'email': f'user{number}@example.com', 'password': password,
+                })
+                self.assertEqual(response.status_code, 201, response.data)
 
     def test_register_rejects_duplicate_username(self):
         Account.objects.create_user(username='taken', email='taken@example.com', password='pass12345')
@@ -176,14 +186,14 @@ class ApiLanguageTests(APITestCase):
         response = self.register()
 
         self.assertEqual(response.data['username'], ['A user with that username already exists.'])
-        self.assertIn('This password is too common.', response.data['password'])
+        self.assertIn('Your password must contain both English letters and numbers.', response.data['password'])
 
     def test_messages_follow_accept_language(self):
         response = self.register(HTTP_ACCEPT_LANGUAGE='zh-Hant')
 
-        # Django's built-in model/password-validator messages come back translated.
+        # Django's built-in model messages and our password rule come back translated.
         self.assertEqual(response.data['username'], ['一個相同名稱的使用者已經存在。'])
-        self.assertIn('這個密碼太常見了。', response.data['password'])
+        self.assertIn('密碼必須同時包含英文字母和數字。', response.data['password'])
         self.assertEqual(response['Content-Language'], 'zh-hant')
 
     def test_our_own_messages_are_translated(self):
@@ -410,3 +420,81 @@ class PasswordResetTests(APITestCase):
         self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': refresh}).status_code, 401)
         self.user.refresh_from_db()
         self.assertTrue(self.user.email_verified)
+@override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+    LOGIN_LOCKOUT_FAILURES=3, LOGIN_LOCKOUT_MINUTES=15,
+)
+class AdminLoginLockoutTests(APITestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        Account.objects.create_superuser(username='boss', email='boss@example.com', password='Right!Pass123')
+        self.url = reverse('admin:login')
+
+    def sign_in(self, password, username='boss', address='203.0.113.7'):
+        return self.client.post(
+            self.url, {'username': username, 'password': password, 'next': reverse('admin:index')},
+            HTTP_X_FORWARDED_FOR=address,
+        )
+
+    def test_the_right_password_signs_in(self):
+        self.assertEqual(self.sign_in('Right!Pass123').status_code, 302)
+
+    def test_repeated_wrong_passwords_lock_the_account_even_for_the_right_one(self):
+        for _ in range(3):
+            self.assertEqual(self.sign_in('wrong').status_code, 200)
+
+        response = self.sign_in('Right!Pass123', address='198.51.100.9')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Too many failed sign-in attempts')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_one_address_guessing_many_usernames_is_locked_out(self):
+        for name in ('a', 'b', 'c'):
+            self.sign_in('wrong', username=name)
+
+        self.assertContains(self.sign_in('Right!Pass123'), 'Too many failed sign-in attempts')
+        self.assertEqual(self.sign_in('Right!Pass123', address='198.51.100.9').status_code, 302)
+
+    def test_the_lock_wears_off(self):
+        from django.core.cache import cache
+
+        for _ in range(3):
+            self.sign_in('wrong')
+        cache.clear()  # what the timeout does after LOGIN_LOCKOUT_MINUTES
+
+        self.assertEqual(self.sign_in('Right!Pass123').status_code, 302)
+
+    def test_the_browsable_api_login_is_locked_the_same_way(self):
+        for _ in range(3):
+            self.client.post('/api-auth/login/', {'username': 'boss', 'password': 'wrong'})
+
+        response = self.client.post('/api-auth/login/', {'username': 'boss', 'password': 'Right!Pass123'})
+
+        self.assertContains(response, 'Too many failed sign-in attempts')
+
+
+class AdminAddressTests(APITestCase):
+    def tearDown(self):
+        self.reload_urls()
+
+    def reload_urls(self):
+        import importlib
+
+        from django.urls import clear_url_caches
+
+        import backend.urls
+
+        clear_url_caches()
+        importlib.reload(backend.urls)
+
+    def test_admin_is_at_admin_by_default(self):
+        self.assertEqual(reverse('admin:index'), '/admin/')
+
+    def test_admin_address_comes_from_the_setting(self):
+        with override_settings(ADMIN_URL='staff-x7k2/'):
+            self.reload_urls()
+            self.assertEqual(reverse('admin:index'), '/staff-x7k2/')
+            self.assertEqual(self.client.get('/admin/').status_code, 404)

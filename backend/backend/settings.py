@@ -159,20 +159,15 @@ else:
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
+# The whole policy: 8+ characters with both letters and numbers. The sign-up and reset forms list the
+# same rules (Frontend/src/constants/passwordRules.js); keep them in step.
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js); keep it in step.
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {'min_length': 8},
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'common.passwords.LettersAndNumbersValidator',
     },
 ]
 
@@ -377,6 +372,14 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = env_int('DJANGO_SECURE_HSTS_SECONDS', 31536000)
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# Where the Django admin lives, e.g. a hard-to-guess `staff-x7k2/` in production so bots scanning for
+# /admin/ never find the login page. Leading/trailing slashes are optional.
+ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/') + '/'
+# Password sign-in on the admin (and the browsable API) is refused for this many minutes after this
+# many failures in a row, per username and per client address (authentication/lockout.py).
+LOGIN_LOCKOUT_FAILURES = env_int('LOGIN_LOCKOUT_FAILURES', 5)
+LOGIN_LOCKOUT_MINUTES = env_int('LOGIN_LOCKOUT_MINUTES', 15)
 
 # SimpleJWT Configuration
 SIMPLE_JWT = {

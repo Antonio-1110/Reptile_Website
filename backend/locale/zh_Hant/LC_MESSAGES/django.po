@@ -714,6 +714,13 @@ msgstr "有人申請重設帳號 %(username)s 的密碼。若要設定新密碼�
 msgid "If it wasn't you, ignore this email: your password stays the same."
 msgstr "如果不是你本人申請，請忽略這封信，你的密碼不會改變。"
 
+#: authentication/lockout.py:30
+#, python-format
+msgid ""
+"Too many failed sign-in attempts. Please wait %(minutes)s minutes and try "
+"again."
+msgstr "登入失敗次數過多，請等待 %(minutes)s 分鐘後再試。"
+
 #: authentication/permissions.py:13
 msgid ""
 "Please confirm your email address first: open the link we emailed you. You "
@@ -1017,6 +1024,9 @@ msgstr "請以 JSON 陣列傳送照片順序。"
 #: post/views.py:415
 msgid "Only the seller can mark an inquiry as replied."
 msgstr "只有賣家可以將詢問標記為已回覆。"
+#: common/passwords.py:16 common/passwords.py:21
+msgid "Your password must contain both English letters and numbers."
+msgstr "密碼必須同時包含英文字母和數字。"
 
 #~ msgid "Passwords must match."
 #~ msgstr "兩次輸入的密碼必須相同。"

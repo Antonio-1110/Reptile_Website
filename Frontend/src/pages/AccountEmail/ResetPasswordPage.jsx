@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { resetPassword } from '../../api/authApi';
+import PasswordRules from '../../components/ui/PasswordRules';
 import { errorText, toErrorState } from '../../utils/errorState';
 
 // Opened from the password-reset email: /reset-password?uid=…&token=…
@@ -55,10 +56,12 @@ export default function ResetPasswordPage() {
             onChange={(event) => { setPassword(event.target.value); setFieldError(''); }}
             autoComplete="new-password"
             aria-invalid={Boolean(fieldError)}
+            aria-describedby="password-rules"
             required
           />
           {fieldError && <small className="authFieldError">{fieldError}</small>}
         </label>
+        <PasswordRules id="password-rules" password={password} />
         <label className="authField">
           <span>{t('auth.confirmPassword')}</span>
           <input
