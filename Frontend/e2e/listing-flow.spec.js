@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { API, PNG, expectNoConsoleErrors, signIn, signOut, submitSignIn, useEnglish } from './helpers';
 
 // The core loop of the marketplace: a seller lists an animal with a photo, a buyer finds it and asks
-// the seller to get in touch.
+// the seller to get in touch, and the seller answers.
 test('seller lists an animal with a photo; a buyer views it and contacts the seller', async ({ page, request }) => {
   const errors = [];
   page.on('console', (message) => message.type() === 'error' && errors.push(message.text()));
@@ -45,6 +45,20 @@ test('seller lists an animal with a photo; a buyer views it and contacts the sel
   await expect(page.getByText('Send your contact details to the seller')).toBeVisible();
   await page.getByRole('button', { name: 'Send my details' }).click();
   await expect(page.getByText('Your details were sent')).toBeVisible();
+
+  // Seller: the inquiry waits in their inbox with the buyer's details; they mark it replied.
+  await signOut(page);
+  await signIn(page, 'kevin_chen', '/inquiries');
+  const received = page.getByRole('listitem').filter({ hasText: title });
+  await expect(received.getByText('buyer_hsu', { exact: true })).toBeVisible();
+  await received.getByRole('button', { name: 'Mark as replied' }).click();
+  await expect(received.getByText("We've let the buyer know.")).toBeVisible();
+
+  // Buyer: sees that the seller got back to them.
+  await signOut(page);
+  await signIn(page, 'buyer_hsu', '/inquiries');
+  await page.getByRole('tab', { name: 'Sent' }).click();
+  await expect(page.getByRole('listitem').filter({ hasText: title }).getByText(/The seller got back to you/)).toBeVisible();
 
   await expectNoConsoleErrors(errors);
 });
