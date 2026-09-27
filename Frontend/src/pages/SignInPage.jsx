@@ -2,6 +2,7 @@ import './SignInPage.css';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { login, register } from '../api/authApi';
+import { PASSWORD_MIN_LENGTH, passwordRuleStates } from '../constants/passwordRules';
 
 // Only allow same-site relative redirects, so ?next= can't send users off-site.
 function getNextPath() {
@@ -80,7 +81,7 @@ export default function SignInPage() {
     }
   };
 
-  const field = (name, label, type = 'text', autoComplete = undefined) => (
+  const field = (name, label, type = 'text', autoComplete = undefined, describedBy = undefined) => (
     <label className="authField">
       <span>{label}</span>
       <input
@@ -90,6 +91,7 @@ export default function SignInPage() {
         onChange={updateField(name)}
         autoComplete={autoComplete}
         aria-invalid={Boolean(errors[name])}
+        aria-describedby={describedBy}
         required
       />
       {errors[name] && <small className="authFieldError">{errors[name]}</small>}
@@ -115,7 +117,22 @@ export default function SignInPage() {
         <form className="authForm" onSubmit={handleSubmit}>
           {field('username', t('auth.username'), 'text', 'username')}
           {isRegister && field('email', t('auth.email'), 'email', 'email')}
-          {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password')}
+          {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password', isRegister ? 'password-rules' : undefined)}
+          {isRegister && (
+            // Shown up front rather than only after a rejected attempt; the server still has the final say.
+            <div id="password-rules" className="authPasswordRules">
+              <p>{t('passwordRules.heading')}</p>
+              <ul>
+                {passwordRuleStates(form.password).map(({ key, met }) => (
+                  <li key={key} className={met === true ? 'is-met' : undefined}>
+                    <span aria-hidden="true">{met === true ? '✓' : '•'}</span>
+                    {t(`passwordRules.${key}`, { count: PASSWORD_MIN_LENGTH })}
+                    {met !== null && form.password && <span className="authSr"> ({t(met ? 'passwordRules.met' : 'passwordRules.notMet')})</span>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {isRegister && field('confirmPassword', t('auth.confirmPassword'), 'password', 'new-password')}
 
           {errors.form && <p className="authFormError" role="alert">{errors.form}</p>}
