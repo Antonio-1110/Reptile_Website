@@ -16,6 +16,10 @@ import StartAuctionPage from "./pages/Auctions/StartAuctionPage";
 import AuctionRedirectPage from "./pages/Auctions/AuctionRedirectPage";
 import SignInPage from "./pages/SignInPage";
 import UpgradePage from "./pages/UpgradePage";
+import ForgotPasswordPage from "./pages/AccountEmail/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/AccountEmail/ResetPasswordPage";
+import VerifyEmailPage from "./pages/AccountEmail/VerifyEmailPage";
+import EmailVerificationBanner from "./components/layout/EmailVerificationBanner";
 import { isLoggedIn } from "./api/authApi";
 import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
 
@@ -87,6 +91,7 @@ export default function App() {
         onSearch={handleHeaderSearch}
         selectedSearchTags={search.tags}
       />
+      {location.pathname !== "/verify-email" && <EmailVerificationBanner />}
       <Routes>
         <Route path="/posts/:id" element={<WithNumericId render={(id) => <ListingDetailPage listingId={id} />} />} />
         <Route path="/equipment/:id" element={<WithNumericId render={(id) => <ListingDetailPage listingId={id} category="equipment" />} />} />
@@ -102,6 +107,9 @@ export default function App() {
         <Route path="/saved" element={<SavedListingsPage />} />
         <Route path="/settings" element={<RequireSignIn><AccountSettingsPage /></RequireSignIn>} />
         <Route path="/upgrade" element={<RequireSignIn><UpgradePage /></RequireSignIn>} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/marketplace" element={<MarketplacePage searchTerm={search.term} searchTags={search.tags} onClearSearch={() => handleHeaderSearch("", [])} />} />
         <Route path="*" element={<HomePage />} />
       </Routes>

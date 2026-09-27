@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-26 15:06+0000\n"
+"POT-Creation-Date: 2026-09-27 17:11+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -219,9 +219,9 @@ msgid ""
 "the price). If you don't pay in time, your deposit is kept and the sale is "
 "cancelled."
 msgstr ""
-"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過 Reptilian 支付剩餘"
-"的 %(balance)s（保證金會抵扣價款）。若未在期限內付款，保證金將不予退還，交易"
-"也會取消。"
+"你以 %(price)s 得標「%(title)s」。請在 %(payment_due)s 前透過 Reptilian 支付"
+"剩餘的 %(balance)s（保證金會抵扣價款）。若未在期限內付款，保證金將不予退還，"
+"交易也會取消。"
 
 #: auction/notifications.py:141
 #, python-format
@@ -576,11 +576,11 @@ msgstr "這場競標沒有其他人出價。"
 msgid "There is no offer to decline."
 msgstr "沒有可以婉拒的邀請。"
 
-#: auction/orders.py:399
+#: auction/orders.py:401
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:401 auction/services.py:292 auction/views.py:21
+#: auction/orders.py:403 auction/services.py:292 auction/views.py:23
 msgid ""
 "Auctions are available to paid commercial accounts. Upgrade your account to "
 "start one."
@@ -676,21 +676,94 @@ msgstr "這場競標已無法直接購買。"
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
 
-#: auction/views.py:121
+#: auction/views.py:120
 msgid "Only the seller can cancel this auction."
 msgstr "只有賣家可以取消此競標。"
 
-#: authentication/serializers.py:20
+#: authentication/emails.py:44
+msgid "Confirm your email address"
+msgstr "請確認你的電子郵件地址"
+
+#: authentication/emails.py:45
+#, python-format
+msgid ""
+"Hi %(username)s, please confirm this is your email address by opening this "
+"link:"
+msgstr "%(username)s 你好，請開啟以下連結，確認這是你的電子郵件地址："
+
+#: authentication/emails.py:47
+msgid ""
+"Until then you can browse, but you can't post listings, contact sellers or "
+"bid. If you didn't create this account, you can ignore this email."
+msgstr ""
+"在確認之前，你仍可瀏覽市集，但無法發布刊登、聯絡賣家或出價。如果你沒有建立這"
+"個帳號，請忽略這封信。"
+
+#: authentication/emails.py:55
+msgid "Reset your password"
+msgstr "重設你的密碼"
+
+#: authentication/emails.py:56
+#, python-format
+msgid ""
+"Someone asked to reset the password for the account %(username)s. To choose "
+"a new password, open this link:"
+msgstr "有人申請重設帳號 %(username)s 的密碼。若要設定新密碼，請開啟以下連結："
+
+#: authentication/emails.py:59
+msgid "If it wasn't you, ignore this email: your password stays the same."
+msgstr "如果不是你本人申請，請忽略這封信，你的密碼不會改變。"
+
+#: authentication/permissions.py:13
+msgid ""
+"Please confirm your email address first: open the link we emailed you. You "
+"can ask for a new link at the top of any page."
+msgstr ""
+"請先確認你的電子郵件地址：開啟我們寄給你的連結。你可以在任何頁面頂端要求重新"
+"寄送連結。"
+
+#: authentication/serializers.py:23
 msgid "Username already exists."
 msgstr "此使用者名稱已被使用。"
 
-#: authentication/serializers.py:25
+#: authentication/serializers.py:28
 msgid "Email already registered."
 msgstr "此電子郵件已經註冊過。"
 
+#: authentication/serializers.py:56
+msgid "This link is invalid or has expired. Please ask for a new one."
+msgstr "這個連結無效或已過期，請重新申請。"
+
+#: authentication/views.py:73 authentication/views.py:78
+msgid "Your email address is confirmed."
+msgstr "你的電子郵件地址已確認。"
+
+#: authentication/views.py:90
+msgid "Your email address is already confirmed."
+msgstr "你的電子郵件地址先前已確認。"
+
+#: authentication/views.py:92
+#, python-format
+msgid "We've sent a new link to %(email)s."
+msgstr "我們已將新的連結寄到 %(email)s。"
+
+#: authentication/views.py:113
+msgid ""
+"If an account uses that email address, we've sent it a link to choose a new "
+"password."
+msgstr "如果有帳號使用這個電子郵件地址，我們已寄出設定新密碼的連結。"
+
+#: authentication/views.py:137
+msgid "Your password has been changed. You can sign in with it now."
+msgstr "你的密碼已變更，現在可以用新密碼登入。"
+
 #: common/notifications.py:12
-msgid "Name"
-msgstr "姓名"
+msgid "Username"
+msgstr "使用者名稱"
+
+#: common/notifications.py:13
+msgid "Display name"
+msgstr "顯示名稱"
 
 #: common/notifications.py:13
 msgid "Email"
@@ -726,80 +799,80 @@ msgstr[0] "「%(name)s」有 %(count)s 則新刊登"
 msgid "Post limit reached. This account allows %(count)s posts."
 msgstr "已達刊登上限，此帳號最多可發布 %(count)s 則刊登。"
 
-#: post/serializer.py:28 post/serializer.py:91
-#, python-format
-msgid "Image limit exceeded. This account allows %(count)s images per post."
-msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
-
-#: post/serializer.py:38
+#: post/serializer.py:32
 msgid ""
 "This listing has a running auction. It can't be marked reserved or sold "
 "until the auction ends."
 msgstr "這則刊登正在競標中，競標結束前無法標記為保留或已售出。"
 
-#: post/serializer.py:74
+#: post/serializer.py:68
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
-#: post/serializer.py:81
+#: post/serializer.py:75
 msgid "Add at least one photo."
 msgstr "請至少加入一張照片。"
 
-#: post/serializer.py:83
+#: post/serializer.py:77
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/serializer.py:106
+#: post/serializer.py:85
+#, python-format
+msgid "Image limit exceeded. This account allows %(count)s images per post."
+msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
+
+#: post/serializer.py:100
 msgid "Photo order refers to a file that was not uploaded."
 msgstr "照片順序中包含未上傳的檔案。"
 
-#: post/serializer.py:109
+#: post/serializer.py:103
 msgid "Photo order refers to a photo this listing does not have."
 msgstr "照片順序中包含這則刊登沒有的照片。"
 
-#: post/serializer.py:111
+#: post/serializer.py:105
 msgid "Each photo must appear in the order exactly once."
 msgstr "每張照片在順序中只能出現一次。"
 
-#: post/serializer.py:224
+#: post/serializer.py:218
 msgid "Choose a species from the list or type one, not both."
 msgstr "請從清單選擇物種，或自行輸入，兩者擇一即可。"
 
-#: post/serializer.py:230
+#: post/serializer.py:224
 msgid "Choose a species."
 msgstr "請選擇物種。"
 
-#: post/serializer.py:239
+#: post/serializer.py:233
 msgid ""
 "This listing has a running auction, so its species can't be changed to one "
 "that still needs review."
 msgstr "這則刊登正在競標中，無法將物種改為尚待審核的物種。"
 
-#: post/serializer.py:253
+#: post/serializer.py:247
 #, python-format
 msgid ""
 "\"%(name)s\" isn't accepted as a species (%(note)s). Choose one from the "
 "list."
 msgstr "「%(name)s」未被接受為物種（%(note)s）。請從清單中選擇。"
 
-#: post/serializer.py:255
+#: post/serializer.py:249
 #, python-format
 msgid "\"%(name)s\" isn't accepted as a species. Choose one from the list."
 msgstr "「%(name)s」未被接受為物種。請從清單中選擇。"
 
-#: post/serializer.py:304
+#: post/serializer.py:299
 #, python-format
 msgid "This search has filters that can't be saved: %(names)s."
 msgstr "這個搜尋包含無法儲存的篩選條件：%(names)s。"
 
-#: post/serializer.py:313
+#: post/serializer.py:308
 #, python-format
 msgid ""
 "You can keep up to %(count)s saved searches. Delete one to save another."
 msgstr "你最多可儲存 %(count)s 個搜尋。請先刪除一個再儲存新的。"
 
-#: post/serializer.py:316
+#: post/serializer.py:314
 msgid "Marketplace search"
 msgstr "市集搜尋"
 
@@ -813,14 +886,18 @@ msgstr "你的刊登已上架：%(title)s"
 msgid ""
 "We reviewed the species you entered, \"%(requested)s\", and listed it as "
 "\"%(species)s\". Your listing \"%(title)s\" is now on the marketplace."
-msgstr "我們已審核你輸入的物種「%(requested)s」，並歸類為「%(species)s」。你的刊登「%(title)s」現已在市集上架。"
+msgstr ""
+"我們已審核你輸入的物種「%(requested)s」，並歸類為「%(species)s」。你的刊登"
+"「%(title)s」現已在市集上架。"
 
 #: post/species.py:134
 #, python-format
 msgid ""
 "We couldn't add \"%(requested)s\" to our species list, so your listing "
 "\"%(title)s\" isn't on the marketplace yet."
-msgstr "我們無法將「%(requested)s」加入物種清單，因此你的刊登「%(title)s」尚未在市集上架。"
+msgstr ""
+"我們無法將「%(requested)s」加入物種清單，因此你的刊登「%(title)s」尚未在市集"
+"上架。"
 
 #: post/species.py:136
 #, python-format
@@ -838,59 +915,59 @@ msgstr "請編輯刊登並從清單中選擇物種，即可上架：%(url)s"
 msgid "Choose a different species for your listing: %(title)s"
 msgstr "請為你的刊登選擇其他物種：%(title)s"
 
-#: post/views.py:47
+#: post/views.py:48
 #, python-format
 msgid "New inquiry about your listing: %(title)s"
 msgstr "你的刊登有新的詢問：%(title)s"
 
-#: post/views.py:49
+#: post/views.py:50
 #, python-format
 msgid ""
 "%(name)s is interested in your listing \"%(title)s\" on Reptilian and asked "
 "us to pass on their contact details:"
 msgstr ""
-"%(name)s 對你在 Reptilian 上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡方"
-"式："
+"%(name)s 對你在 Reptilian 上的刊登「%(title)s」有興趣，並請我們轉交對方的聯絡"
+"方式："
 
-#: post/views.py:51
+#: post/views.py:52
 msgid ""
 "Please contact them directly. We never share your own contact details with "
 "buyers who ask."
 msgstr "請直接與對方聯繫。我們不會把你的聯絡方式提供給詢問的買家。"
 
-#: post/views.py:68
+#: post/views.py:70
 #, python-format
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 
-#: post/views.py:69
+#: post/views.py:71
 #, python-format
 msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
 msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
 
-#: post/views.py:135
+#: post/views.py:137
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:140
+#: post/views.py:142
 msgid "This listing has been sold."
 msgstr "這則刊登已售出。"
 
-#: post/views.py:152
+#: post/views.py:154
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:170
+#: post/views.py:172
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:183
+#: post/views.py:185
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:220
+#: post/views.py:222
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
 

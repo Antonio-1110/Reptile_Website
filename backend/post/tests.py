@@ -281,6 +281,21 @@ class ContactAndReportTests(APITestCase):
 		self.assertFalse(response.data['already_sent'])
 		self.assertEqual(len(mail.outbox), 0)
 
+	def test_shared_details_label_the_username_and_a_real_name_separately(self):
+		# A buyer who never set a name is shown by username, not passed off as their name.
+		self.client.force_authenticate(self.buyer)
+		contact = self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['contact']
+		self.assertEqual(contact['username'], self.buyer.username)
+		self.assertNotIn('name', contact)
+
+		self.buyer.first_name = 'Mei'
+		self.buyer.save()
+		contact = self.client.get(reverse('live-animal-contact', args=[self.post.id])).data['contact']
+		self.assertEqual(contact['name'], 'Mei')
+		self.client.post(reverse('live-animal-contact', args=[self.post.id]))
+		self.assertIn(f'Username: {self.buyer.username}', mail.outbox[0].body)
+		self.assertIn('Display name: Mei', mail.outbox[0].body)
+
 	def test_contact_sends_the_buyers_details_and_never_reveals_the_sellers(self):
 		self.buyer.phone_number = '0987654321'
 		self.buyer.save()
@@ -843,6 +858,16 @@ class FavoritesTests(APITestCase):
 		self.assertTrue(all(len(message.to) == 1 for message in mail.outbox))
 		self.assertIn('8,000', mail.outbox[0].body)
 		self.assertIn('10,000', mail.outbox[0].body)
+
+	def test_price_drop_skips_savers_who_have_not_confirmed_their_email(self):
+		Account.objects.filter(pk=self.other.pk).update(email_verified=False)
+		for user in (self.buyer, self.other):
+			Favorite.objects.create(account=user, live_animal_post=self.post)
+		self.client.force_authenticate(self.seller)
+		with self.captureOnCommitCallbacks(execute=True):
+			self.client.patch(reverse('live-animal-detail', args=[self.post.id]), {'price': 8000}, format='json')
+
+		self.assertEqual([message.to[0] for message in mail.outbox], ['buyer@example.com'])
 
 	@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
 	def test_repeated_price_drops_email_savers_once_a_day(self):

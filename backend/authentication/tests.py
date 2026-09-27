@@ -1,4 +1,8 @@
+import re
+from urllib.parse import parse_qs, urlparse
+
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -21,6 +25,17 @@ class RegisterTests(APITestCase):
         user = Account.objects.get(username='newuser')
         self.assertNotEqual(user.password, 'S3curePass!23')
         self.assertTrue(user.check_password('S3curePass!23'))
+
+    def test_register_enforces_the_password_rules_the_form_lists(self):
+        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js).
+        for password in ['Ab1!xyz', '8675309123', 'newuser99', 'password123']:
+            with self.subTest(password=password):
+                response = self.client.post(reverse('jwt-register'), {
+                    'username': 'newuser99', 'email': 'someone@example.com', 'password': password,
+                })
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('password', response.data)
+        self.assertFalse(Account.objects.filter(username='newuser99').exists())
 
     def test_register_rejects_duplicate_username(self):
         Account.objects.create_user(username='taken', email='taken@example.com', password='pass12345')
@@ -184,3 +199,214 @@ class ApiLanguageTests(APITestCase):
 
         self.assertEqual(english.data['detail'], "You can't report your own listing.")
         self.assertEqual(chinese.data['detail'], '你不能檢舉自己的刊登。')
+
+
+def link_params(message):
+    """The uid and token from the link in an emailed message."""
+    query = parse_qs(urlparse(re.search(r'https?://\S+', message.body).group()).query)
+    return {'uid': query['uid'][0], 'token': query['token'][0]}
+
+
+class EmailVerificationTests(APITestCase):
+    def register(self):
+        return self.client.post(reverse('jwt-register'), {
+            'username': 'newuser', 'email': 'newuser@example.com', 'password': 'S3curePass!23',
+        })
+
+    def test_registering_emails_a_confirmation_link_and_starts_unverified(self):
+        self.assertEqual(self.register().status_code, 201)
+
+        user = Account.objects.get(username='newuser')
+        self.assertFalse(user.email_verified)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['newuser@example.com'])
+        self.assertIn('/verify-email?uid=', mail.outbox[0].body)
+
+    def test_opening_the_link_confirms_the_address(self):
+        self.register()
+
+        response = self.client.post(reverse('verify-email'), link_params(mail.outbox[0]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Account.objects.get(username='newuser').email_verified)
+
+    def test_opening_the_link_again_still_reports_success(self):
+        self.register()
+        params = link_params(mail.outbox[0])
+        self.client.post(reverse('verify-email'), params)
+
+        response = self.client.post(reverse('verify-email'), params)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_a_wrong_token_is_rejected(self):
+        self.register()
+        params = {**link_params(mail.outbox[0]), 'token': 'abc-123'}
+
+        response = self.client.post(reverse('verify-email'), params)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('invalid or has expired', response.data['detail'])
+        self.assertFalse(Account.objects.get(username='newuser').email_verified)
+
+    def test_a_link_for_an_old_address_stops_working_when_the_address_changes(self):
+        self.register()
+        params = link_params(mail.outbox[0])
+        Account.objects.filter(username='newuser').update(email='changed@example.com')
+
+        self.assertEqual(self.client.post(reverse('verify-email'), params).status_code, 400)
+
+    def test_signed_in_user_can_ask_for_a_new_link(self):
+        self.register()
+        user = Account.objects.get(username='newuser')
+        self.client.force_authenticate(user)
+
+        response = self.client.post(reverse('verify-email-resend'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_no_new_link_is_sent_once_confirmed(self):
+        user = Account.objects.create_user(username='done', email='done@example.com', password='pass12345')
+        self.client.force_authenticate(user)
+
+        response = self.client.post(reverse('verify-email-resend'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mail.outbox, [])
+
+    def test_me_reports_whether_the_address_is_confirmed(self):
+        user = Account.objects.create_user(
+            username='fresh', email='fresh@example.com', password='pass12345', email_verified=False,
+        )
+        self.client.force_authenticate(user)
+
+        self.assertFalse(self.client.get(reverse('jwt-me')).data['email_verified'])
+
+    def test_changing_the_email_on_the_profile_needs_a_new_confirmation(self):
+        user = Account.objects.create_user(username='mover', email='old@example.com', password='pass12345')
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(reverse('profile'), {'email': 'new@example.com'}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data['email_verified'])
+        self.assertEqual(mail.outbox[0].to, ['new@example.com'])
+
+    def test_saving_the_profile_with_the_same_email_keeps_it_confirmed(self):
+        user = Account.objects.create_user(username='stayer', email='same@example.com', password='pass12345')
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(reverse('profile'), {'email': 'same@example.com', 'bio': 'Hi'}, format='json')
+
+        self.assertTrue(response.data['email_verified'])
+        self.assertEqual(mail.outbox, [])
+
+
+class UnverifiedAccountLimitTests(APITestCase):
+    def setUp(self):
+        from post.models import LiveAnimalPost, Species
+
+        seller = Account.objects.create_user(username='seller', email='seller@example.com', password='pass12345')
+        self.post = LiveAnimalPost.objects.create(
+            account=seller, species=Species.objects.create(name='Geckos'), title='Leo', description='d', contact_info='{}',
+        )
+        self.user = Account.objects.create_user(
+            username='fresh', email='fresh@example.com', password='pass12345', email_verified=False,
+        )
+        self.client.force_authenticate(self.user)
+
+    def test_unverified_account_can_browse(self):
+        self.assertEqual(self.client.get(reverse('live-animal-list')).status_code, 200)
+        self.assertEqual(self.client.get(reverse('live-animal-detail', args=[self.post.id])).status_code, 200)
+
+    def test_unverified_account_cannot_post_a_listing(self):
+        response = self.client.post(reverse('live-animal-list'), {'title': 'X'}, format='json')
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn('confirm your email address', response.data['detail'])
+
+    def test_unverified_account_cannot_contact_a_seller(self):
+        response = self.client.post(reverse('live-animal-contact', args=[self.post.id]))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(mail.outbox, [])
+
+    def test_unverified_account_cannot_report_a_listing(self):
+        self.assertEqual(self.client.post(reverse('live-animal-report', args=[self.post.id])).status_code, 403)
+
+    def test_unverified_account_cannot_bid(self):
+        response = self.client.post(reverse('auction-bids', args=[1]), {'amount': '100'})
+        self.assertEqual(response.status_code, 403)
+
+    def test_confirming_the_address_lifts_the_limits(self):
+        Account.objects.filter(pk=self.user.pk).update(email_verified=True)
+        self.user.refresh_from_db()
+        self.client.force_authenticate(self.user)
+
+        self.assertEqual(self.client.post(reverse('live-animal-contact', args=[self.post.id])).status_code, 200)
+
+
+class PasswordResetTests(APITestCase):
+    def setUp(self):
+        self.user = Account.objects.create_user(username='forgetful', email='forgetful@example.com', password='OldPass!234')
+
+    def request_reset(self, email='forgetful@example.com'):
+        return self.client.post(reverse('password-reset'), {'email': email})
+
+    def test_requesting_a_reset_emails_a_link(self):
+        response = self.request_reset('Forgetful@Example.com')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(mail.outbox[0].to, ['forgetful@example.com'])
+        self.assertIn('/reset-password?uid=', mail.outbox[0].body)
+        self.assertIn('forgetful', mail.outbox[0].body)
+
+    def test_unknown_address_gets_the_same_answer_and_no_email(self):
+        known = self.request_reset()
+        unknown = self.request_reset('nobody@example.com')
+
+        self.assertEqual(unknown.status_code, 200)
+        self.assertEqual(unknown.data, known.data)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_the_link_sets_a_new_password(self):
+        self.request_reset()
+
+        response = self.client.post(reverse('password-reset-confirm'), {
+            **link_params(mail.outbox[0]), 'password': 'BrandNew!567',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('BrandNew!567'))
+
+    def test_the_link_works_only_once(self):
+        self.request_reset()
+        params = link_params(mail.outbox[0])
+        self.client.post(reverse('password-reset-confirm'), {**params, 'password': 'BrandNew!567'})
+
+        response = self.client.post(reverse('password-reset-confirm'), {**params, 'password': 'Another!890'})
+
+        self.assertEqual(response.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('BrandNew!567'))
+
+    def test_weak_passwords_are_rejected(self):
+        self.request_reset()
+
+        response = self.client.post(reverse('password-reset-confirm'), {**link_params(mail.outbox[0]), 'password': '123'})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('password', response.data)
+
+    def test_resetting_signs_out_everywhere_and_confirms_the_email(self):
+        Account.objects.filter(pk=self.user.pk).update(email_verified=False)
+        refresh = self.client.post(reverse('jwt-login'), {'username': 'forgetful', 'password': 'OldPass!234'}).data['refresh']
+        self.request_reset()
+
+        self.client.post(reverse('password-reset-confirm'), {**link_params(mail.outbox[0]), 'password': 'BrandNew!567'})
+
+        self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': refresh}).status_code, 401)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.email_verified)

@@ -1,0 +1,18 @@
+export default {
+  forgotLink: "Forgot password?",
+  forgotTitle: "Reset your password",
+  forgotSubtitle: "Enter the email address on your account and we'll send you a link to choose a new password.",
+  sendLink: "Send link",
+  backToSignIn: "Back to sign in",
+  resetTitle: "Choose a new password",
+  newPassword: "New password",
+  savePassword: "Save password",
+  incompleteLink: "This link is incomplete. Open it again from the email, or ask for a new one.",
+  askForNewLink: "Ask for a new link",
+  verifyTitle: "Confirm your email",
+  verifying: "Confirming your email address…",
+  goToMarketplace: "Go to the marketplace",
+  bannerText: "Please confirm your email address. Until then you can browse, but you can't post listings, contact sellers or bid. The link is in the email we sent you.",
+  resend: "Send a new link",
+  sending: "Sending…",
+};

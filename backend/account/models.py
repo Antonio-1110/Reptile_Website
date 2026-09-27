@@ -33,6 +33,10 @@ class Account(AbstractUser):
     total_reviews = models.IntegerField(default=0)
     bio = models.TextField(blank=True, null=True, max_length=500)
     verified_seller = models.BooleanField(default=False)
+    # Whether the owner has opened the link emailed to `email`. Only self-registration (and changing the
+    # address) sets it to False; accounts made by staff, the seed data and existing accounts count as
+    # verified. Unverified accounts can't post, contact sellers or bid (authentication.permissions).
+    email_verified = models.BooleanField(default=True)
     is_paid_account = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -92,7 +96,10 @@ class Account(AbstractUser):
         buyer's inquiry, or the two sides of a paid sale). Never exposed publicly. Empty fields are left out.
         """
         details = {
-            'name': self.get_display_name(),
+            # The username always identifies them on the site; a name only when they set one in
+            # their profile, since get_display_name() falls back to the username.
+            'username': self.username,
+            'name': self.get_display_name() if self.first_name else '',
             'email': self.contact_email or self.email,
             'phone': self.phone_number,
             'line': self.line_id,

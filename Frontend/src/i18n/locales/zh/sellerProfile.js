@@ -8,8 +8,10 @@ export default {
   rating_other: "★ {{rating}} · {{count}} 則評價",
   noReviews: "尚無評價",
   memberSince: "{{date}} 加入",
-  listings_other: "{{count}} 隻個體出售中",
-  equipmentCount_other: "另有 {{count}} 項器材出售中。",
+  listingsHeading: "刊登列表",
+  categoryLabel: "刊登類別",
+  categoryTabs: { live_animal: "活體動物（{{count}}）", equipment: "器材（{{count}}）" },
   noListings: "目前沒有刊登任何個體。",
+  noEquipment: "目前沒有刊登任何器材。",
   showMore: "顯示更多",
 };

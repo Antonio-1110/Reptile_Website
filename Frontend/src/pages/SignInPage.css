@@ -153,3 +153,52 @@
   background-color: rgb(34 197 94 / 10%);
   font-size: 0.85rem;
 }
+
+/* The notice as a page's main message (the account email pages), not squeezed under a subtitle. */
+.authNoticeStandalone {
+  margin: 0;
+}
+
+.authTitleSpaced {
+  margin-bottom: 20px;
+}
+
+.authSwitch a,
+.authFormError a,
+.authForgot a {
+  color: var(--color-accent-bright);
+  font-weight: 600;
+}
+
+.authSwitch a:hover,
+.authForgot a:hover {
+  color: var(--color-accent-hover);
+}
+
+.authForgot {
+  margin: -6px 0 0;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.authPasswordRules {
+  margin-top: -6px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.authPasswordRules p { margin: 0 0 4px; }
+.authPasswordRules ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.authPasswordRules li { display: flex; gap: 6px; }
+.authPasswordRules li > span[aria-hidden] { flex: 0 0 1em; text-align: center; }
+.authPasswordRules li.is-met { color: #4ade80; }
+
+/* Visually hidden, read by screen readers. */
+.authSr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

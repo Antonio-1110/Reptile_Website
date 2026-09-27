@@ -1,0 +1,46 @@
+.emailVerificationBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-muted);
+  color: var(--color-text);
+  background-color: var(--color-surface-muted);
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.emailVerificationBanner p {
+  margin: 0;
+  max-width: 720px;
+}
+
+.emailVerificationBanner button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--color-text);
+  background-color: var(--color-accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.emailVerificationBanner button:hover:not(:disabled) {
+  background-color: var(--color-accent-strong);
+}
+
+.emailVerificationBanner button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.emailVerificationBannerStatus {
+  font-weight: 600;
+}
+
+.emailVerificationBannerError {
+  color: #f87171;
+}

@@ -164,7 +164,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
+        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js); keep it in step.
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -352,6 +354,7 @@ REST_FRAMEWORK = {
         'contact': os.environ.get('DJANGO_THROTTLE_CONTACT', '20/hour'),      # "contact seller"
         'report': os.environ.get('DJANGO_THROTTLE_REPORT', '20/hour'),        # report a listing
         'payments': os.environ.get('DJANGO_THROTTLE_PAYMENTS', '30/hour'),    # deposits, buy now, order payments
+        'email': os.environ.get('DJANGO_THROTTLE_EMAIL', '5/hour'),           # password reset, new verification link
     },
 }
 

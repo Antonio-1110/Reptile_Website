@@ -24,6 +24,7 @@ class AccountSerializer(serializers.ModelSerializer):
             'seller_rating',
             'total_reviews',
             'verified_seller',
+            'email_verified',
             'is_paid_account',
             'max_images_per_post',
             'max_post_count',
@@ -40,6 +41,7 @@ class AccountSerializer(serializers.ModelSerializer):
             'seller_rating',
             'total_reviews',
             'verified_seller',
+            'email_verified',
             'is_paid_account',
             'max_images_per_post',
             'max_post_count',
@@ -125,6 +127,19 @@ class ProfileAccountSerializer(AccountSerializer):
             'post_count', 'remaining_post_count',
         ]
         read_only_fields = AccountSerializer.Meta.read_only_fields + ['post_count', 'remaining_post_count']
+
+    def update(self, instance, validated_data):
+        # A new address has to be confirmed like the first one; the old confirmation doesn't carry over.
+        new_email = validated_data.get('email')
+        email_changed = new_email is not None and new_email.lower() != (instance.email or '').lower()
+        if email_changed:
+            validated_data['email_verified'] = False
+        account = super().update(instance, validated_data)
+        if email_changed:
+            from authentication.emails import send_verification_email
+
+            send_verification_email(account)
+        return account
 
     def get_post_count(self, account):
         from post.models import EquipmentPost, LiveAnimalPost

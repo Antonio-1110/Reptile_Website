@@ -9,7 +9,8 @@ from django.utils.translation import gettext_lazy
 
 # Labels for Account.contact_details() keys.
 CONTACT_LABELS = {
-    'name': gettext_lazy('Name'),
+    'username': gettext_lazy('Username'),
+    'name': gettext_lazy('Display name'),
     'email': gettext_lazy('Email'),
     'phone': gettext_lazy('Phone'),
     'line': 'LINE',
