@@ -80,6 +80,7 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    | `DJANGO_CSRF_TRUSTED_ORIGINS` | `https://api.reptilian.app` |
    | `DJANGO_FRONTEND_URL` | `https://reptilian.app` |
    | `DJANGO_ADMINS` | your email (gets order problem reports) |
+   | `DJANGO_ADMIN_URL` | a hard-to-guess path for the admin, e.g. `staff-` plus a few random letters and digits and a `/` (keep it to yourself; bots scan `/admin/`) |
    | `DJANGO_DEFAULT_FROM_EMAIL` | `Reptilian <no-reply@reptilian.app>` |
    | `DJANGO_S3_BUCKET` | `reptilian-photos` |
    | `DJANGO_S3_REGION` | `ap-northeast-1` |
@@ -103,7 +104,8 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    **Automatic Certificate Management**.
 
 Check: `https://reptilian-api.herokuapp.com/api/v1/posts/species/` returns JSON, and
-`/admin/` shows a styled login page.
+your `DJANGO_ADMIN_URL` address shows a styled login page. After 5 wrong passwords in a row the admin
+refuses sign-in for 15 minutes (`LOGIN_LOCKOUT_FAILURES`, `LOGIN_LOCKOUT_MINUTES`).
 
 ## 3. Vercel project for the frontend
 
@@ -158,5 +160,5 @@ Amazon SES works the same way with its own SMTP host and credentials.
 - `https://reptilian.app` loads, a listing page opens directly (e.g. after a refresh), and both
   languages work.
 - Register, sign in, create a listing with a photo: the photo URL starts with your bucket's address.
-- `https://api.reptilian.app/admin/` lets the staff account in.
+- `https://api.reptilian.app/<your DJANGO_ADMIN_URL>` lets the staff account in, and `/admin/` is a 404.
 - `http://api.reptilian.app/…` redirects to `https://`.

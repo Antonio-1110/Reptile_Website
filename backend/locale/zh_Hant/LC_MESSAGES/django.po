@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 17:11+0800\n"
+"POT-Creation-Date: 2026-09-27 19:03+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -714,6 +714,13 @@ msgstr "有人申請重設帳號 %(username)s 的密碼。若要設定新密碼�
 msgid "If it wasn't you, ignore this email: your password stays the same."
 msgstr "如果不是你本人申請，請忽略這封信，你的密碼不會改變。"
 
+#: authentication/lockout.py:30
+#, python-format
+msgid ""
+"Too many failed sign-in attempts. Please wait %(minutes)s minutes and try "
+"again."
+msgstr "登入失敗次數過多，請等待 %(minutes)s 分鐘後再試。"
+
 #: authentication/permissions.py:13
 msgid ""
 "Please confirm your email address first: open the link we emailed you. You "
@@ -730,7 +737,7 @@ msgstr "此使用者名稱已被使用。"
 msgid "Email already registered."
 msgstr "此電子郵件已經註冊過。"
 
-#: authentication/serializers.py:56
+#: authentication/serializers.py:67
 msgid "This link is invalid or has expired. Please ask for a new one."
 msgstr "這個連結無效或已過期，請重新申請。"
 
@@ -765,11 +772,11 @@ msgstr "使用者名稱"
 msgid "Display name"
 msgstr "顯示名稱"
 
-#: common/notifications.py:13
+#: common/notifications.py:14
 msgid "Email"
 msgstr "電子信箱"
 
-#: common/notifications.py:14
+#: common/notifications.py:15
 msgid "Phone"
 msgstr "電話"
 

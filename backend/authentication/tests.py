@@ -410,3 +410,81 @@ class PasswordResetTests(APITestCase):
         self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': refresh}).status_code, 401)
         self.user.refresh_from_db()
         self.assertTrue(self.user.email_verified)
+@override_settings(
+    CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
+    LOGIN_LOCKOUT_FAILURES=3, LOGIN_LOCKOUT_MINUTES=15,
+)
+class AdminLoginLockoutTests(APITestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+        Account.objects.create_superuser(username='boss', email='boss@example.com', password='Right!Pass123')
+        self.url = reverse('admin:login')
+
+    def sign_in(self, password, username='boss', address='203.0.113.7'):
+        return self.client.post(
+            self.url, {'username': username, 'password': password, 'next': reverse('admin:index')},
+            HTTP_X_FORWARDED_FOR=address,
+        )
+
+    def test_the_right_password_signs_in(self):
+        self.assertEqual(self.sign_in('Right!Pass123').status_code, 302)
+
+    def test_repeated_wrong_passwords_lock_the_account_even_for_the_right_one(self):
+        for _ in range(3):
+            self.assertEqual(self.sign_in('wrong').status_code, 200)
+
+        response = self.sign_in('Right!Pass123', address='198.51.100.9')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Too many failed sign-in attempts')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_one_address_guessing_many_usernames_is_locked_out(self):
+        for name in ('a', 'b', 'c'):
+            self.sign_in('wrong', username=name)
+
+        self.assertContains(self.sign_in('Right!Pass123'), 'Too many failed sign-in attempts')
+        self.assertEqual(self.sign_in('Right!Pass123', address='198.51.100.9').status_code, 302)
+
+    def test_the_lock_wears_off(self):
+        from django.core.cache import cache
+
+        for _ in range(3):
+            self.sign_in('wrong')
+        cache.clear()  # what the timeout does after LOGIN_LOCKOUT_MINUTES
+
+        self.assertEqual(self.sign_in('Right!Pass123').status_code, 302)
+
+    def test_the_browsable_api_login_is_locked_the_same_way(self):
+        for _ in range(3):
+            self.client.post('/api-auth/login/', {'username': 'boss', 'password': 'wrong'})
+
+        response = self.client.post('/api-auth/login/', {'username': 'boss', 'password': 'Right!Pass123'})
+
+        self.assertContains(response, 'Too many failed sign-in attempts')
+
+
+class AdminAddressTests(APITestCase):
+    def tearDown(self):
+        self.reload_urls()
+
+    def reload_urls(self):
+        import importlib
+
+        from django.urls import clear_url_caches
+
+        import backend.urls
+
+        clear_url_caches()
+        importlib.reload(backend.urls)
+
+    def test_admin_is_at_admin_by_default(self):
+        self.assertEqual(reverse('admin:index'), '/admin/')
+
+    def test_admin_address_comes_from_the_setting(self):
+        with override_settings(ADMIN_URL='staff-x7k2/'):
+            self.reload_urls()
+            self.assertEqual(reverse('admin:index'), '/staff-x7k2/')
+            self.assertEqual(self.client.get('/admin/').status_code, 404)
