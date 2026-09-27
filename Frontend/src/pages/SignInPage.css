@@ -154,6 +154,33 @@
   font-size: 0.85rem;
 }
 
+/* The notice as a page's main message (the account email pages), not squeezed under a subtitle. */
+.authNoticeStandalone {
+  margin: 0;
+}
+
+.authTitleSpaced {
+  margin-bottom: 20px;
+}
+
+.authSwitch a,
+.authFormError a,
+.authForgot a {
+  color: var(--color-accent-bright);
+  font-weight: 600;
+}
+
+.authSwitch a:hover,
+.authForgot a:hover {
+  color: var(--color-accent-hover);
+}
+
+.authForgot {
+  margin: -6px 0 0;
+  font-size: 0.85rem;
+  text-align: right;
+}
+
 .authPasswordRules {
   margin-top: -6px;
   color: var(--color-text-muted);

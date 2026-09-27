@@ -94,7 +94,7 @@ def send_all_alerts():
     """Every saved search, once. Returns (searches checked, emails sent)."""
     now = timezone.now()
     emails = 0
-    for saved_search in SavedSearch.objects.select_related('account').filter(account__is_active=True):
+    for saved_search in SavedSearch.objects.select_related('account').filter(account__is_active=True, account__email_verified=True):
         if send_alert(saved_search, now):
             emails += 1
-    return SavedSearch.objects.filter(account__is_active=True).count(), emails
+    return SavedSearch.objects.filter(account__is_active=True, account__email_verified=True).count(), emails

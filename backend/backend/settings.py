@@ -354,6 +354,7 @@ REST_FRAMEWORK = {
         'contact': os.environ.get('DJANGO_THROTTLE_CONTACT', '20/hour'),      # "contact seller"
         'report': os.environ.get('DJANGO_THROTTLE_REPORT', '20/hour'),        # report a listing
         'payments': os.environ.get('DJANGO_THROTTLE_PAYMENTS', '30/hour'),    # deposits, buy now, order payments
+        'email': os.environ.get('DJANGO_THROTTLE_EMAIL', '5/hour'),           # password reset, new verification link
     },
 }
 
