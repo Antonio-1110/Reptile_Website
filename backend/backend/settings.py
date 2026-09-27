@@ -378,6 +378,14 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
+# Where the Django admin lives, e.g. a hard-to-guess `staff-x7k2/` in production so bots scanning for
+# /admin/ never find the login page. Leading/trailing slashes are optional.
+ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/') + '/'
+# Password sign-in on the admin (and the browsable API) is refused for this many minutes after this
+# many failures in a row, per username and per client address (authentication/lockout.py).
+LOGIN_LOCKOUT_FAILURES = env_int('LOGIN_LOCKOUT_FAILURES', 5)
+LOGIN_LOCKOUT_MINUTES = env_int('LOGIN_LOCKOUT_MINUTES', 15)
+
 # SimpleJWT Configuration
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),

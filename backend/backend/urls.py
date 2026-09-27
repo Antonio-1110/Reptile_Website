@@ -17,12 +17,16 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
+from django.contrib.auth.views import LoginView
 from django.urls import path, include
 
 from account.views import SellerProfile, SellerReviews
+from authentication.lockout import LockoutAdminAuthenticationForm, LockoutAuthenticationForm
+
+admin.site.login_form = LockoutAdminAuthenticationForm
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
     # Every endpoint lives under /api/v1/: URL segments are plural, kebab-case nouns; JSON fields are snake_case.
     path('api/v1/auth/', include('authentication.urls')),
     path('api/v1/account/', include('account.urls')),
@@ -30,6 +34,10 @@ urlpatterns = [
     path('api/v1/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
     path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/v1/auctions/', include('auction.urls')),
+    # The browsable API's session login, with the same lockout as the admin (listed first so it wins).
+    path('api-auth/login/', LoginView.as_view(
+        template_name='rest_framework/login.html', authentication_form=LockoutAuthenticationForm,
+    ), name='api-login'),
     path('api-auth/', include('rest_framework.urls')),
 ]
 
