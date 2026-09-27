@@ -201,7 +201,12 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
                 {showAuction ? t('auctions.detail.kicker') : t(listing.status === 'available' ? 'listingDetail.forSale' : `listingStatus.${listing.status}`)}
               </span>
               <div className="listing-detail-summary-actions">
-                <span className="listing-detail-rating">★ {listing.rating}</span>
+                {/* The seller's rating (not the listing's), worded like their page so the two always agree. */}
+                <Link to={sellerPagePath(listing.sellerId)} className="listing-detail-rating" title={t('listingDetail.sellerRating')}>
+                  {listing.reviewCount > 0
+                    ? t('sellerProfile.rating', { rating: listing.rating.toFixed(1), count: listing.reviewCount })
+                    : t('sellerProfile.noReviews')}
+                </Link>
                 <FavoriteButton listingId={listingId} category={category} initial={listing.isFavorite} />
                 <button
                   type="button"

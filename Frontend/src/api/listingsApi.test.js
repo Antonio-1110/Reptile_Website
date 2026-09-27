@@ -59,14 +59,14 @@ describe('getListingsPage: marketplace filters → API query', () => {
     mockFetch([{
       id: 7, title: 'Pied', species_name: 'Ball Pythons', location: 'TPE', life_stage: 'adult', age_years: 2,
       size_cm: 90, weight_grams: 800, shipping_methods: ['shipping'], posted_days: 3, genes: ['Pied'],
-      seller: { id: 3, username: 'apex', display_name: 'Apex Exotics', seller_rating: 4.9 },
+      seller: { id: 3, username: 'apex', display_name: 'Apex Exotics', seller_rating: 4.9, total_reviews: 12 },
     }], { next: 'http://x/?page=2', count: 30 });
     const { results, count, hasMore } = await getListingsPage({});
     expect(count).toBe(30);
     expect(hasMore).toBe(true);
     expect(results[0]).toMatchObject({
       species: 'Ball Pythons', location: 'taipei', lifeStage: 'adult', ageYears: 2, size: 90, weight: 800,
-      shippingMethods: ['shipping'], postedDays: 3, seller: 'Apex Exotics', sellerTag: 'apex', sellerId: 3, rating: 4.9,
+      shippingMethods: ['shipping'], postedDays: 3, seller: 'Apex Exotics', sellerTag: 'apex', sellerId: 3, rating: 4.9, reviewCount: 12,
     });
   });
 });

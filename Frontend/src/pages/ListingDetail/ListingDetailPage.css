@@ -209,7 +209,10 @@
   color: #fbbf24;
   font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
 }
+
+.listing-detail-rating:hover { text-decoration: underline; }
 
 .listing-detail-report {
   padding: 0;

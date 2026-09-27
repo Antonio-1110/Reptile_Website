@@ -19,7 +19,9 @@ function normalizeListing(item) {
     seller: item.seller?.display_name || item.seller?.username,
     sellerTag: item.seller?.username,
     sellerId: item.seller?.id,
+    // The seller's rating, from the same reviews their page lists.
     rating: item.seller?.seller_rating ?? 0,
+    reviewCount: item.seller?.total_reviews ?? 0,
     location: getLocationKey(item.location) || item.location,
     lifeStage: item.life_stage,
     ageYears: item.age_years,

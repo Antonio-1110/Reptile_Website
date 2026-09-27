@@ -22,6 +22,17 @@ class RegisterTests(APITestCase):
         self.assertNotEqual(user.password, 'S3curePass!23')
         self.assertTrue(user.check_password('S3curePass!23'))
 
+    def test_register_enforces_the_password_rules_the_form_lists(self):
+        # The sign-up form lists these rules (Frontend/src/constants/passwordRules.js).
+        for password in ['Ab1!xyz', '8675309123', 'newuser99', 'password123']:
+            with self.subTest(password=password):
+                response = self.client.post(reverse('jwt-register'), {
+                    'username': 'newuser99', 'email': 'someone@example.com', 'password': password,
+                })
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('password', response.data)
+        self.assertFalse(Account.objects.filter(username='newuser99').exists())
+
     def test_register_rejects_duplicate_username(self):
         Account.objects.create_user(username='taken', email='taken@example.com', password='pass12345')
 
