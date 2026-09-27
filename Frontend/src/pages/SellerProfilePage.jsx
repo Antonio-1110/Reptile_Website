@@ -8,19 +8,25 @@ import { getListingsPage, getSellerProfile } from '../api/listingsApi';
 import SellerReviews from './SellerReviews';
 import { intlLocale } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
-import { Link } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
+import CategorySwitch from '../components/ui/CategorySwitch';
+import { MARKETPLACE_CATEGORIES, readMarketplaceCategory } from '../utils/marketplaceSearch';
 
 // A seller's public page: who they are, their badges and rating, and their listings. No contact
 // details: buyers reach a seller through a listing's "Contact seller".
 export default function SellerProfilePage({ sellerId }) {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  // In the URL (?category=equipment) so Back and shared links keep the tab.
+  const category = readMarketplaceCategory(location.search);
   const [profile, setProfile] = useState(null); // null loading, false not found
   const [profileError, setProfileError] = useState(null);
   const [feed, setFeed] = useState({ listings: [], nextPage: 1, loading: true, error: null });
 
   const loadListings = useCallback((page) => {
     setFeed((current) => ({ ...current, loading: true, error: null }));
-    getListingsPage({ seller: sellerId, page })
+    getListingsPage({ seller: sellerId, category, page })
       .then(({ results, hasMore }) => setFeed((current) => ({
         listings: page === 1 ? results : [...current.listings, ...results],
         nextPage: hasMore ? page + 1 : null,
@@ -28,7 +34,7 @@ export default function SellerProfilePage({ sellerId }) {
         error: null,
       })))
       .catch((error) => setFeed((current) => ({ ...current, loading: false, error: toErrorState(error, 'listings.loadError') })));
-  }, [sellerId]);
+  }, [sellerId, category]);
 
   const loadProfile = useCallback(() => {
     getSellerProfile(sellerId)
@@ -38,8 +44,21 @@ export default function SellerProfilePage({ sellerId }) {
 
   useEffect(() => {
     loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    // Clear the other category's cards so they don't flash under the new tab while it loads.
+    setFeed({ listings: [], nextPage: 1, loading: true, error: null });
     loadListings(1);
-  }, [loadProfile, loadListings]);
+  }, [loadListings]);
+
+  const changeCategory = (value) => {
+    const params = new URLSearchParams(location.search);
+    if (value === 'live_animal') params.delete('category');
+    else params.set('category', value);
+    const query = params.toString();
+    navigate(`${location.pathname}${query ? `?${query}` : ''}`, { replace: true });
+  };
 
   if (profileError) {
     return <div className="seller-page"><p role="alert" className="seller-page-error">{errorText(t, profileError)}</p></div>;
@@ -83,8 +102,18 @@ export default function SellerProfilePage({ sellerId }) {
         {/* Refreshing the profile after a review updates the rating badge above. */}
         <SellerReviews profile={profile} onRatingChanged={loadProfile} />
 
-        <h2 className="seller-listings-heading">{t('sellerProfile.listings', { count: profile.liveAnimalCount })}</h2>
-        {profile.equipmentCount > 0 && <p className="seller-page-status">{t('sellerProfile.equipmentCount', { count: profile.equipmentCount })}</p>}
+        <h2 className="seller-listings-heading">{t('sellerProfile.listingsHeading')}</h2>
+        <CategorySwitch
+          className="seller-category"
+          labelClassName="seller-category-label"
+          label={t('sellerProfile.categoryLabel')}
+          options={MARKETPLACE_CATEGORIES.map((value) => ({
+            value,
+            label: t(`sellerProfile.categoryTabs.${value}`, { count: value === 'equipment' ? profile.equipmentCount : profile.liveAnimalCount }),
+          }))}
+          value={category}
+          onChange={changeCategory}
+        />
         {feed.error && (
           <p role="alert" className="seller-page-error">
             {errorText(t, feed.error)}{' '}
@@ -92,7 +121,7 @@ export default function SellerProfilePage({ sellerId }) {
           </p>
         )}
         {feed.loading && feed.listings.length === 0 && <p className="seller-page-status">{t('listings.loading')}</p>}
-        {!feed.loading && !feed.error && feed.listings.length === 0 && <p className="seller-page-empty">{t('sellerProfile.noListings')}</p>}
+        {!feed.loading && !feed.error && feed.listings.length === 0 && <p className="seller-page-empty">{t(category === 'equipment' ? 'sellerProfile.noEquipment' : 'sellerProfile.noListings')}</p>}
         {feed.listings.length > 0 && (
           <ListingGrid>
             {feed.listings.map((listing) => <ListingCard key={listing.id} animal={listing} />)}

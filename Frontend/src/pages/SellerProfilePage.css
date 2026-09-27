@@ -101,3 +101,6 @@
 }
 
 .seller-page-missing a { color: #93c5fd; }
+
+.seller-category { max-width: 420px; }
+.seller-category-label { margin: 0 0 8px; color: var(--color-text-muted); font-size: 0.85rem; font-weight: 700; }
