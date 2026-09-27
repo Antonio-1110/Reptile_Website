@@ -59,6 +59,19 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
+    def test_register_rejects_an_email_already_used_in_another_case(self):
+        Account.objects.create_user(username='first', email='shared@example.com', password='pass12345')
+
+        response = self.client.post(reverse('jwt-register'), {
+            'username': 'second',
+            'email': 'Shared@Example.com',
+            'password': 'S3curePass!23',
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)
+
+
 class LoginAndTokenTests(APITestCase):
     def setUp(self):
         self.user = Account.objects.create_user(username='seller', email='seller@example.com', password='pass12345')
@@ -73,6 +86,23 @@ class LoginAndTokenTests(APITestCase):
     def test_login_rejects_invalid_credentials(self):
         response = self.client.post(reverse('jwt-login'), {'username': 'seller', 'password': 'wrong-password'})
         self.assertEqual(response.status_code, 401)
+
+    def test_login_accepts_the_email_address_in_any_case(self):
+        response = self.client.post(reverse('jwt-login'), {'username': 'Seller@Example.com', 'password': 'pass12345'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access', response.data)
+
+    def test_login_by_email_still_needs_the_right_password(self):
+        response = self.client.post(reverse('jwt-login'), {'username': 'seller@example.com', 'password': 'wrong-password'})
+        self.assertEqual(response.status_code, 401)
+
+    def test_a_username_that_looks_like_an_email_signs_in_as_itself(self):
+        Account.objects.create_user(username='seller@example.com', email='odd@example.com', password='other12345')
+
+        response = self.client.post(reverse('jwt-login'), {'username': 'seller@example.com', 'password': 'other12345'})
+
+        self.assertEqual(response.status_code, 200)
 
     def test_refresh_returns_new_access_token(self):
         login_response = self.client.post(reverse('jwt-login'), {'username': 'seller', 'password': 'pass12345'})
@@ -311,6 +341,27 @@ class EmailVerificationTests(APITestCase):
 
         self.assertTrue(response.data['email_verified'])
         self.assertEqual(mail.outbox, [])
+
+
+    def test_the_profile_cannot_take_an_email_another_account_uses(self):
+        Account.objects.create_user(username='owner', email='mine@example.com', password='pass12345')
+        user = Account.objects.create_user(username='copycat', email='copy@example.com', password='pass12345')
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(reverse('profile'), {'email': 'MINE@example.com'}, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)
+
+    def test_the_database_refuses_two_accounts_with_one_email(self):
+        from django.db import IntegrityError, transaction
+
+        Account.objects.create_user(username='one', email='dup@example.com', password='pass12345')
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Account.objects.create_user(username='two', email='DUP@example.com', password='pass12345')
+        # Accounts without an address don't clash.
+        Account.objects.create_user(username='blank1', email='', password='pass12345')
+        Account.objects.create_user(username='blank2', email='', password='pass12345')
 
 
 class UnverifiedAccountLimitTests(APITestCase):

@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -44,6 +46,11 @@ class Account(AbstractUser):
     class Meta:
         verbose_name = 'Account'
         verbose_name_plural = 'Accounts'
+        constraints = [
+            # People can sign in with their email address, so it must pick out one account. Accounts
+            # made without one (e.g. by createsuperuser) are left out.
+            models.UniqueConstraint(Lower('email'), condition=~Q(email=''), name='account_email_unique_ci'),
+        ]
 
     def __str__(self):
         return self.username

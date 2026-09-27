@@ -65,14 +65,16 @@ test('seller lists an animal with a photo; a buyer views it and contacts the sel
   await expectNoConsoleErrors(errors);
 });
 
-test('a wrong password is refused and the right one signs in', async ({ page }) => {
+test('a wrong password is refused and the right one signs in, with the username or the email', async ({ page }) => {
   await useEnglish(page);
   await page.goto('/signin');
-  await page.getByLabel('Username').fill('buyer_hsu');
+  await page.getByLabel('Username or email').fill('buyer_hsu');
   await page.getByLabel('Password').fill('not-the-password');
   await submitSignIn(page);
-  await expect(page.getByRole('alert')).toHaveText('Incorrect username or password.');
+  await expect(page.getByRole('alert')).toHaveText('Incorrect username, email or password.');
 
+  // The seeded address, typed in another case.
+  await page.getByLabel('Username or email').fill('BUYER_HSU@demo.morphmarket.test');
   await page.getByLabel('Password').fill('DemoPass123!');
   await submitSignIn(page);
   await page.waitForURL((url) => !url.pathname.startsWith('/signin'));

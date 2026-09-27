@@ -9,7 +9,7 @@ from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairVi
 
 from .emails import send_password_reset_email, send_verification_email, user_from_uid
 from .serializers import (
-    MeSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer, RegisterSerializer,
+    LoginSerializer, MeSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer, RegisterSerializer,
     VerifyEmailSerializer,
 )
 
@@ -31,7 +31,11 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LoginView(TokenObtainPairView):
-    """POST /api/v1/auth/login/ — SimpleJWT's token pair view, rate limited against password guessing."""
+    """POST /api/v1/auth/login/ — `username` (or the account's email) and `password` for a token pair.
+
+    Rate limited against password guessing.
+    """
+    serializer_class = LoginSerializer
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth'
 

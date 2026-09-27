@@ -78,7 +78,7 @@ export default function SignInPage() {
       const hasFieldErrors = error.fields && Object.keys(error.fields).length > 0;
       setErrors(hasFieldErrors
         ? splitFieldErrors(error.fields)
-        : { form: error.status === 401 ? t('auth.invalidCredentials') : (error.message || t('auth.genericError')) });
+        : { form: error.status === 401 ? t('signInOptions.invalidCredentials') : (error.message || t('auth.genericError')) });
     }
   };
 
@@ -116,7 +116,7 @@ export default function SignInPage() {
         {hasNext && !isRegister && <p className="authNotice" role="status">{t('auth.signInToContinue')}</p>}
 
         <form className="authForm" onSubmit={handleSubmit}>
-          {field('username', t('auth.username'), 'text', 'username')}
+          {field('username', isRegister ? t('auth.username') : t('signInOptions.usernameOrEmail'), 'text', 'username')}
           {isRegister && field('email', t('auth.email'), 'email', 'email')}
           {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password', isRegister ? 'password-rules' : undefined)}
           {!isRegister && <p className="authForgot"><Link to="/forgot-password">{t('accountEmail.forgotLink')}</Link></p>}
