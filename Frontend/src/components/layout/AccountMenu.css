@@ -61,7 +61,7 @@
 .accountMenuItem:hover { background: var(--color-surface-muted); color: var(--color-accent-hover); }
 .accountMenuItem:focus-visible { outline: 2px solid var(--color-accent-bright); outline-offset: -2px; }
 
-/* Inquiries waiting for a reply: an inverted pill so it reads on the olive button and in the list. */
+/* Inquiries waiting for a reply: an inverted pill so it reads on the green button and in the list. */
 .accountMenuBadge {
   display: inline-block;
   min-width: 1.4em;

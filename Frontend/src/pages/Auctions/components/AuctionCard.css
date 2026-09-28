@@ -84,10 +84,10 @@
 
 .auction-card-gene {
   padding: 0.25rem 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent-hover) 40%, transparent);
+  border: 1px solid rgba(74, 222, 128, 0.4);
   border-radius: 0.45rem;
-  color: var(--color-accent-soft);
-  background: color-mix(in srgb, var(--color-accent-strong) 35%, transparent);
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.35);
   font-size: 0.68rem;
   line-height: 1.2;
 }
@@ -116,7 +116,7 @@
 
 .auction-card-price {
   margin: 0.1rem 0 0;
-  color: var(--color-accent-hover);
+  color: #4ade80;
   font-size: 1.2rem;
   font-weight: 800;
   white-space: nowrap;

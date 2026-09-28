@@ -16,12 +16,12 @@
   padding: 1.5rem;
   border: 1px solid #1f2937;
   border-radius: 1.5rem;
-  background: linear-gradient(135deg, #111827, #0f172a 60%, color-mix(in srgb, var(--color-accent-strong) 35%, transparent));
+  background: linear-gradient(135deg, #111827, #0f172a 60%, rgba(20, 83, 45, 0.35));
 }
 
 .auctions-kicker {
   margin: 0 0 0.35rem;
-  color: var(--color-accent-hover);
+  color: #4ade80;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -79,8 +79,8 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 50%;
-  color: var(--color-accent-ink);
-  background: var(--color-accent-hover);
+  color: #052e16;
+  background: #4ade80;
   font-size: 0.85rem;
   font-weight: 800;
 }
@@ -115,8 +115,8 @@
 }
 
 .auctions-tab.is-active {
-  color: var(--color-accent-ink);
-  background: var(--color-accent-hover);
+  color: #052e16;
+  background: #4ade80;
 }
 
 .auctions-tab:focus-visible,
@@ -142,9 +142,9 @@
 
 .auctions-retry {
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--color-accent-bright);
+  border: 1px solid #22c55e;
   border-radius: 999px;
-  color: var(--color-accent-soft);
+  color: #bbf7d0;
   background: transparent;
   cursor: pointer;
 }

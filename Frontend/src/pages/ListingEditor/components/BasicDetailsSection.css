@@ -33,7 +33,7 @@
 
 .basic-details-species-option:hover,
 .basic-details-species-option.is-active {
-  background-color: var(--color-accent);
+  background-color: oklch(62.7% 0.194 149.214);
 }
 
 .basic-details-species-option--review {

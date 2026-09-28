@@ -101,6 +101,6 @@
   cursor: pointer;
 }
 
-.start-auction-primary:hover:not(:disabled) { background: var(--color-accent-strong); }
+.start-auction-primary:hover:not(:disabled) { background: var(--color-accent-bright); }
 .start-auction-primary:disabled { opacity: 0.6; cursor: default; }
 .start-auction-secondary { color: #93c5fd; }

@@ -61,9 +61,9 @@
 
 .marketplace-retry {
   padding: 0.25rem 0.75rem;
-  border: 1px solid var(--color-accent-bright);
+  border: 1px solid oklch(72.3% 0.219 149.579);
   border-radius: 999px;
-  color: var(--color-accent-soft);
+  color: oklch(87.1% 0.15 154.449);
   cursor: pointer;
 }
 
@@ -77,7 +77,7 @@
 
 .marketplace-save-search { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 1rem; }
 .marketplace-save-search p { margin: 0; font-size: 0.9rem; }
-.marketplace-save-search [role="status"] { color: var(--color-accent-hover); }
+.marketplace-save-search [role="status"] { color: #4ade80; }
 .marketplace-save-search [role="status"] a { color: #93c5fd; }
 
 /* A small callout under the button rather than a line in the heading row, which used to grow the
@@ -124,8 +124,8 @@
   cursor: pointer;
 }
 
-.marketplace-save-search button:hover:not(:disabled) { border-color: var(--color-accent-bright); }
-.marketplace-save-search button:focus-visible { outline: 2px solid var(--color-accent-bright); outline-offset: 2px; }
+.marketplace-save-search button:hover:not(:disabled) { border-color: #22c55e; }
+.marketplace-save-search button:focus-visible { outline: 2px solid #22c55e; outline-offset: 2px; }
 
 .marketplace-saved-link {
   color: #fb7185;

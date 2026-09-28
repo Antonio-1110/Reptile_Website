@@ -65,7 +65,7 @@
 
 .crop-modal-zoom-slider {
   width: 100%;
-  accent-color: var(--color-accent-bright);
+  accent-color: oklch(69.6% 0.17 162.48);
 }
 
 .crop-modal-error {
@@ -101,12 +101,12 @@
 
 .crop-modal-save {
   color: oklch(12.9% 0.042 264.695);
-  background-color: var(--color-accent-bright);
+  background-color: oklch(69.6% 0.17 162.48);
   font-weight: 700;
 }
 
 .crop-modal-save:hover {
-  background-color: var(--color-accent-hover);
+  background-color: oklch(76.5% 0.177 163.223);
 }
 
 .crop-modal-close:disabled,

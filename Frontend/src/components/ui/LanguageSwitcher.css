@@ -38,5 +38,5 @@
 }
 
 .language-option.is-active {
-  color: var(--color-accent-hover);
+  color: oklch(79.2% 0.209 151.711);
 }

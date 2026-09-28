@@ -57,7 +57,7 @@
   font-weight: 700;
 }
 
-.seller-badge--verified { color: var(--color-accent-ink); background: var(--color-accent-hover); }
+.seller-badge--verified { color: #052e16; background: #4ade80; }
 .seller-since { margin: 12px 0 0; color: var(--color-text-muted); font-size: 0.9rem; }
 .seller-bio { margin: 12px 0 0; line-height: 1.6; white-space: pre-line; }
 

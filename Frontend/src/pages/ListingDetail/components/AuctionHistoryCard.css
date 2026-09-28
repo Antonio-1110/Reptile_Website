@@ -40,7 +40,7 @@
 }
 
 .auction-history-bid.is-top .auction-history-amount {
-  color: var(--color-accent-hover);
+  color: #4ade80;
   font-size: 18px;
 }
 
@@ -60,8 +60,8 @@
 }
 
 .auction-history-tag--top {
-  border-color: color-mix(in srgb, var(--color-accent-hover) 50%, transparent);
-  color: var(--color-accent-soft);
+  border-color: rgba(74, 222, 128, 0.5);
+  color: #bbf7d0;
 }
 
 .auction-history-time {

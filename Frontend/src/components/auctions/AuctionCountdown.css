@@ -20,9 +20,9 @@
 }
 
 .auction-countdown--live {
-  border-color: color-mix(in srgb, var(--color-accent-hover) 45%, transparent);
-  color: var(--color-accent-soft);
-  background: color-mix(in srgb, var(--color-accent-strong) 85%, transparent);
+  border-color: rgba(74, 222, 128, 0.45);
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.85);
 }
 
 .auction-countdown--ending {

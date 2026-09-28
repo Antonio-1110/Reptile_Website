@@ -53,9 +53,9 @@
 }
 
 .inquiries-tab.is-selected {
-  border-color: var(--color-accent-bright);
+  border-color: #22c55e;
   color: #08111f;
-  background: var(--color-accent-hover);
+  background: #4ade80;
 }
 
 .inquiries-tab:focus-visible,
@@ -161,7 +161,7 @@
   border: 0;
   border-radius: 999px;
   color: #08111f;
-  background: var(--color-accent-hover);
+  background: #4ade80;
   font-weight: 700;
   cursor: pointer;
 }
@@ -171,7 +171,7 @@
 .inquiries-hint { color: #94a3b8; font-size: 13px; }
 
 .inquiries-state { margin: 8px 0 0; color: #fbbf24; }
-.inquiries-state.is-done { color: var(--color-accent-hover); }
+.inquiries-state.is-done { color: #4ade80; }
 
 .inquiries-more {
   display: block;

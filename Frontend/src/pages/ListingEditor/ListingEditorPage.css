@@ -17,7 +17,7 @@
 
 .listing-editor-title {
   margin-bottom: 0.5rem;
-  color: var(--color-accent-bright);
+  color: oklch(72.3% 0.219 149.579);
   font-size: 1.5rem;
   font-weight: 700;
   line-height: calc(2 / 1.5);
@@ -58,7 +58,7 @@
   padding-block: 0.75rem;
   border-radius: 0.5rem;
   color: #fff;
-  background-color: var(--color-accent);
+  background-color: oklch(62.7% 0.194 149.214);
   font-weight: 700;
   transition-property: color, background-color, border-color, opacity, box-shadow;
   transition-duration: 150ms;
@@ -66,7 +66,7 @@
 }
 
 .listing-editor-submit:hover {
-  background-color: var(--color-accent-strong);
+  background-color: oklch(72.3% 0.219 149.579);
 }
 
 .listing-editor-submit:disabled {
@@ -83,7 +83,7 @@
 }
 
 .listing-editor-result--success {
-  color: var(--color-accent-hover);
+  color: oklch(79.2% 0.209 151.711);
 }
 
 .listing-editor-result--success a,
@@ -130,7 +130,7 @@
 .listing-editor-created-actions > .listing-editor-created-primary {
   border-color: transparent;
   color: #fff;
-  background-color: var(--color-accent-strong);
+  background-color: oklch(52.7% 0.154 150.069);
 }
 
 @media (min-width: 40rem) {

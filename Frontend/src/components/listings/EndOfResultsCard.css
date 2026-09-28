@@ -4,7 +4,7 @@
   width: 100%;
   min-height: 420px;
   overflow: hidden;
-  border: 1px dashed color-mix(in srgb, var(--color-accent-hover) 45%, transparent);
+  border: 1px dashed rgba(74, 222, 128, 0.45);
   border-radius: 1rem;
   color: #f8fafc;
   background: #111827;
@@ -25,7 +25,7 @@
   overflow: hidden;
   background:
     radial-gradient(circle at 78% 22%, rgba(250, 204, 21, 0.18), transparent 28%),
-    linear-gradient(180deg, #0b1437 0%, #13294b 65%, var(--color-accent-deep) 100%);
+    linear-gradient(180deg, #0b1437 0%, #13294b 65%, #1f3a2e 100%);
 }
 
 .end-card-moon {
@@ -130,10 +130,10 @@
 
 .end-card-gene {
   padding: 0.25rem 0.5rem;
-  border: 1px solid color-mix(in srgb, var(--color-accent-hover) 40%, transparent);
+  border: 1px solid rgba(74, 222, 128, 0.4);
   border-radius: 0.45rem;
-  color: var(--color-accent-soft);
-  background: color-mix(in srgb, var(--color-accent-strong) 35%, transparent);
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.35);
   font-size: 0.68rem;
   line-height: 1.2;
 }
@@ -154,7 +154,7 @@
 }
 
 .end-card-price {
-  color: var(--color-accent-hover);
+  color: #4ade80;
   font-size: 1.15rem;
   font-weight: 800;
   font-style: italic;
@@ -164,9 +164,9 @@
 .end-card-action {
   justify-self: start;
   padding: 0.45rem 0.9rem;
-  border: 1px solid var(--color-accent-bright);
+  border: 1px solid #22c55e;
   border-radius: 999px;
-  color: var(--color-accent-soft);
+  color: #bbf7d0;
   background: transparent;
   font-size: 0.8rem;
   font-weight: 600;
@@ -175,7 +175,7 @@
 
 .end-card-action:hover {
   color: #f8fafc;
-  background: var(--color-accent-strong);
+  background: #16a34a;
 }
 
 @keyframes end-card-breathe {

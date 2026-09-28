@@ -53,9 +53,9 @@
 }
 
 .my-orders-tab.is-selected {
-  border-color: var(--color-accent-bright);
+  border-color: #22c55e;
   color: #08111f;
-  background: var(--color-accent-hover);
+  background: #4ade80;
 }
 
 .my-orders-tab:focus-visible,
@@ -165,7 +165,7 @@
   text-align: right;
 }
 
-.my-orders-row-side strong { color: var(--color-accent-hover); font-size: 18px; }
+.my-orders-row-side strong { color: #4ade80; font-size: 18px; }
 .my-orders-row-side span { color: #94a3b8; font-size: 13px; }
 
 .my-orders-open {

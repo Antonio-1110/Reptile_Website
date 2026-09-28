@@ -178,9 +178,9 @@
 
 .my-listings-auction {
   padding: 8px 14px;
-  border: 1px solid var(--color-accent-bright);
+  border: 1px solid #22c55e;
   border-radius: 999px;
-  color: var(--color-accent-hover);
+  color: #4ade80;
   font-weight: 700;
   text-decoration: none;
 }
