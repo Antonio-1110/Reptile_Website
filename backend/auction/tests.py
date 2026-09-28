@@ -5,6 +5,7 @@ from unittest import mock
 from django.conf import settings
 from django.core import mail
 from django.core.management import call_command
+from django.db.models import ProtectedError
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -429,14 +430,6 @@ class CloseAuctionTests(AuctionTestCase):
         response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
         self.assertEqual(response.status_code, 201)
 
-    def test_deleting_a_listing_removes_its_auction_bids_and_deposits(self):
-        auction = self.create_auction()
-        self.pay_deposit(auction, self.buyer)
-        self.bid(auction, self.buyer, '5000.00')
-        self.listing.delete()
-        self.assertFalse(Auction.objects.exists())
-        self.assertFalse(Deposit.objects.exists())
-
 
 class BuyNowTests(AuctionTestCase):
     def setUp(self):
@@ -542,6 +535,121 @@ class BuyNowTests(AuctionTestCase):
         second = self.buy_now(auction, self.buyer).data
         self.assertEqual(first['id'], second['id'])
         self.assertEqual(BuyNowPurchase.objects.count(), 1)
+
+
+@override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)
+class DeletingWhileMoneyIsHeldTests(AuctionTestCase):
+    """A listing or account can't be deleted while an auction on it runs or still holds anyone's money (#37)."""
+
+    def delete_listing(self):
+        self.client.force_authenticate(self.seller)
+        return self.client.delete(reverse('live-animal-detail', args=[self.listing.id]))
+
+    def win_auction(self):
+        auction = self.create_auction()
+        self.pay_deposit(auction, self.other_buyer)
+        self.bid(auction, self.other_buyer, '5000.00')
+        self.pay_deposit(auction, self.buyer)
+        self.bid(auction, self.buyer, '5100.00')
+        Auction.objects.filter(pk=auction.pk).update(ends_at=timezone.now() - timedelta(seconds=1))
+        with self.captureOnCommitCallbacks(execute=True):
+            services.settle_due_auctions()
+        return Order.objects.get(auction=auction)
+
+    def complete(self, order):
+        with self.captureOnCommitCallbacks(execute=True):
+            orders.pay_order(order, self.buyer)
+            orders.mark_handed_over(order, self.seller)
+            orders.confirm_received(order, self.buyer)
+        order.refresh_from_db()
+        self.assertEqual(order.status, Order.Status.COMPLETED)
+
+    def assert_listing_kept(self, response):
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('auction', response.data['detail'])
+        self.assertTrue(LiveAnimalPost.objects.filter(pk=self.listing.pk).exists())
+
+    def test_listing_with_a_running_auction_cannot_be_deleted(self):
+        auction = self.create_auction()
+        self.pay_deposit(auction, self.buyer)
+        self.bid(auction, self.buyer, '5000.00')
+
+        self.assert_listing_kept(self.delete_listing())
+        self.assertEqual(Deposit.objects.get().status, Deposit.Status.HELD)
+
+    def test_listing_with_a_scheduled_auction_cannot_be_deleted(self):
+        self.create_auction(starts_at=timezone.now() + timedelta(days=1))
+        self.assert_listing_kept(self.delete_listing())
+
+    def test_listing_can_be_deleted_once_its_auction_is_cancelled(self):
+        auction = self.create_auction()
+        self.pay_deposit(auction, self.buyer)
+        services.cancel_auction(auction)  # refunds the deposit
+
+        self.assertEqual(self.delete_listing().status_code, 204)
+        self.assertFalse(Auction.objects.exists())
+        self.assertFalse(Deposit.objects.exists())
+
+    def test_ended_auction_whose_winner_has_not_paid_blocks_deletion(self):
+        self.win_auction()  # the winner's deposit is still held
+        self.assert_listing_kept(self.delete_listing())
+
+    def test_completed_sale_blocks_deletion_until_the_seller_is_paid_out(self):
+        order = self.win_auction()
+        self.complete(order)
+        self.assert_listing_kept(self.delete_listing())
+
+        orders.mark_paid_out(order)
+        self.assertEqual(self.delete_listing().status_code, 204)
+        self.assertFalse(Order.objects.exists())
+
+    def test_paid_buy_now_blocks_deletion_until_the_sale_is_settled(self):
+        auction = self.create_auction(buy_now_price=Decimal('16000'))
+        self.client.force_authenticate(self.buyer)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(reverse('auction-buy-now', args=[auction.id]))
+        self.assertEqual(BuyNowPurchase.objects.get().status, BuyNowPurchase.Status.PAID)
+
+        self.assert_listing_kept(self.delete_listing())
+
+    def test_bidder_account_with_a_held_deposit_cannot_be_deleted(self):
+        auction = self.create_auction()
+        self.pay_deposit(auction, self.buyer)
+
+        with self.assertRaises(ProtectedError):
+            self.buyer.delete()
+        self.assertEqual(Deposit.objects.get().status, Deposit.Status.HELD)
+
+    def test_seller_account_with_a_running_auction_cannot_be_deleted(self):
+        self.create_auction()
+        with self.assertRaises(ProtectedError):
+            self.seller.delete()
+        self.assertTrue(Account.objects.filter(pk=self.seller.pk).exists())
+
+    def test_seller_account_with_a_held_bond_cannot_be_deleted(self):
+        SellerBond.objects.create(account=self.seller, amount=Decimal('3000'), currency='TWD', status=SellerBond.Status.HELD, provider='test')
+        with self.assertRaises(ProtectedError):
+            self.seller.delete()
+
+    def test_accounts_whose_auction_money_is_settled_can_be_deleted(self):
+        auction = self.create_auction()
+        self.pay_deposit(auction, self.buyer)
+        services.cancel_auction(auction)
+
+        self.buyer.delete()
+        self.seller.delete()
+        self.assertFalse(Auction.objects.exists())
+
+    def test_admin_lists_the_auction_instead_of_deleting_the_listing(self):
+        auction = self.create_auction()
+        staff = Account.objects.create_superuser(username='staff', email='staff@example.com', password='pass12345')
+        self.client.force_login(staff)
+        url = reverse('admin:post_liveanimalpost_delete', args=[self.listing.pk])
+
+        response = self.client.get(url)
+        self.assertContains(response, f'Auction #{auction.pk}')
+        self.client.post(url, {'post': 'yes'})
+        self.assertTrue(LiveAnimalPost.objects.filter(pk=self.listing.pk).exists())
 
 
 @override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)

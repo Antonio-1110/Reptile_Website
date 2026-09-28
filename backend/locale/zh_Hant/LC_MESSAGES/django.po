@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-29 00:02+0800\n"
+"POT-Creation-Date: 2026-09-29 00:12+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -775,6 +775,17 @@ msgstr "如果有帳號使用這個電子郵件地址，我們已寄出設定新
 #: authentication/views.py:177
 msgid "Your password has been changed. You can sign in with it now."
 msgstr "你的密碼已變更，現在可以用新密碼登入。"
+
+#: common/exceptions.py:31
+msgid ""
+"This listing can't be deleted while its auction is running or someone's "
+"money for it is still held. Try again once the auction has ended and its "
+"sale is settled."
+msgstr "這則刊登的拍賣仍在進行中，或仍有相關款項由平台保管，因此暫時無法刪除。請等拍賣結束、交易完成後再試一次。"
+
+#: common/exceptions.py:34
+msgid "This can't be deleted because other records still depend on it."
+msgstr "仍有其他資料與此項目相關，因此無法刪除。"
 
 #: common/notifications.py:12
 msgid "Username"

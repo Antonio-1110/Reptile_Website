@@ -384,6 +384,9 @@ Apply these whenever you build or review a feature — they're the common gaps i
   waits for staff review (`post/species.py`, admin: Species requests), and until then the listing is
   unpublished like a hidden one. Any new public queryset of live animals must filter by
   `LiveAnimalPost.PUBLISHED`, and code reading `post.species.name` must allow for `None`.
+- Deleting a listing, an account or an auction is refused (`ProtectedError`, a 400 from the API) while
+  an auction on it runs or still holds money (`cascade_unless_money_held` in `auction/models.py`).
+  Code that deletes such data on purpose, like `seed_demo --reset`, removes the money records first.
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.
