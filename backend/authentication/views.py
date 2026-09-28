@@ -1,16 +1,21 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import update_last_login
 from django.utils.translation import gettext as _
 from rest_framework import generics, permissions
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairView
 
 from .emails import send_password_reset_email, send_verification_email, user_from_uid
+from .google import GoogleTokenError, account_for_google, verify_id_token
 from .serializers import (
-    MeSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer, RegisterSerializer,
-    VerifyEmailSerializer,
+    GoogleSignInSerializer, LoginSerializer, MeSerializer, PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer, RegisterSerializer, VerifyEmailSerializer,
 )
 
 Account = get_user_model()
@@ -31,9 +36,45 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LoginView(TokenObtainPairView):
-    """POST /api/v1/auth/login/ — SimpleJWT's token pair view, rate limited against password guessing."""
+    """POST /api/v1/auth/login/ — `username` (or the account's email) and `password` for a token pair.
+
+    Rate limited against password guessing.
+    """
+    serializer_class = LoginSerializer
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth'
+
+
+class GoogleSignInView(APIView):
+    """POST /api/v1/auth/google/ — `credential` from Google's sign-in button; answers like login/.
+
+    Signs in to the account already linked to that Google account, else the one using its (confirmed)
+    email address, else creates a new account with a username made from the address and no password.
+    """
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
+
+    def get_authenticate_header(self, request):
+        # A refused sign-in is a 401, like a wrong password on login/ (DRF sends 403 without this).
+        return 'Bearer realm="api"'
+
+    def post(self, request):
+        if not settings.GOOGLE_CLIENT_ID:
+            raise ValidationError({'detail': _('Signing in with Google is not available.')})
+        serializer = GoogleSignInSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            claims = verify_id_token(serializer.validated_data['credential'])
+        except GoogleTokenError:
+            raise AuthenticationFailed(_("Google couldn't confirm who you are. Please try again."))
+        account, created = account_for_google(claims)
+        if not account.is_active:
+            raise AuthenticationFailed(_('This account has been disabled.'))
+        refresh = RefreshToken.for_user(account)
+        update_last_login(None, account)
+        return Response({'access': str(refresh.access_token), 'refresh': str(refresh), 'created': created})
 
 
 class LogoutView(TokenBlacklistView):
@@ -105,10 +146,9 @@ class PasswordResetRequestView(APIView):
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        accounts = Account.objects.filter(email__iexact=serializer.validated_data['email'], is_active=True)
-        for account in accounts:
-            if account.has_usable_password():
-                send_password_reset_email(account)
+        # Accounts made with Google sign-in have no password yet; this is how their owners set one.
+        for account in Account.objects.filter(email__iexact=serializer.validated_data['email'], is_active=True):
+            send_password_reset_email(account)
         return Response({'detail': _(
             "If an account uses that email address, we've sent it a link to choose a new password."
         )})

@@ -255,13 +255,20 @@ Each refresh token works once: `refresh/` returns a new pair and retires the old
 `logout/` retires the current one.
 
 - `POST /register/` — `username`, `email`, `password`; returns `id`, `username`, `email` (no token)
-- `POST /login/` — returns `access` (60 min) and `refresh` (7 days) tokens
+- `POST /login/` — `username` (or the account's email, any case) and `password`; returns `access`
+  (60 min) and `refresh` (7 days) tokens
+- `POST /google/` — `credential` (the ID token from Google's sign-in button); returns tokens like
+  `login/` plus `created`. Signs in to the account linked to that Google account, else the one with
+  its email address (confirming it; an unconfirmed account's password is cleared, in case someone
+  else registered with that address), else creates one with no password. Off (400) until
+  `DJANGO_GOOGLE_CLIENT_ID` is set
 - `POST /refresh/` — `refresh` → new `access` and `refresh` (the old refresh token stops working)
 - `POST /logout/` — `refresh`; retires it (401 if it's invalid or already retired)
 - `GET /me/` (auth required) — `id`, `username`, `email`, `email_verified`, `verified_seller`
 - `POST /verify-email/` — `uid`, `token` from the sign-up email; confirms the address (no sign-in needed)
 - `POST /verify-email/resend/` (auth required) — emails a new confirmation link
-- `POST /password-reset/` — `email`; emails a reset link to accounts using it (same answer either way)
+- `POST /password-reset/` — `email`; emails a reset link to accounts using it (same answer either way);
+  also how a Google-only account sets a password
 - `POST /password-reset/confirm/` — `uid`, `token`, `password`; sets it, confirms the email and signs
   the account out everywhere
 

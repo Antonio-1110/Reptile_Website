@@ -1,0 +1,30 @@
+.googleSignIn {
+  margin-top: 1.25rem;
+}
+
+.googleSignInDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  color: var(--color-text-subtle);
+  font-size: 0.875rem;
+}
+
+.googleSignInDivider::before,
+.googleSignInDivider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--color-border-muted);
+}
+
+.googleSignInButton {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.googleSignInButton.isDisabled {
+  pointer-events: none;
+  opacity: 0.6;
+}

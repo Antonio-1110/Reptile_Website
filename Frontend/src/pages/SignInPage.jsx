@@ -2,8 +2,9 @@ import './SignInPage.css';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { login, register } from '../api/authApi';
+import { googleSignIn, login, register } from '../api/authApi';
 import PasswordRules from '../components/ui/PasswordRules';
+import GoogleSignInButton from './SignIn/GoogleSignInButton';
 
 // Only allow same-site relative redirects, so ?next= can't send users off-site.
 function getNextPath() {
@@ -78,7 +79,19 @@ export default function SignInPage() {
       const hasFieldErrors = error.fields && Object.keys(error.fields).length > 0;
       setErrors(hasFieldErrors
         ? splitFieldErrors(error.fields)
-        : { form: error.status === 401 ? t('auth.invalidCredentials') : (error.message || t('auth.genericError')) });
+        : { form: error.status === 401 ? t('signInOptions.invalidCredentials') : (error.message || t('auth.genericError')) });
+    }
+  };
+
+  const handleGoogleCredential = async (credential) => {
+    setSubmitting(true);
+    setErrors({});
+    try {
+      await googleSignIn(credential);
+      window.location.href = getNextPath();
+    } catch (error) {
+      setSubmitting(false);
+      setErrors({ form: error.message || t('auth.genericError') });
     }
   };
 
@@ -116,7 +129,7 @@ export default function SignInPage() {
         {hasNext && !isRegister && <p className="authNotice" role="status">{t('auth.signInToContinue')}</p>}
 
         <form className="authForm" onSubmit={handleSubmit}>
-          {field('username', t('auth.username'), 'text', 'username')}
+          {field('username', isRegister ? t('auth.username') : t('signInOptions.usernameOrEmail'), 'text', 'username')}
           {isRegister && field('email', t('auth.email'), 'email', 'email')}
           {field('password', t('auth.password'), 'password', isRegister ? 'new-password' : 'current-password', isRegister ? 'password-rules' : undefined)}
           {!isRegister && <p className="authForgot"><Link to="/forgot-password">{t('accountEmail.forgotLink')}</Link></p>}
@@ -129,6 +142,8 @@ export default function SignInPage() {
             {submitting ? t('auth.pleaseWait') : (isRegister ? t('auth.createAccount') : t('auth.signIn'))}
           </button>
         </form>
+
+        <GoogleSignInButton onCredential={handleGoogleCredential} disabled={submitting} />
 
         <p className="authSwitch">
           {isRegister ? t('auth.haveAccount') : t('auth.noAccount')}{' '}

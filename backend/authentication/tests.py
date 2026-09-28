@@ -59,6 +59,19 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
+    def test_register_rejects_an_email_already_used_in_another_case(self):
+        Account.objects.create_user(username='first', email='shared@example.com', password='pass12345')
+
+        response = self.client.post(reverse('jwt-register'), {
+            'username': 'second',
+            'email': 'Shared@Example.com',
+            'password': 'S3curePass!23',
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)
+
+
 class LoginAndTokenTests(APITestCase):
     def setUp(self):
         self.user = Account.objects.create_user(username='seller', email='seller@example.com', password='pass12345')
@@ -73,6 +86,23 @@ class LoginAndTokenTests(APITestCase):
     def test_login_rejects_invalid_credentials(self):
         response = self.client.post(reverse('jwt-login'), {'username': 'seller', 'password': 'wrong-password'})
         self.assertEqual(response.status_code, 401)
+
+    def test_login_accepts_the_email_address_in_any_case(self):
+        response = self.client.post(reverse('jwt-login'), {'username': 'Seller@Example.com', 'password': 'pass12345'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('access', response.data)
+
+    def test_login_by_email_still_needs_the_right_password(self):
+        response = self.client.post(reverse('jwt-login'), {'username': 'seller@example.com', 'password': 'wrong-password'})
+        self.assertEqual(response.status_code, 401)
+
+    def test_a_username_that_looks_like_an_email_signs_in_as_itself(self):
+        Account.objects.create_user(username='seller@example.com', email='odd@example.com', password='other12345')
+
+        response = self.client.post(reverse('jwt-login'), {'username': 'seller@example.com', 'password': 'other12345'})
+
+        self.assertEqual(response.status_code, 200)
 
     def test_refresh_returns_new_access_token(self):
         login_response = self.client.post(reverse('jwt-login'), {'username': 'seller', 'password': 'pass12345'})
@@ -313,6 +343,27 @@ class EmailVerificationTests(APITestCase):
         self.assertEqual(mail.outbox, [])
 
 
+    def test_the_profile_cannot_take_an_email_another_account_uses(self):
+        Account.objects.create_user(username='owner', email='mine@example.com', password='pass12345')
+        user = Account.objects.create_user(username='copycat', email='copy@example.com', password='pass12345')
+        self.client.force_authenticate(user)
+
+        response = self.client.patch(reverse('profile'), {'email': 'MINE@example.com'}, format='json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('email', response.data)
+
+    def test_the_database_refuses_two_accounts_with_one_email(self):
+        from django.db import IntegrityError, transaction
+
+        Account.objects.create_user(username='one', email='dup@example.com', password='pass12345')
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Account.objects.create_user(username='two', email='DUP@example.com', password='pass12345')
+        # Accounts without an address don't clash.
+        Account.objects.create_user(username='blank1', email='', password='pass12345')
+        Account.objects.create_user(username='blank2', email='', password='pass12345')
+
+
 class UnverifiedAccountLimitTests(APITestCase):
     def setUp(self):
         from post.models import LiveAnimalPost, Species
@@ -498,3 +549,145 @@ class AdminAddressTests(APITestCase):
             self.reload_urls()
             self.assertEqual(reverse('admin:index'), '/staff-x7k2/')
             self.assertEqual(self.client.get('/admin/').status_code, 404)
+
+
+GOOGLE_CLIENT_ID = 'test-client.apps.googleusercontent.com'
+
+
+@override_settings(GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID)
+class GoogleSignInTests(APITestCase):
+    """Tokens are signed with a key made here, standing in for Google's published keys."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        cls.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+
+    def setUp(self):
+        from unittest import mock
+
+        patcher = mock.patch('authentication.google._signing_key', return_value=self.private_key.public_key())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def google_token(self, **claims):
+        import time
+
+        import jwt
+
+        now = int(time.time())
+        payload = {
+            'iss': 'https://accounts.google.com', 'aud': GOOGLE_CLIENT_ID, 'sub': '1234567890',
+            'email': 'keeper@gmail.com', 'email_verified': True, 'iat': now, 'exp': now + 600,
+        }
+        payload.update(claims)
+        return jwt.encode(payload, self.private_key, algorithm='RS256')
+
+    def sign_in(self, **claims):
+        return self.client.post(reverse('google-sign-in'), {'credential': self.google_token(**claims)})
+
+    def test_a_new_google_user_gets_a_confirmed_account_without_a_password(self):
+        response = self.sign_in()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data['created'])
+        account = Account.objects.get(email='keeper@gmail.com')
+        self.assertEqual(account.username, 'keeper')
+        self.assertTrue(account.email_verified)
+        self.assertFalse(account.has_usable_password())
+        self.assertEqual(account.google_id, '1234567890')
+        me = self.client.get(reverse('jwt-me'), HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+        self.assertEqual(me.data['username'], 'keeper')
+
+    def test_signing_in_again_uses_the_same_account(self):
+        self.sign_in()
+        response = self.sign_in(email='renamed@gmail.com')
+
+        self.assertFalse(response.data['created'])
+        self.assertEqual(Account.objects.filter(google_id='1234567890').count(), 1)
+        self.assertFalse(Account.objects.filter(email='renamed@gmail.com').exists())
+
+    def test_a_taken_username_gets_a_number(self):
+        Account.objects.create_user(username='keeper', email='other@example.com', password='pass12345')
+
+        self.sign_in()
+
+        self.assertEqual(Account.objects.get(email='keeper@gmail.com').username, 'keeper2')
+
+    def test_an_existing_account_with_the_address_is_signed_in_and_keeps_its_password(self):
+        account = Account.objects.create_user(username='olduser', email='Keeper@Gmail.com', password='pass12345')
+
+        response = self.sign_in()
+
+        self.assertFalse(response.data['created'])
+        account.refresh_from_db()
+        self.assertEqual(account.google_id, '1234567890')
+        self.assertTrue(account.check_password('pass12345'))
+
+    def test_an_unconfirmed_account_with_the_address_loses_its_password_and_sessions(self):
+        # Someone may have signed up with the owner's address first, to get into the account later.
+        account = Account.objects.create_user(
+            username='squatter', email='keeper@gmail.com', password='pass12345', email_verified=False,
+        )
+        refresh = self.client.post(reverse('jwt-login'), {'username': 'squatter', 'password': 'pass12345'}).data['refresh']
+
+        response = self.sign_in()
+
+        self.assertEqual(response.status_code, 200)
+        account.refresh_from_db()
+        self.assertTrue(account.email_verified)
+        self.assertFalse(account.has_usable_password())
+        self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': refresh}).status_code, 401)
+
+    def test_a_token_for_another_site_is_refused(self):
+        response = self.sign_in(aud='someone-else.apps.googleusercontent.com')
+
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(Account.objects.filter(email='keeper@gmail.com').exists())
+
+    def test_an_expired_token_is_refused(self):
+        response = self.sign_in(iat=1000, exp=2000)
+        self.assertEqual(response.status_code, 401)
+
+    def test_a_token_not_issued_by_google_is_refused(self):
+        response = self.sign_in(iss='https://evil.example.com')
+        self.assertEqual(response.status_code, 401)
+
+    def test_an_unconfirmed_google_address_is_refused(self):
+        Account.objects.create_user(username='olduser', email='keeper@gmail.com', password='pass12345')
+
+        response = self.sign_in(email_verified=False)
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIsNone(Account.objects.get(username='olduser').google_id)
+
+    def test_a_forged_signature_is_refused(self):
+        token = self.google_token()
+        header, payload, _signature = token.split('.')
+        response = self.client.post(reverse('google-sign-in'), {'credential': f'{header}.{payload}.AAAA'})
+        self.assertEqual(response.status_code, 401)
+
+    def test_a_disabled_account_cannot_sign_in(self):
+        Account.objects.create_user(username='banned', email='keeper@gmail.com', password='pass12345', is_active=False)
+
+        response = self.sign_in()
+
+        self.assertEqual(response.status_code, 401)
+        self.assertNotIn('access', response.data)
+        self.assertIsNone(Account.objects.get(username='banned').google_id)
+
+    @override_settings(GOOGLE_CLIENT_ID='')
+    def test_it_is_off_until_a_client_id_is_set(self):
+        response = self.sign_in()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['detail'], 'Signing in with Google is not available.')
+
+    def test_a_google_only_account_can_set_a_password_by_reset_link(self):
+        self.sign_in()
+
+        self.client.post(reverse('password-reset'), {'email': 'keeper@gmail.com'})
+
+        self.assertEqual(len(mail.outbox), 1)

@@ -3,6 +3,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext as _
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .emails import email_verification_token, password_reset_token, user_from_uid
 
@@ -24,7 +25,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate_email(self, value):
-        if Account.objects.filter(email=value).exists():
+        if Account.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError(_('Email already registered.'))
         return value
 
@@ -45,6 +46,24 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             email_verified=False,
         )
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+    """SimpleJWT's sign-in, where the `username` field also accepts the account's email address."""
+
+    def validate(self, attrs):
+        login = attrs.get(self.username_field, '').strip()
+        # A username may itself contain "@", so an exact username match wins over an email match.
+        if '@' in login and not Account.objects.filter(username=login).exists():
+            usernames = list(Account.objects.filter(email__iexact=login).values_list('username', flat=True)[:2])
+            if len(usernames) == 1:
+                attrs[self.username_field] = usernames[0]
+        return super().validate(attrs)
+
+
+class GoogleSignInSerializer(serializers.Serializer):
+    """`credential`: the ID token Google Identity Services hands the browser."""
+    credential = serializers.CharField()
 
 
 class MeSerializer(serializers.ModelSerializer):

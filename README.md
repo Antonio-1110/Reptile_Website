@@ -107,7 +107,7 @@ Conventions every endpoint follows:
 
 ### Authentication (`/api/v1/auth/`, JWT)
 
-- `POST /register/`, `POST /login/` (returns `access` + `refresh`), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
+- `POST /register/`, `POST /login/` (username or email; returns `access` + `refresh`), `POST /google/` (Google's ID token; same answer), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
 - `POST /verify-email/`, `POST /verify-email/resend/`, `POST /password-reset/`, `POST /password-reset/confirm/`: the one-time links emailed after sign-up and for a forgotten password
 
 ### Account (`/api/v1/account/`)

@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -37,6 +39,8 @@ class Account(AbstractUser):
     # address) sets it to False; accounts made by staff, the seed data and existing accounts count as
     # verified. Unverified accounts can't post, contact sellers or bid (authentication.permissions).
     email_verified = models.BooleanField(default=True)
+    # The Google account ("sub" claim) linked by signing in with Google (authentication/google.py).
+    google_id = models.CharField(max_length=255, unique=True, null=True, blank=True, editable=False)
     is_paid_account = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -44,6 +48,11 @@ class Account(AbstractUser):
     class Meta:
         verbose_name = 'Account'
         verbose_name_plural = 'Accounts'
+        constraints = [
+            # People can sign in with their email address, so it must pick out one account. Accounts
+            # made without one (e.g. by createsuperuser) are left out.
+            models.UniqueConstraint(Lower('email'), condition=~Q(email=''), name='account_email_unique_ci'),
+        ]
 
     def __str__(self):
         return self.username

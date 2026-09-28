@@ -12,7 +12,7 @@ export const PNG = {
 
 export async function signIn(page, username, next = '/marketplace') {
   await page.goto(`/signin?next=${encodeURIComponent(next)}`);
-  await page.getByLabel('Username').fill(username);
+  await page.getByLabel('Username or email').fill(username);
   await page.getByLabel('Password').fill(DEMO_PASSWORD);
   await submitSignIn(page);
   await page.waitForURL((url) => url.pathname === next);

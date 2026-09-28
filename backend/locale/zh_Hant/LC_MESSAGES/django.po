@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-27 21:24+0800\n"
+"POT-Creation-Date: 2026-09-28 00:42+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: account/serializers.py:136 authentication/serializers.py:29
+msgid "Email already registered."
+msgstr "此電子郵件已經註冊過。"
 
 #: account/views.py:109
 msgid ""
@@ -729,38 +733,46 @@ msgstr ""
 "請先確認你的電子郵件地址：開啟我們寄給你的連結。你可以在任何頁面頂端要求重新"
 "寄送連結。"
 
-#: authentication/serializers.py:23
+#: authentication/serializers.py:24
 msgid "Username already exists."
 msgstr "此使用者名稱已被使用。"
 
-#: authentication/serializers.py:28
-msgid "Email already registered."
-msgstr "此電子郵件已經註冊過。"
-
-#: authentication/serializers.py:66
+#: authentication/serializers.py:85
 msgid "This link is invalid or has expired. Please ask for a new one."
 msgstr "這個連結無效或已過期，請重新申請。"
 
-#: authentication/views.py:73 authentication/views.py:78
+#: authentication/views.py:65
+msgid "Signing in with Google is not available."
+msgstr "目前無法使用 Google 登入。"
+
+#: authentication/views.py:71
+msgid "Google couldn't confirm who you are. Please try again."
+msgstr "Google 無法確認你的身分，請再試一次。"
+
+#: authentication/views.py:74
+msgid "This account has been disabled."
+msgstr "此帳號已停用。"
+
+#: authentication/views.py:114 authentication/views.py:119
 msgid "Your email address is confirmed."
 msgstr "你的電子郵件地址已確認。"
 
-#: authentication/views.py:90
+#: authentication/views.py:131
 msgid "Your email address is already confirmed."
 msgstr "你的電子郵件地址先前已確認。"
 
-#: authentication/views.py:92
+#: authentication/views.py:133
 #, python-format
 msgid "We've sent a new link to %(email)s."
 msgstr "我們已將新的連結寄到 %(email)s。"
 
-#: authentication/views.py:113
+#: authentication/views.py:153
 msgid ""
 "If an account uses that email address, we've sent it a link to choose a new "
 "password."
 msgstr "如果有帳號使用這個電子郵件地址，我們已寄出設定新密碼的連結。"
 
-#: authentication/views.py:137
+#: authentication/views.py:177
 msgid "Your password has been changed. You can sign in with it now."
 msgstr "你的密碼已變更，現在可以用新密碼登入。"
 

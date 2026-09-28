@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 from . import reviews
 from .models import Account, Review
@@ -127,6 +128,13 @@ class ProfileAccountSerializer(AccountSerializer):
             'post_count', 'remaining_post_count',
         ]
         read_only_fields = AccountSerializer.Meta.read_only_fields + ['post_count', 'remaining_post_count']
+
+    def validate_email(self, value):
+        # Email addresses sign people in (authentication.serializers.LoginSerializer), so two accounts
+        # can't share one.
+        if value and Account.objects.filter(email__iexact=value).exclude(pk=getattr(self.instance, 'pk', None)).exists():
+            raise serializers.ValidationError(_('Email already registered.'))
+        return value
 
     def update(self, instance, validated_data):
         # A new address has to be confirmed like the first one; the old confirmation doesn't carry over.
