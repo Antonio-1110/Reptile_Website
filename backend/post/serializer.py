@@ -46,6 +46,9 @@ class OwnerOnlyContactInfoMixin:
 
 
 MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024
+# Uploads are decoded to strip their metadata (post/photos.py). A small file can still decode to a huge
+# image, so this caps the memory one photo can take; phone cameras stay well below it.
+MAX_PHOTO_PIXELS = 50_000_000
 
 
 class ListingPhotoUploadSerializer(serializers.Serializer):
@@ -66,6 +69,11 @@ class ListingPhotoUploadSerializer(serializers.Serializer):
         for photo in photos:
             if photo.size > MAX_PHOTO_SIZE_BYTES:
                 raise serializers.ValidationError(_('"%(name)s" is larger than 5 MB.') % {'name': photo.name})
+            width, height = photo.image.size
+            if width * height > MAX_PHOTO_PIXELS:
+                raise serializers.ValidationError(
+                    _('"%(name)s" has too many pixels. Use a photo under 50 megapixels.') % {'name': photo.name}
+                )
         return photos
 
     def validate(self, attrs):

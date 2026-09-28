@@ -1,5 +1,4 @@
 import json
-import os
 import uuid
 
 from django.shortcuts import render
@@ -22,11 +21,13 @@ from .serializer import (
 from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
+from . import photos as listing_photos
 from . import species as species_catalog
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from django_filters.rest_framework import DjangoFilterBackend
@@ -208,11 +209,18 @@ class ListingPhotosMixin:
         upload.is_valid(raise_exception=True)
         photos = upload.validated_data['photos']
 
+        # Every photo is cleaned before any is stored, so one that can't be read leaves no stray files.
+        cleaned = []
+        for photo in photos:
+            try:
+                cleaned.append(listing_photos.without_metadata(photo))
+            except (OSError, ValueError):
+                raise ValidationError({'photos': [_('"%(name)s" could not be read as an image.') % {'name': photo.name}]})
+
         folder = f'listings/{post._meta.model_name}/{post.pk}'
         new_urls = []
-        for photo in photos:
-            extension = os.path.splitext(photo.name)[1].lower() or '.jpg'
-            name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', photo)
+        for content, extension in cleaned:
+            name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', content)
             new_urls.append(request.build_absolute_uri(default_storage.url(name)))
 
         prefix = ListingPhotoUploadSerializer.NEW_PREFIX

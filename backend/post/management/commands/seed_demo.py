@@ -21,7 +21,7 @@ from django.utils import timezone
 from account.models import Account, Review
 from account.reviews import refresh_rating
 from auction import orders
-from auction.models import Auction, Bid, Deposit, Order
+from auction.models import Auction, Bid, BuyNowPurchase, Deposit, Order, SellerBond
 from auction.services import deposit_amount_for
 from account.models import Review
 from account.reviews import refresh_rating
@@ -295,6 +295,7 @@ class Command(BaseCommand):
 
         if options['reset'] or options['delete']:
             count = demo_accounts.count()
+            self.delete_demo_money(demo_accounts)
             demo_accounts.delete()  # cascades to their posts, contact requests, reports and auctions
             self.stdout.write(f'Deleted {count} demo accounts and everything they owned.')
             if options['delete']:
@@ -463,6 +464,17 @@ class Command(BaseCommand):
             refresh_rating(seller)
 
     # --- auctions -------------------------------------------------------------------------------
+
+    @staticmethod
+    def delete_demo_money(demo_accounts):
+        # Deleting an account or listing is refused while auction money is held (auction/models.py
+        # cascade_unless_money_held). Demo money is made up, so its records go first, children first.
+        auctions = Auction.objects.filter(seller__in=demo_accounts)
+        Bid.objects.filter(auction__in=auctions).delete()
+        for model in (Order, BuyNowPurchase, Deposit):
+            model.objects.filter(auction__in=auctions).delete()
+        auctions.delete()
+        SellerBond.objects.filter(account__in=demo_accounts).delete()
 
     def create_auctions(self, bidders, sellers):
         # Built directly rather than through auction.services so start/end and bid times can be in

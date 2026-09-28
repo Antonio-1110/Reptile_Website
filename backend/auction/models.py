@@ -3,10 +3,25 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.db.models.deletion import CASCADE, ProtectedError
 from django.utils import timezone
 
 from account.models import Account
 from post.models import EquipmentPost, LiveAnimalPost
+
+
+def cascade_unless_money_held(collector, field, sub_objs, using):
+    """
+    on_delete for every link whose deletion would take auction money records with it. Deleting a
+    listing, an account or an auction cascades as usual, unless a record it would delete still holds
+    (or may still receive) someone's money: then nothing is deleted. The admin lists the protected
+    records; the API answers with a message (common/exceptions.py). Migrations refer to this function
+    by name, so keep it here.
+    """
+    held = [obj for obj in sub_objs if obj.holds_money()]
+    if held:
+        raise ProtectedError(f'{field.model.__name__} records still hold money.', held)
+    CASCADE(collector, field, sub_objs, using)
 
 
 class Auction(models.Model):
@@ -19,9 +34,9 @@ class Auction(models.Model):
         ENDED = 'ended', 'Ended'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    seller = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='auctions')
-    live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=models.CASCADE, null=True, blank=True, related_name='auctions')
-    equipment_post = models.ForeignKey(EquipmentPost, on_delete=models.CASCADE, null=True, blank=True, related_name='auctions')
+    seller = models.ForeignKey(Account, on_delete=cascade_unless_money_held, related_name='auctions')
+    live_animal_post = models.ForeignKey(LiveAnimalPost, on_delete=cascade_unless_money_held, null=True, blank=True, related_name='auctions')
+    equipment_post = models.ForeignKey(EquipmentPost, on_delete=cascade_unless_money_held, null=True, blank=True, related_name='auctions')
     starting_price = models.DecimalField(max_digits=10, decimal_places=2)
     min_increment = models.DecimalField(max_digits=10, decimal_places=2)
     # Optional: the seller agrees in advance to sell at this price. The first buyer to pay it in full
@@ -105,6 +120,15 @@ class Auction(models.Model):
             return self.winning_purchase.amount
         return self.winning_bid.amount if self.winning_bid_id else None
 
+    def holds_money(self):
+        """Whether it is still running (or yet to start), or a deposit, payment or sale on it isn't settled."""
+        return (
+            self.status == self.Status.ACTIVE
+            or any(deposit.holds_money() for deposit in self.deposits.all())
+            or any(purchase.holds_money() for purchase in self.purchases.all())
+            or any(order.holds_money() for order in self.orders.all())
+        )
+
 
 class Deposit(models.Model):
     """
@@ -123,8 +147,8 @@ class Deposit(models.Model):
         FAILED = 'failed', 'Failed'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='deposits')
-    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='auction_deposits')
+    auction = models.ForeignKey(Auction, on_delete=cascade_unless_money_held, related_name='deposits')
+    account = models.ForeignKey(Account, on_delete=cascade_unless_money_held, related_name='auction_deposits')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -147,6 +171,10 @@ class Deposit(models.Model):
     @property
     def payer(self):
         return self.account
+
+    def holds_money(self):
+        # PENDING too: the payment may still arrive.
+        return self.status in (self.Status.PENDING, self.Status.HELD)
 
 
 class Bid(models.Model):
@@ -183,8 +211,8 @@ class BuyNowPurchase(models.Model):
         FAILED = 'failed', 'Failed'
         CANCELLED = 'cancelled', 'Cancelled'
 
-    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='purchases')
-    buyer = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='buy_now_purchases')
+    auction = models.ForeignKey(Auction, on_delete=cascade_unless_money_held, related_name='purchases')
+    buyer = models.ForeignKey(Account, on_delete=cascade_unless_money_held, related_name='buy_now_purchases')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -212,6 +240,14 @@ class BuyNowPurchase(models.Model):
     @property
     def payer(self):
         return self.buyer
+
+    def holds_money(self):
+        if self.status == self.Status.PENDING:
+            return True  # the payment may still arrive
+        if self.status != self.Status.PAID:
+            return False
+        order = getattr(self, 'order', None)
+        return order is None or order.holds_money()
 
 
 class Order(models.Model):
@@ -250,8 +286,8 @@ class Order(models.Model):
         OFFERED = 'offered', 'Offered'
         DECLINED = 'declined', 'Not offered'
 
-    auction = models.ForeignKey(Auction, on_delete=models.CASCADE, related_name='orders')
-    buyer = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='orders')
+    auction = models.ForeignKey(Auction, on_delete=cascade_unless_money_held, related_name='orders')
+    buyer = models.ForeignKey(Account, on_delete=cascade_unless_money_held, related_name='orders')
     source = models.CharField(max_length=20, choices=Source.choices)
     status = models.CharField(max_length=20, choices=Status.choices)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -305,6 +341,14 @@ class Order(models.Model):
         fee = (self.price * settings.ORDER_FEE_RATE).quantize(Decimal('0.01'))
         return self.price - fee
 
+    def holds_money(self):
+        """Money stays held or owed until the sale falls through, or completes and the seller is paid out."""
+        if self.status == self.Status.COMPLETED:
+            return self.paid_out_at is None
+        return self.status not in (
+            self.Status.BUYER_DEFAULTED, self.Status.DECLINED, self.Status.SELLER_DEFAULTED, self.Status.REFUNDED,
+        )
+
 
 class SellerBond(models.Model):
     """
@@ -318,7 +362,7 @@ class SellerBond(models.Model):
         RELEASED = 'released', 'Released'
         FAILED = 'failed', 'Failed'
 
-    account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='seller_bond')
+    account = models.OneToOneField(Account, on_delete=cascade_unless_money_held, related_name='seller_bond')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
@@ -337,6 +381,9 @@ class SellerBond(models.Model):
     @property
     def payer(self):
         return self.account
+
+    def holds_money(self):
+        return self.status in (self.Status.PENDING, self.Status.HELD)
 
 
 class Incident(models.Model):

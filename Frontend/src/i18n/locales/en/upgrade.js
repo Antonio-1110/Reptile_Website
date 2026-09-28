@@ -16,6 +16,8 @@ export default {
     photos: "{{count}} photos per listing",
     auctions: "Run auctions",
     noAuctions: "No auctions",
+    auctionFeeFree: "0% fee on auction sales for now",
+    auctionFee: "{{percent}} fee on auction sales",
   },
   checkout: {
     title: "Upgrading to {{plan}} is coming soon",

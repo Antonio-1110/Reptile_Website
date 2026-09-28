@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.db.models import Count, Q
 from rest_framework.generics import GenericAPIView, RetrieveAPIView, RetrieveUpdateAPIView, get_object_or_404
@@ -53,6 +54,9 @@ class AccountPlans(APIView):
                 'max_post_count': account.max_post_count,
                 'max_images_per_post': account.max_images_per_post,
                 'can_start_auction': account.can_start_auction,
+                # Share of an auction sale kept as the marketplace fee (0 while it's free), or None
+                # for plans that can't run auctions.
+                'auction_fee_rate': str(settings.ORDER_FEE_RATE) if account.can_start_auction else None,
             })
         return Response(plans)
 

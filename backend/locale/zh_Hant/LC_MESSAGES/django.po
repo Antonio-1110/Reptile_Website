@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-28 00:42+0800\n"
+"POT-Creation-Date: 2026-09-29 00:12+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -776,6 +776,17 @@ msgstr "如果有帳號使用這個電子郵件地址，我們已寄出設定新
 msgid "Your password has been changed. You can sign in with it now."
 msgstr "你的密碼已變更，現在可以用新密碼登入。"
 
+#: common/exceptions.py:31
+msgid ""
+"This listing can't be deleted while its auction is running or someone's "
+"money for it is still held. Try again once the auction has ended and its "
+"sale is settled."
+msgstr "這則刊登的拍賣仍在進行中，或仍有相關款項由平台保管，因此暫時無法刪除。請等拍賣結束、交易完成後再試一次。"
+
+#: common/exceptions.py:34
+msgid "This can't be deleted because other records still depend on it."
+msgstr "仍有其他資料與此項目相關，因此無法刪除。"
+
 #: common/notifications.py:12
 msgid "Username"
 msgstr "使用者名稱"
@@ -828,74 +839,79 @@ msgid ""
 "until the auction ends."
 msgstr "這則刊登正在競標中，競標結束前無法標記為保留或已售出。"
 
-#: post/serializer.py:68
+#: post/serializer.py:71
 #, python-format
 msgid "\"%(name)s\" is larger than 5 MB."
 msgstr "「%(name)s」超過 5 MB。"
 
 #: post/serializer.py:75
+#, python-format
+msgid "\"%(name)s\" has too many pixels. Use a photo under 50 megapixels."
+msgstr "「%(name)s」的像素過多，請使用 5000 萬像素以下的照片。"
+
+#: post/serializer.py:83
 msgid "Add at least one photo."
 msgstr "請至少加入一張照片。"
 
-#: post/serializer.py:77
+#: post/serializer.py:85
 msgid "Cover index is out of range."
 msgstr "封面照片索引超出範圍。"
 
-#: post/serializer.py:85
+#: post/serializer.py:93
 #, python-format
 msgid "Image limit exceeded. This account allows %(count)s images per post."
 msgstr "圖片數量超過上限，此帳號每則刊登最多可上傳 %(count)s 張圖片。"
 
-#: post/serializer.py:100
+#: post/serializer.py:108
 msgid "Photo order refers to a file that was not uploaded."
 msgstr "照片順序中包含未上傳的檔案。"
 
-#: post/serializer.py:103
+#: post/serializer.py:111
 msgid "Photo order refers to a photo this listing does not have."
 msgstr "照片順序中包含這則刊登沒有的照片。"
 
-#: post/serializer.py:105
+#: post/serializer.py:113
 msgid "Each photo must appear in the order exactly once."
 msgstr "每張照片在順序中只能出現一次。"
 
-#: post/serializer.py:218
+#: post/serializer.py:226
 msgid "Choose a species from the list or type one, not both."
 msgstr "請從清單選擇物種，或自行輸入，兩者擇一即可。"
 
-#: post/serializer.py:224
+#: post/serializer.py:232
 msgid "Choose a species."
 msgstr "請選擇物種。"
 
-#: post/serializer.py:233
+#: post/serializer.py:241
 msgid ""
 "This listing has a running auction, so its species can't be changed to one "
 "that still needs review."
 msgstr "這則刊登正在競標中，無法將物種改為尚待審核的物種。"
 
-#: post/serializer.py:247
+#: post/serializer.py:255
 #, python-format
 msgid ""
 "\"%(name)s\" isn't accepted as a species (%(note)s). Choose one from the "
 "list."
 msgstr "「%(name)s」未被接受為物種（%(note)s）。請從清單中選擇。"
 
-#: post/serializer.py:249
+#: post/serializer.py:257
 #, python-format
 msgid "\"%(name)s\" isn't accepted as a species. Choose one from the list."
 msgstr "「%(name)s」未被接受為物種。請從清單中選擇。"
 
-#: post/serializer.py:299
+#: post/serializer.py:307
 #, python-format
 msgid "This search has filters that can't be saved: %(names)s."
 msgstr "這個搜尋包含無法儲存的篩選條件：%(names)s。"
 
-#: post/serializer.py:308
+#: post/serializer.py:316
 #, python-format
 msgid ""
 "You can keep up to %(count)s saved searches. Delete one to save another."
 msgstr "你最多可儲存 %(count)s 個搜尋。請先刪除一個再儲存新的。"
 
-#: post/serializer.py:314
+#: post/serializer.py:322
 msgid "Marketplace search"
 msgstr "市集搜尋"
 
@@ -938,43 +954,48 @@ msgstr "請編輯刊登並從清單中選擇物種，即可上架：%(url)s"
 msgid "Choose a different species for your listing: %(title)s"
 msgstr "請為你的刊登選擇其他物種：%(title)s"
 
-#: post/views.py:54
+#: post/views.py:55
 #, python-format
 msgid "Price drop: %(title)s"
 msgstr "降價通知：%(title)s"
 
-#: post/views.py:55
+#: post/views.py:56
 #, python-format
 msgid "A listing you saved, \"%(title)s\", is now %(new)s (it was %(old)s)."
 msgstr "你收藏的「%(title)s」現在只要 %(new)s（原價 %(old)s）。"
 
-#: post/views.py:122
+#: post/views.py:123
 msgid "You can't contact yourself about your own listing."
 msgstr "你不能就自己的刊登聯絡自己。"
 
-#: post/views.py:127
+#: post/views.py:128
 msgid "This listing has been sold."
 msgstr "這則刊登已售出。"
 
-#: post/views.py:138
+#: post/views.py:139
 msgid ""
 "We've sent your contact details to the seller. They'll get in touch with you."
 msgstr "已將你的聯絡方式轉交給賣家，賣家會主動與你聯繫。"
 
-#: post/views.py:156
+#: post/views.py:157
 msgid "You can't report your own listing."
 msgstr "你不能檢舉自己的刊登。"
 
-#: post/views.py:169
+#: post/views.py:170
 msgid ""
 "Thanks — we've received your report and our team will review this listing."
 msgstr "謝謝，我們已收到你的檢舉，團隊會審核這則刊登。"
 
-#: post/views.py:206
+#: post/views.py:207
 msgid "Send the photo order as a JSON list."
 msgstr "請以 JSON 陣列傳送照片順序。"
 
-#: post/views.py:351
+#: post/views.py:218
+#, python-format
+msgid "\"%(name)s\" could not be read as an image."
+msgstr "無法讀取「%(name)s」這張圖片。"
+
+#: post/views.py:359
 msgid "Only the seller can mark an inquiry as replied."
 msgstr "只有賣家可以將詢問標記為已回覆。"
 
