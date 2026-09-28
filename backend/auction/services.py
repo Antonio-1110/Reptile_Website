@@ -23,6 +23,30 @@ logger = logging.getLogger(__name__)
 
 
 
+def plan_fee_rate(account):
+    """The share of an auction sale kept as the marketplace fee on this account's plan, or None."""
+    if not account.can_start_auction:
+        return None
+    return settings.AUCTION_FEE_RATE_PRO if account.is_paid_account else settings.AUCTION_FEE_RATE_COMMERCIAL
+
+
+def launch_offer_ends(account):
+    """When this account's launch offer (no auction fee) ends, or None if it never had one."""
+    cutoff = settings.LAUNCH_OFFER_JOINED_BEFORE
+    if settings.LAUNCH_OFFER_DAYS <= 0 or (cutoff and account.date_joined.date() >= cutoff):
+        return None
+    return account.date_joined + timedelta(days=settings.LAUNCH_OFFER_DAYS)
+
+
+def fee_rate_for(account, at=None):
+    """The fee rate an auction this account starts at `at` (default now) keeps until it's settled."""
+    at = at or timezone.now()
+    ends = launch_offer_ends(account)
+    if ends and at < ends:
+        return Decimal('0')
+    return plan_fee_rate(account)
+
+
 def deposit_amount_for(starting_price):
     rate_amount = (Decimal(starting_price) * settings.AUCTION_DEPOSIT_RATE).quantize(Decimal('0.01'))
     return max(rate_amount, settings.AUCTION_MIN_DEPOSIT)
@@ -294,9 +318,9 @@ def _cancel_pending_purchases(auction):
 
 
 def check_can_start_auction(account):
-    """Paid commercial accounts only, and (when settings.SELLER_BOND_AMOUNT is set) with a bond held."""
+    """Commercial accounts only, and (when settings.SELLER_BOND_AMOUNT is set) with a bond held."""
     if not account.can_start_auction:
-        raise AuctionError(_('Auctions are available to paid commercial accounts. Upgrade your account to start one.'))
+        raise AuctionError(_('Auctions are available to commercial accounts. Upgrade your account to start one.'))
     if orders.bond_required() and not orders.has_bond(account):
         raise AuctionError(_('Post the seller bond of %(amount)s before starting an auction.') % {
             'amount': format_money(settings.SELLER_BOND_AMOUNT),

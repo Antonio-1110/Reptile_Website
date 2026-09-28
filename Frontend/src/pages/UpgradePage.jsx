@@ -4,16 +4,20 @@ import { useTranslation } from "react-i18next";
 import { getAccountPlans, getCurrentProfile } from "../api/listingsApi";
 import { errorText, toErrorState } from "../utils/errorState";
 import BackLink from "../components/ui/BackLink";
+import { formatDate, formatMoney, formatPercent } from "../utils/auctionFormat";
 
 // Plans in upgrade order, so anything after the current plan counts as an upgrade.
 const PLAN_ORDER = ["hobbyist", "commercial", "commercial_paid"];
 
 // The marketplace fee on auction sales comes from the API (a share such as "0.05"); 0 is advertised as free.
 function auctionFeeText(t, language, rate) {
-  const share = Number(rate);
-  if (!share) return t("upgrade.features.auctionFeeFree");
-  const percent = new Intl.NumberFormat(language, { style: "percent", maximumFractionDigits: 2 }).format(share);
-  return t("upgrade.features.auctionFee", { percent });
+  if (!Number(rate)) return t("upgrade.features.auctionFeeFree");
+  return t("upgrade.features.auctionFee", { percent: formatPercent(rate, language) });
+}
+
+function priceText(t, language, plan) {
+  if (!Number(plan.monthly_price)) return t("upgrade.price.free");
+  return t("upgrade.price.monthly", { price: formatMoney(plan.monthly_price, plan.currency, language) });
 }
 
 function currentPlanId(profile) {
@@ -64,6 +68,14 @@ export default function UpgradePage() {
     <div className="upgrade-page">
       {header}
 
+      {profile.launch_offer_ends_at && (
+        <p className="upgrade-launch-offer">
+          {t("upgrade.launchOffer", {
+            date: formatDate(new Date(profile.launch_offer_ends_at), i18n.language),
+          })}
+        </p>
+      )}
+
       <div className="upgrade-plans">
         {plans.map((plan) => {
           const planIndex = PLAN_ORDER.indexOf(plan.id);
@@ -75,6 +87,7 @@ export default function UpgradePage() {
                 <h2 className="upgrade-plan-name">{t(`upgrade.plans.${plan.id}.name`)}</h2>
                 {isCurrent && <span className="upgrade-plan-badge">{t("upgrade.current")}</span>}
               </div>
+              <p className="upgrade-plan-price">{priceText(t, i18n.language, plan)}</p>
               <p className="upgrade-plan-description">{t(`upgrade.plans.${plan.id}.description`)}</p>
               <ul className="upgrade-plan-features">
                 <li>{t("upgrade.features.listings", { count: plan.max_post_count })}</li>

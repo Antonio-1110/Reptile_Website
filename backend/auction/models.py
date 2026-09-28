@@ -1,6 +1,5 @@
 from decimal import Decimal
 
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models.deletion import CASCADE, ProtectedError
@@ -26,7 +25,7 @@ def cascade_unless_money_held(collector, field, sub_objs, using):
 
 class Auction(models.Model):
     """
-    A timed auction on one of the seller's listings. Only paid commercial accounts may start one
+    A timed auction on one of the seller's listings. Only commercial accounts may start one
     (`Account.can_start_auction`); anyone else may bid once they have a held `Deposit`.
     """
     class Status(models.TextChoices):
@@ -45,6 +44,9 @@ class Auction(models.Model):
     # Fixed when the auction is created from the platform policy in settings, so changing the policy
     # later never changes what bidders on an existing auction owe.
     deposit_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # Share of the sale price kept as the marketplace fee, fixed the same way (services.fee_rate_for):
+    # the seller's plan rate, or 0 during their launch offer. Auctions from before fees existed have 0.
+    fee_rate = models.DecimalField(max_digits=5, decimal_places=4, default=Decimal('0'))
     currency = models.CharField(max_length=3)
     starts_at = models.DateTimeField()
     ends_at = models.DateTimeField()
@@ -337,8 +339,8 @@ class Order(models.Model):
 
     @property
     def payout(self):
-        """What the seller receives: the price minus the marketplace fee (settings.ORDER_FEE_RATE)."""
-        fee = (self.price * settings.ORDER_FEE_RATE).quantize(Decimal('0.01'))
+        """What the seller receives: the price minus the marketplace fee (the auction's fee_rate)."""
+        fee = (self.price * self.auction.fee_rate).quantize(Decimal('0.01'))
         return self.price - fee
 
     def holds_money(self):

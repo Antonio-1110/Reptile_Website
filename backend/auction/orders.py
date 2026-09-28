@@ -400,7 +400,7 @@ def request_bond(account):
     if not bond_required():
         raise AuctionError(_('A seller bond is not required right now.'))
     if not account.can_start_auction:
-        raise AuctionError(_('Auctions are available to paid commercial accounts. Upgrade your account to start one.'))
+        raise AuctionError(_('Auctions are available to commercial accounts. Upgrade your account to start one.'))
     with transaction.atomic():
         bond = SellerBond.objects.select_for_update().filter(account=account).first()
         if bond and bond.status in (SellerBond.Status.PENDING, SellerBond.Status.HELD):

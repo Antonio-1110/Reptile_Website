@@ -4,8 +4,11 @@ export default {
   loadError: "無法載入這則刊登，請確認它屬於你後再試一次。",
   backToListings: "返回我的刊登",
   intro: "買家出價前需先支付可退還的保證金。時間結束時的最高出價者得標，得標者再透過我們付清餘款。",
-  paidOnly: "競標功能僅開放給付費商業帳號。",
+  paidOnly: "競標功能僅開放給商業帳號。",
   seePlans: "查看方案",
+  feeHint: "本場競標的手續費為成交價的 {{percent}}，將從你的撥款中扣除。",
+  feeLaunchOffer: "本場競標免手續費：你的早期賣家優惠適用於{{date}}前發起的競標。",
+  feeFree: "本場競標免手續費。",
   fields: {
     startingPrice: "起標價",
     minIncrement: "最低加價金額",

@@ -17,6 +17,15 @@ export function formatMoney(amount, currency, language) {
   }).format(value);
 }
 
+// "0.05" → "5%" (a fee share from the API).
+export function formatPercent(share, language) {
+  return new Intl.NumberFormat(intlLocale(language), { style: "percent", maximumFractionDigits: 2 }).format(Number(share));
+}
+
+export function formatDate(date, language) {
+  return new Intl.DateTimeFormat(intlLocale(language), { dateStyle: "long" }).format(date);
+}
+
 export function formatDateTime(date, language) {
   return new Intl.DateTimeFormat(intlLocale(language), { dateStyle: "medium", timeStyle: "short" }).format(date);
 }

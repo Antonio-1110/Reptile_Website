@@ -479,7 +479,9 @@ class Command(BaseCommand):
     def create_auctions(self, bidders, sellers):
         # Built directly rather than through auction.services so start/end and bid times can be in
         # the past. Deposits use a 'demo' provider so they're recognisable in the admin.
-        auction_sellers = [seller for seller in sellers if seller.can_start_auction]
+        # Pro sellers only, so the demo auctions (and the e2e flows that use them) stay the same now
+        # that Commercial can run auctions too.
+        auction_sellers = [seller for seller in sellers if seller.can_start_auction and seller.is_paid_account]
         posts = list(LiveAnimalPost.objects.filter(account__in=auction_sellers).order_by('id'))
         for post, plan in zip(self.rng.sample(posts, len(AUCTION_PLANS)), AUCTION_PLANS):
             self.create_auction(post, bidders, **plan)

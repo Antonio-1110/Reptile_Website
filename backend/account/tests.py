@@ -177,13 +177,19 @@ class AccountPlansTests(APITestCase):
             plans['commercial_paid']['max_images_per_post'],
             Account(account_type='commercial', is_paid_account=True).max_images_per_post,
         )
-        self.assertFalse(plans['commercial']['can_start_auction'])
+        self.assertFalse(plans['hobbyist']['can_start_auction'])
+        self.assertTrue(plans['commercial']['can_start_auction'])
         self.assertTrue(plans['commercial_paid']['can_start_auction'])
 
-    @override_settings(ORDER_FEE_RATE=Decimal('0.05'))
-    def test_plans_that_run_auctions_show_the_auction_fee(self):
+    @override_settings(
+        AUCTION_FEE_RATE_COMMERCIAL=Decimal('0.05'), AUCTION_FEE_RATE_PRO=Decimal('0.03'),
+        PLAN_PRICE_COMMERCIAL=Decimal('299'), PLAN_PRICE_PRO=Decimal('499'),
+    )
+    def test_plans_show_their_monthly_price_and_auction_fee(self):
         plans = {plan['id']: plan for plan in self.client.get(reverse('account-plans')).data}
-        self.assertEqual(plans['commercial_paid']['auction_fee_rate'], '0.05')
+        self.assertEqual((plans['commercial']['monthly_price'], plans['commercial']['auction_fee_rate']), ('299', '0.05'))
+        self.assertEqual((plans['commercial_paid']['monthly_price'], plans['commercial_paid']['auction_fee_rate']), ('499', '0.03'))
+        self.assertIsNone(plans['hobbyist']['monthly_price'])
         self.assertIsNone(plans['hobbyist']['auction_fee_rate'])
 
 
@@ -339,7 +345,7 @@ class PlanWorkflowTests(APITestCase):
     PLANS = {
         # name: (account fields, max posts, max photos, may auction)
         'hobbyist': ({}, 5, 3, False),
-        'commercial': ({'account_type': 'commercial'}, 20, 6, False),
+        'commercial': ({'account_type': 'commercial'}, 20, 6, True),
         'commercial_paid': ({'account_type': 'commercial', 'is_paid_account': True}, 200, 12, True),
     }
 

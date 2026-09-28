@@ -109,7 +109,9 @@ python3 manage.py test
 | Commercial      |    20 |               6 |
 | Paid commercial |   200 |              12 |
 
-- `can_start_auction`: only paid commercial accounts may start auctions (the paywall); anyone may bid.
+- `can_start_auction`: only commercial accounts (either plan) may start auctions (the paywall); anyone may bid.
+  Commercial pays `AUCTION_FEE_RATE_COMMERCIAL` on auction sales and Commercial Pro `AUCTION_FEE_RATE_PRO`;
+  sellers who joined before `LAUNCH_OFFER_JOINED_BEFORE` pay none for `LAUNCH_OFFER_DAYS` after joining.
 
 ### Posts (`post/models.py`)
 
@@ -139,7 +141,7 @@ python3 manage.py test
 
 ### Auctions (`auction/`)
 
-- A paid commercial seller puts one of their own listings up for auction (`Auction`, one active
+- A commercial seller puts one of their own listings up for auction (`Auction`, one active
   auction per listing) with a starting price, minimum increment and end time.
 - Before bidding, a buyer pays a **deposit** to the platform (`Deposit`, one per bidder per auction).
   Its amount is fixed at auction creation from `AUCTION_DEPOSIT_RATE` (10% of the starting price) with
@@ -174,7 +176,7 @@ Every sale becomes an `Order`, and all money stays with us until the buyer has t
    it, then marks it handed over (optionally with a courier / tracking note).
 3. **Confirm.** The buyer then has `ORDER_CONFIRM_DAYS` to confirm it arrived healthy, or to report a
    problem. If they do neither, the sale completes. Completed orders show the seller's `payout` (price
-   minus `ORDER_FEE_RATE`); staff pay out by hand and tick **Mark the seller as paid out**.
+   minus the auction's `fee_rate`, fixed when it started); staff pay out by hand and tick **Mark the seller as paid out**.
 
 When it falls through:
 
@@ -377,7 +379,7 @@ and each `*_exclude` variant inverts its counterpart:
 ### Auctions (`/api/v1/auctions/`)
 
 - `GET /` (filters: `status`, `seller`, `live_animal_post`, `equipment_post`), `GET /<id>/`
-- `POST /` — paid commercial accounts only (`403` otherwise)
+- `POST /` — commercial accounts only (`403` otherwise)
 - `GET /mine/` — the current user's auctions as a seller
 - `GET /rules/` — public: currency, duration limits, deposit rate/minimum and whether a seller bond is
   required (the "start an auction" form explains and pre-checks these)

@@ -19,8 +19,8 @@ from .serializers import (
 
 
 class CanStartAuction(permissions.BasePermission):
-    """Starting an auction is behind the paywall: paid commercial accounts only."""
-    message = gettext_lazy('Auctions are available to paid commercial accounts. Upgrade your account to start one.')
+    """Starting an auction is behind the paywall: commercial accounts (either plan) only."""
+    message = gettext_lazy('Auctions are available to commercial accounts. Upgrade your account to start one.')
 
     def has_permission(self, request, view):
         if view.action != 'create':

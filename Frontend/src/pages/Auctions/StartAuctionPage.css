@@ -23,7 +23,7 @@
 .start-auction-card p { margin: 0; line-height: 1.5; }
 
 .start-auction-listing { color: var(--color-accent-bright); font-weight: 700; }
-.start-auction-intro, .start-auction-hint { color: var(--color-text-muted); }
+.start-auction-intro, .start-auction-fee, .start-auction-hint { color: var(--color-text-muted); }
 .start-auction-hint { margin-top: 6px !important; font-size: 0.85rem; }
 
 .start-auction-grid {

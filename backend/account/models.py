@@ -83,8 +83,9 @@ class Account(AbstractUser):
 
     @property
     def can_start_auction(self):
-        # Starting an auction is a paid feature; anyone may bid (after paying a deposit).
-        return self.is_commercial and self.is_paid_account
+        # Starting an auction needs a commercial plan (Commercial or Commercial Pro, which differ in
+        # the auction fee: auction.services.plan_fee_rate); anyone may bid (after paying a deposit).
+        return self.is_commercial
 
     def can_create_post(self, current_post_count=0):
         return current_post_count < self.max_post_count

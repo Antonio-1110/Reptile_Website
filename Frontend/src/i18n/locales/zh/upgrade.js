@@ -9,7 +9,12 @@ export default {
   plans: {
     hobbyist: { name: "個人飼主", description: "適合偶爾轉讓或出售個體的飼主。" },
     commercial: { name: "商業賣家", description: "適合固定有個體供應的繁殖者與店家。" },
-    commercial_paid: { name: "商業專業版", description: "適合需要最高刊登上限與拍賣功能的成熟賣家。" },
+    commercial_paid: { name: "商業專業版", description: "適合大量出貨的賣家：最高刊登上限，拍賣手續費更低。" },
+  },
+  launchOffer: "早期賣家優惠：{{date}}前發起的拍賣免收手續費。",
+  price: {
+    free: "免費",
+    monthly: "每月 {{price}}",
   },
   features: {
     listings: "最多 {{count}} 則刊登",

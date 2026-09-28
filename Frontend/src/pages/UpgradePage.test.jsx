@@ -5,13 +5,17 @@ import UpgradePage from './UpgradePage';
 
 const json = (body) => new Response(JSON.stringify(body), { status: 200 });
 const plan = (id, overrides = {}) => ({
-  id, max_post_count: 5, max_images_per_post: 3, can_start_auction: false, auction_fee_rate: null, ...overrides,
+  id, max_post_count: 5, max_images_per_post: 3, can_start_auction: false, auction_fee_rate: null,
+  monthly_price: null, currency: 'TWD', ...overrides,
 });
 
-function renderWithPlans(feeRate) {
+function renderWithPlans(feeRate, profile = {}) {
   vi.stubGlobal('fetch', vi.fn(async (url) => (String(url).includes('/account/plans/')
-    ? json([plan('hobbyist'), plan('commercial_paid', { can_start_auction: true, auction_fee_rate: feeRate })])
-    : json({ account_type: 'hobbyist', is_paid_account: false }))));
+    ? json([
+      plan('hobbyist'),
+      plan('commercial_paid', { can_start_auction: true, auction_fee_rate: feeRate, monthly_price: '499.00' }),
+    ])
+    : json({ account_type: 'hobbyist', is_paid_account: false, launch_offer_ends_at: null, ...profile }))));
   render(<UpgradePage />, { wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter> });
 }
 
@@ -31,5 +35,22 @@ describe('UpgradePage', () => {
   it('shows the fee as a percentage once there is one', async () => {
     renderWithPlans('0.05');
     expect(await screen.findByText('5% fee on auction sales')).toBeInTheDocument();
+  });
+
+  it('shows each plan\'s monthly price, and free plans as free', async () => {
+    renderWithPlans('0.03');
+    expect(await screen.findByText('NT$499 a month')).toBeInTheDocument();
+    expect(screen.getByText('Free')).toBeInTheDocument();
+  });
+
+  it('tells early sellers when their launch offer ends', async () => {
+    renderWithPlans('0.03', { launch_offer_ends_at: '2027-03-29T08:00:00Z' });
+    expect(await screen.findByText(/Early seller offer: auctions you start before March 29, 2027 have no fee/)).toBeInTheDocument();
+  });
+
+  it('says nothing about a launch offer to sellers without one', async () => {
+    renderWithPlans('0.03');
+    await screen.findByText('NT$499 a month');
+    expect(screen.queryByText(/Early seller offer/)).not.toBeInTheDocument();
   });
 });
