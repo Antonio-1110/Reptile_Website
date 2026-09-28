@@ -37,7 +37,7 @@
   color: var(--color-text);
 }
 
-/* The logo's wordmark is drawn for the dark header (light text); see public/logo.svg. */
+/* The whole logo (mark and wordmark) is one image, public/logo.svg. */
 .logo img {
   display: block;
   width: auto;
