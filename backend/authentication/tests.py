@@ -691,3 +691,17 @@ class GoogleSignInTests(APITestCase):
         self.client.post(reverse('password-reset'), {'email': 'keeper@gmail.com'})
 
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_a_new_google_user_can_pick_another_username(self):
+        access = self.sign_in().data['access']
+        Account.objects.create_user(username='taken', email='taken@example.com', password='pass12345')
+        auth = {'HTTP_AUTHORIZATION': f'Bearer {access}'}
+
+        refused = self.client.patch(reverse('profile'), {'username': 'taken'}, format='json', **auth)
+        chosen = self.client.patch(reverse('profile'), {'username': 'gecko_fan'}, format='json', **auth)
+
+        self.assertEqual(refused.status_code, 400)
+        self.assertIn('username', refused.data)
+        self.assertEqual(chosen.status_code, 200)
+        self.assertEqual(Account.objects.get(google_id='1234567890').username, 'gecko_fan')
+
