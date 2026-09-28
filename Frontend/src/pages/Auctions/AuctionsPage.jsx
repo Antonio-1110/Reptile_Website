@@ -5,6 +5,7 @@ import AuctionCard from './components/AuctionCard';
 import ListingGrid from '../../components/listings/ListingGrid';
 import { getAuctionsPage } from '../../api/auctionsApi';
 import useNow from '../../hooks/useNow';
+import usePageMeta from '../../hooks/usePageMeta';
 import { Link, useSearchParams } from 'react-router';
 
 const TABS = ['live', 'ended'];
@@ -18,6 +19,7 @@ function readTab(params) {
 
 export default function AuctionsPage() {
   const { t } = useTranslation();
+  usePageMeta(t('auctions.title'), t('auctions.intro'));
   const now = useNow();
   const [params, setParams] = useSearchParams();
   const tab = readTab(params);
