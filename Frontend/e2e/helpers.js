@@ -38,3 +38,25 @@ export async function useEnglish(page) {
 export async function expectNoConsoleErrors(errors) {
   expect(errors.filter((text) => !/Failed to load resource/.test(text))).toEqual([]);
 }
+
+// Signs in through the API and stores the tokens as the app does, for flows that don't test the form
+// itself (and for Chinese runs, where the form's labels differ).
+export async function signInWithApi(page, request, username) {
+  const response = await request.post(`${API}/auth/login/`, { data: { username, password: DEMO_PASSWORD } });
+  expect(response.ok()).toBe(true);
+  const { access, refresh } = await response.json();
+  await page.addInitScript(([accessToken, refreshToken]) => {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+  }, [access, refresh]);
+}
+
+// An auction from the demo data that fits a flow, found through the public API.
+export async function findAuction(request, matches) {
+  const response = await request.get(`${API}/auctions/?status=active&page_size=100`);
+  const data = await response.json();
+  const auctions = data.results ?? data;
+  const auction = auctions.find((candidate) => candidate.is_open && matches(candidate));
+  expect(auction, 'no demo auction fits this flow').toBeTruthy();
+  return auction;
+}
