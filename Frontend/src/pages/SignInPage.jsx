@@ -1,6 +1,6 @@
 import './SignInPage.css';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { googleSignIn, login, register } from '../api/authApi';
 import PasswordRules from '../components/ui/PasswordRules';
@@ -144,6 +144,10 @@ export default function SignInPage() {
         </form>
 
         <GoogleSignInButton onCredential={handleGoogleCredential} disabled={submitting} />
+
+        <p className="authAgree">
+          <Trans i18nKey="legal.agreeNotice" components={{ terms: <Link to="/terms" />, privacy: <Link to="/privacy" /> }} />
+        </p>
 
         <p className="authSwitch">
           {isRegister ? t('auth.haveAccount') : t('auth.noAccount')}{' '}

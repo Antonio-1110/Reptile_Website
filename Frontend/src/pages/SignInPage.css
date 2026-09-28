@@ -180,3 +180,15 @@
   font-size: 0.85rem;
   text-align: right;
 }
+
+.authAgree {
+  margin: 16px 0 0;
+  color: var(--color-text-subtle);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.authAgree a {
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}

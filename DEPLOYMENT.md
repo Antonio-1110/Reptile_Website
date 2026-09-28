@@ -162,8 +162,10 @@ client ID is used: it isn't secret (every visitor's browser sees it), and the cl
 shows you isn't needed anywhere.
 
 1. At <https://console.cloud.google.com>, create a project (e.g. `Reptilian`).
-2. **Google Auth Platform → Branding**: app name `Reptilian`, your support email, and under
-   **Audience** choose **External**.
+2. **Google Auth Platform → Branding**: app name `Reptilian`, your support email, homepage
+   `https://reptilian.app`, privacy policy `https://reptilian.app/privacy`, terms of service
+   `https://reptilian.app/terms`, and authorized domain `reptilian.app`. Leave the logo empty: uploading
+   one makes Google review the app. Under **Audience** choose **External**.
 3. **Clients → Create client**: type **Web application**. Under **Authorized JavaScript origins** add
    `https://reptilian.app`, `https://www.reptilian.app` and, for local testing, `http://localhost:5173`
    and `http://localhost`. No redirect URIs are needed. Copy the **Client ID** (it ends in

@@ -21,6 +21,8 @@ import ForgotPasswordPage from "./pages/AccountEmail/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/AccountEmail/ResetPasswordPage";
 import VerifyEmailPage from "./pages/AccountEmail/VerifyEmailPage";
 import EmailVerificationBanner from "./components/layout/EmailVerificationBanner";
+import Footer from "./components/layout/Footer";
+import LegalPage from "./pages/Legal/LegalPage";
 import { isLoggedIn } from "./api/authApi";
 import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
 
@@ -112,9 +114,12 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/privacy" element={<LegalPage doc="privacy" />} />
+        <Route path="/terms" element={<LegalPage doc="terms" />} />
         <Route path="/marketplace" element={<MarketplacePage searchTerm={search.term} searchTags={search.tags} onClearSearch={() => handleHeaderSearch("", [])} />} />
         <Route path="*" element={<HomePage />} />
       </Routes>
+      <Footer />
     </>
   );
 }
