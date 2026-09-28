@@ -142,7 +142,7 @@
 }
 
 .action-panel-card--success {
-  border-color: rgba(74, 222, 128, 0.55);
+  border-color: color-mix(in srgb, var(--color-accent-hover) 55%, transparent);
 }
 
 .action-panel-subheading {

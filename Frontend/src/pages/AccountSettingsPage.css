@@ -117,7 +117,7 @@
 }
 
 .account-settings-saved {
-  color: #86efac;
+  color: var(--color-accent-soft);
 }
 
 .account-settings-loading,

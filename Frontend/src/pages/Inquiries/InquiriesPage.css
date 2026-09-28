@@ -53,9 +53,9 @@
 }
 
 .inquiries-tab.is-selected {
-  border-color: #22c55e;
+  border-color: var(--color-accent-bright);
   color: #08111f;
-  background: #4ade80;
+  background: var(--color-accent-hover);
 }
 
 .inquiries-tab:focus-visible,
@@ -161,7 +161,7 @@
   border: 0;
   border-radius: 999px;
   color: #08111f;
-  background: #4ade80;
+  background: var(--color-accent-hover);
   font-weight: 700;
   cursor: pointer;
 }
@@ -171,7 +171,7 @@
 .inquiries-hint { color: #94a3b8; font-size: 13px; }
 
 .inquiries-state { margin: 8px 0 0; color: #fbbf24; }
-.inquiries-state.is-done { color: #4ade80; }
+.inquiries-state.is-done { color: var(--color-accent-hover); }
 
 .inquiries-more {
   display: block;

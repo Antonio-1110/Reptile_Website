@@ -6,7 +6,7 @@
   --card-text: #f8fafc;
   --card-accent: #60a5fa;
   --card-accent-strong: #3b82f6;
-  --card-price: #4ade80;
+  --card-price: var(--color-accent-hover);
 
   position: relative;
   display: block;
@@ -166,10 +166,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 0.5rem;
-  border: 1px solid rgba(74, 222, 128, 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-accent-hover) 40%, transparent);
   border-radius: 0.45rem;
-  background: rgba(20, 83, 45, 0.35);
-  color: #bbf7d0;
+  background: color-mix(in srgb, var(--color-accent-strong) 35%, transparent);
+  color: var(--color-accent-soft);
   font-size: 0.68rem;
   /* Centres the text vertically inside the fixed height (minus the 1px top and bottom borders). */
   line-height: calc(var(--gene-badge-height) - 2px);

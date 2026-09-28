@@ -9,7 +9,7 @@
 }
 
 .media-dropzone:hover {
-  border-color: oklch(72.3% 0.219 149.579);
+  border-color: var(--color-accent-bright);
 }
 
 .media-dropzone.is-disabled {
@@ -55,7 +55,7 @@
 }
 
 .media-frame.is-cover {
-  border-color: oklch(72.3% 0.219 149.579);
+  border-color: var(--color-accent-bright);
 }
 
 .media-preview {
@@ -90,18 +90,18 @@
 }
 
 .media-cover-radio {
-  accent-color: oklch(72.3% 0.219 149.579);
+  accent-color: var(--color-accent-bright);
 }
 
 .media-recrop {
-  color: oklch(79.2% 0.209 151.711);
+  color: var(--color-accent-hover);
   font-size: 0.75rem;
   line-height: calc(1 / 0.75);
   text-decoration-line: underline;
 }
 
 .media-recrop:hover {
-  color: oklch(87.1% 0.15 154.449);
+  color: var(--color-accent-soft);
 }
 
 @media (min-width: 40rem) {
@@ -112,7 +112,7 @@
 
 /* The file input is visually hidden inside the label, so show its keyboard focus on the dropzone. */
 .media-dropzone:focus-within {
-  outline: 2px solid oklch(72.3% 0.219 149.579);
+  outline: 2px solid var(--color-accent-bright);
   outline-offset: 2px;
 }
 
@@ -136,7 +136,7 @@
 }
 
 .media-move button:hover:not(:disabled) {
-  background-color: oklch(52.7% 0.154 150.069);
+  background-color: var(--color-accent-strong);
 }
 
 .media-move button:disabled {

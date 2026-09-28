@@ -35,7 +35,7 @@
 }
 
 .listing-form-input:focus {
-  border-color: oklch(72.3% 0.219 149.579);
+  border-color: var(--color-accent-bright);
 }
 
 .listing-form-input--fixed {
@@ -69,7 +69,7 @@
 .listing-form-checkbox {
   width: 1rem;
   height: 1rem;
-  accent-color: oklch(72.3% 0.219 149.579);
+  accent-color: var(--color-accent-bright);
 }
 
 .listing-form-hint,

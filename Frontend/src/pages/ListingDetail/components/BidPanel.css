@@ -14,7 +14,7 @@
 }
 
 .bid-panel--success {
-  border-color: rgba(74, 222, 128, 0.55);
+  border-color: color-mix(in srgb, var(--color-accent-hover) 55%, transparent);
 }
 
 .bid-panel--muted {
@@ -32,7 +32,7 @@
 }
 
 .bid-panel .bid-panel-status--leading {
-  color: #4ade80;
+  color: var(--color-accent-hover);
 }
 
 .bid-panel .bid-panel-status--outbid {
@@ -79,8 +79,8 @@
 }
 
 .bid-panel-input:focus {
-  border-color: #22c55e;
-  outline: 3px solid rgb(34 197 94 / 20%);
+  border-color: var(--color-accent-bright);
+  outline: 3px solid color-mix(in srgb, var(--color-accent-bright) 20%, transparent);
 }
 
 .bid-panel-input[aria-invalid="true"] {
@@ -105,9 +105,9 @@
 
 .bid-panel-primary {
   border: none;
-  color: #052e16;
-  background: linear-gradient(135deg, #4ade80, #22c55e);
-  box-shadow: 0 12px 32px rgba(34, 197, 94, 0.25);
+  color: var(--color-accent-ink);
+  background: linear-gradient(135deg, var(--color-accent-hover), var(--color-accent-bright));
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--color-accent-bright) 25%, transparent);
 }
 
 .bid-panel-secondary {
@@ -156,17 +156,17 @@
 }
 
 .bid-panel-pick.is-selected {
-  border-color: #22c55e;
-  color: #bbf7d0;
+  border-color: var(--color-accent-bright);
+  color: var(--color-accent-soft);
 }
 
 .bid-panel-confirm {
   display: grid;
   gap: 0.6rem;
   padding: 0.85rem;
-  border: 1px solid rgba(74, 222, 128, 0.4);
+  border: 1px solid color-mix(in srgb, var(--color-accent-hover) 40%, transparent);
   border-radius: 0.75rem;
-  background: rgba(20, 83, 45, 0.25);
+  background: color-mix(in srgb, var(--color-accent-strong) 25%, transparent);
 }
 
 .bid-panel .bid-panel-confirm p {
