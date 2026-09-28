@@ -76,9 +76,8 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   return (
     <header className="header">
       <div className="leftSection">
-        <Link to="/" className="logo" aria-label="Reptilian">
-          <span className="logoRepti">REPTI</span>
-          <span className="logoLian">LIAN</span>
+        <Link to="/" className="logo">
+          <img src="/logo.svg" alt="Reptilian" width="154" height="44" />
         </Link>
         <LanguageSwitcher />
       </div>
