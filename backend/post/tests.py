@@ -8,7 +8,8 @@ from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
-from PIL import Image
+from unittest import mock
+from PIL import ExifTags, Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
@@ -700,6 +701,26 @@ def make_image(name='photo.png', size=(10, 10)):
 	return SimpleUploadedFile(name, buffer.getvalue(), content_type='image/png')
 
 
+def make_phone_photo(name='phone.jpg', size=(20, 10), orientation=None, image_format='JPEG'):
+	# Like a phone camera's photo: EXIF with the GPS position it was taken at, a camera model and a comment.
+	exif = Image.Exif()
+	exif[ExifTags.Base.Model] = 'Pixel 9'
+	if orientation:
+		exif[ExifTags.Base.Orientation] = orientation
+	gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+	gps[ExifTags.GPS.GPSLatitudeRef] = 'N'
+	gps[ExifTags.GPS.GPSLatitude] = (25.0, 2.0, 0.0)
+	gps[ExifTags.GPS.GPSLongitudeRef] = 'E'
+	gps[ExifTags.GPS.GPSLongitude] = (121.0, 33.0, 0.0)
+	buffer = io.BytesIO()
+	options = {'exif': exif}
+	if image_format == 'JPEG':
+		options['comment'] = b'home'
+	Image.new('RGB', size, 'green').save(buffer, format=image_format, **options)
+	content_type = 'image/jpeg' if image_format == 'JPEG' else f'image/{image_format.lower()}'
+	return SimpleUploadedFile(name, buffer.getvalue(), content_type=content_type)
+
+
 class ListingPhotoUploadTests(APITestCase):
 	def setUp(self):
 		self.media_root = tempfile.mkdtemp()
@@ -785,6 +806,63 @@ class ListingPhotoUploadTests(APITestCase):
 		self.client.force_authenticate(self.seller)
 		response = self.upload([SimpleUploadedFile('notes.png', b'not an image', content_type='image/png')])
 		self.assertEqual(response.status_code, 400)
+
+	def test_stored_photos_have_no_location_or_other_metadata(self):
+		for image_format in ('JPEG', 'PNG', 'WEBP'):
+			with self.subTest(image_format=image_format):
+				photo = make_phone_photo(f'phone.{image_format.lower()}', image_format=image_format)
+				with Image.open(io.BytesIO(photo.read())) as original:
+					self.assertTrue(original.getexif().get_ifd(ExifTags.IFD.GPSInfo))  # the fixture has GPS
+				photo.seek(0)
+				self.client.force_authenticate(self.seller)
+				self.assertEqual(self.upload([photo]).status_code, 200)
+
+				[stored] = self.stored_files()
+				data = stored.read_bytes()
+				for marker in (b'Exif', b'eXIf', b'Pixel 9', b'home'):
+					self.assertNotIn(marker, data)
+				with Image.open(stored) as cleaned:
+					self.assertEqual(cleaned.format, image_format)
+					self.assertEqual(len(cleaned.getexif()), 0)
+
+	def test_rotated_phone_photo_stays_upright(self):
+		# Orientation 6 means "rotate 90° clockwise to display": the pixels must be turned before the tag goes.
+		self.client.force_authenticate(self.seller)
+		self.upload([make_phone_photo(size=(20, 10), orientation=6)])
+
+		[stored] = self.stored_files()
+		with Image.open(stored) as cleaned:
+			self.assertEqual(cleaned.size, (10, 20))
+			self.assertNotIn(ExifTags.Base.Orientation, cleaned.getexif())
+
+	def test_stored_extension_follows_the_image_not_the_file_name(self):
+		self.client.force_authenticate(self.seller)
+		self.upload([make_image('photo.jpg')])  # really a PNG
+
+		[stored] = self.stored_files()
+		self.assertEqual(stored.suffix, '.png')
+
+	def test_photo_that_cannot_be_decoded_is_rejected_and_nothing_is_stored(self):
+		# The header is intact, so it passes the upload check; the pixel data stops halfway.
+		buffer = io.BytesIO()
+		Image.effect_noise((200, 200), 64).convert('RGB').save(buffer, format='JPEG')
+		data = buffer.getvalue()
+		truncated = SimpleUploadedFile('broken.jpg', data[:len(data) // 2], content_type='image/jpeg')
+		self.client.force_authenticate(self.seller)
+		response = self.upload([make_image('good.png'), truncated])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('could not be read', str(response.data))
+		self.assertEqual(self.stored_files(), [])
+
+	def test_photo_with_too_many_pixels_is_rejected(self):
+		self.client.force_authenticate(self.seller)
+		with mock.patch('post.serializer.MAX_PHOTO_PIXELS', 99):
+			response = self.upload([make_image(size=(10, 10))])
+
+		self.assertEqual(response.status_code, 400)
+		self.assertIn('megapixels', str(response.data))
+		self.assertEqual(self.stored_files(), [])
 
 	def test_out_of_range_cover_index_is_rejected(self):
 		self.client.force_authenticate(self.seller)
