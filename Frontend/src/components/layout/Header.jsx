@@ -77,7 +77,7 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
     <header className="header">
       <div className="leftSection">
         <Link to="/" className="logo">
-          <img src="/logo.svg" alt="Reptilian" width="154" height="44" />
+          <img src="/logo.svg" alt="Reptilian" width="153" height="44" />
         </Link>
         <LanguageSwitcher />
       </div>
