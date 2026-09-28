@@ -18,6 +18,7 @@ import { getListing, getSexKey, isLoggedIn, reportListing, sellerPagePath } from
 import { getLocationLabel } from '../../constants/locations';
 import { getSpeciesLabel } from '../../constants/species';
 import useNow from '../../hooks/useNow';
+import usePageMeta from '../../hooks/usePageMeta';
 import { formatMoney, getHeadlinePrice } from '../../utils/auctionFormat';
 import { errorText } from '../../utils/errorState';
 import { buildMarketplaceUrl } from '../../utils/marketplaceSearch';
@@ -43,6 +44,7 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
   const isEquipment = category === 'equipment';
   const auctionState = useListingAuction(listingId, now, category);
   const { auction, bids, phase, order } = auctionState;
+  usePageMeta(listing?.title, listing?.description);
 
   const showToast = (message, tone = 'success') => {
     clearTimeout(toastTimerRef.current);

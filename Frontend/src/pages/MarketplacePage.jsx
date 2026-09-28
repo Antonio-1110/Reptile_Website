@@ -8,6 +8,7 @@ import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
 import { createSavedSearch, getListingsPage, getSavedSearches, isLoggedIn, listingQueryString, parseListingQuery, updateSavedSearch } from "../api/listingsApi";
 import useDebouncedValue from "../hooks/useDebouncedValue";
+import usePageMeta from "../hooks/usePageMeta";
 import { buildMarketplaceUrl, readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
 import { Link, useLocation, useNavigate } from "react-router";
 
@@ -28,6 +29,7 @@ const emptyFeed = { listings: [], count: 0, nextPage: 1, loadingPage: 1, failedP
 
 export default function MarketplacePage({ searchTerm = "", searchTags = [], onClearSearch }) {
   const { t } = useTranslation();
+  usePageMeta(t("navigation.browseMarketplace"), t("home.intro"));
   const location = useLocation();
   const navigate = useNavigate();
   // "live_animal" or "equipment": which kind of listing the whole page shows. It lives in the URL,

@@ -1438,3 +1438,42 @@ class SpeciesCatalogTests(APITestCase):
 		names = [normalize(name) for name in SpeciesAlias.objects.values_list('name', flat=True)]
 		names += [normalize(name) for name in Species.objects.values_list('name', flat=True).distinct()]
 		self.assertEqual(len(names), len(set(names)))
+
+
+@override_settings(FRONTEND_URL='https://www.reptiles.example')
+class SitemapTests(APITestCase):
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='seller', email='seller@example.com', password='pass1234')
+		self.hidden_seller = Account.objects.create_user(username='hidden', email='hidden@example.com', password='pass1234')
+		species = Species.objects.create(name='Ball Pythons')
+		listing = {'description': 'Healthy', 'contact_info': '{}'}
+		self.live = LiveAnimalPost.objects.create(account=self.seller, species=species, title='For sale', **listing)
+		self.sold = LiveAnimalPost.objects.create(
+			account=self.seller, species=species, title='Sold', status=LiveAnimalPost.Status.SOLD, **listing,
+		)
+		self.hidden = LiveAnimalPost.objects.create(
+			account=self.hidden_seller, species=species, title='Hidden', is_hidden=True, **listing,
+		)
+		self.awaiting_species = LiveAnimalPost.objects.create(
+			account=self.hidden_seller, species_request=SpeciesRequest.objects.create(name='Mystery gecko'),
+			title='Unreviewed species', **listing,
+		)
+		self.equipment = EquipmentPost.objects.create(account=self.seller, title='Heat lamp', **listing)
+
+	def get_sitemap(self):
+		self.client.logout()
+		response = self.client.get('/sitemap.xml')
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response['Content-Type'], 'application/xml')
+		return response.content.decode()
+
+	def test_lists_public_pages_and_listings_for_sale_on_the_frontend_host(self):
+		body = self.get_sitemap()
+		for path in ('/', '/marketplace', '/auctions', f'/posts/{self.live.id}', f'/equipment/{self.equipment.id}', f'/sellers/{self.seller.id}'):
+			self.assertIn(f'<loc>https://www.reptiles.example{path}</loc>', body)
+
+	def test_leaves_out_sold_hidden_and_unpublished_listings_and_their_sellers(self):
+		body = self.get_sitemap()
+		for post in (self.sold, self.hidden, self.awaiting_species):
+			self.assertNotIn(f'/posts/{post.id}<', body)
+		self.assertNotIn(f'/sellers/{self.hidden_seller.id}<', body)
