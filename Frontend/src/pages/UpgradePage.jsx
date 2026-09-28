@@ -8,6 +8,14 @@ import BackLink from "../components/ui/BackLink";
 // Plans in upgrade order, so anything after the current plan counts as an upgrade.
 const PLAN_ORDER = ["hobbyist", "commercial", "commercial_paid"];
 
+// The marketplace fee on auction sales comes from the API (a share such as "0.05"); 0 is advertised as free.
+function auctionFeeText(t, language, rate) {
+  const share = Number(rate);
+  if (!share) return t("upgrade.features.auctionFeeFree");
+  const percent = new Intl.NumberFormat(language, { style: "percent", maximumFractionDigits: 2 }).format(share);
+  return t("upgrade.features.auctionFee", { percent });
+}
+
 function currentPlanId(profile) {
   if (profile.account_type !== "commercial") return "hobbyist";
   return profile.is_paid_account ? "commercial_paid" : "commercial";
@@ -15,7 +23,7 @@ function currentPlanId(profile) {
 
 // Checkout is a placeholder until a payment provider is chosen; choosing a plan only explains that.
 export default function UpgradePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [plans, setPlans] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -72,6 +80,7 @@ export default function UpgradePage() {
                 <li>{t("upgrade.features.listings", { count: plan.max_post_count })}</li>
                 <li>{t("upgrade.features.photos", { count: plan.max_images_per_post })}</li>
                 <li>{t(plan.can_start_auction ? "upgrade.features.auctions" : "upgrade.features.noAuctions")}</li>
+                {plan.can_start_auction && <li>{auctionFeeText(t, i18n.language, plan.auction_fee_rate)}</li>}
               </ul>
               {isUpgrade && (
                 <button type="button" className="upgrade-plan-choose" onClick={() => setChosenPlan(plan.id)}>

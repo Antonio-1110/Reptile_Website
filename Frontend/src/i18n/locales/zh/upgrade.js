@@ -16,6 +16,8 @@ export default {
     photos: "每則 {{count}} 張照片",
     auctions: "可舉辦拍賣",
     noAuctions: "無拍賣功能",
+    auctionFeeFree: "拍賣成交目前免手續費（0%）",
+    auctionFee: "拍賣成交手續費 {{percent}}",
   },
   checkout: {
     title: "{{plan}}升級即將開放",

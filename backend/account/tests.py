@@ -1,3 +1,4 @@
+from decimal import Decimal
 import io
 import shutil
 import tempfile
@@ -178,6 +179,12 @@ class AccountPlansTests(APITestCase):
         )
         self.assertFalse(plans['commercial']['can_start_auction'])
         self.assertTrue(plans['commercial_paid']['can_start_auction'])
+
+    @override_settings(ORDER_FEE_RATE=Decimal('0.05'))
+    def test_plans_that_run_auctions_show_the_auction_fee(self):
+        plans = {plan['id']: plan for plan in self.client.get(reverse('account-plans')).data}
+        self.assertEqual(plans['commercial_paid']['auction_fee_rate'], '0.05')
+        self.assertIsNone(plans['hobbyist']['auction_fee_rate'])
 
 
 
