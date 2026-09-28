@@ -131,8 +131,11 @@ export async function login(username, password) {
 }
 
 // `credential` is the ID token from Google's sign-in button; the answer is the same token pair as login.
+// Resolves to whether this sign-in created a new account.
 export async function googleSignIn(credential) {
-  writeTokens(await postJson("/google/", { credential }));
+  const tokens = await postJson("/google/", { credential });
+  writeTokens(tokens);
+  return Boolean(tokens.created);
 }
 
 export async function register({ username, email, password }) {

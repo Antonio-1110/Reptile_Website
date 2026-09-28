@@ -12,6 +12,7 @@ Disallow: /saved-searches
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /verify-email
+Disallow: /choose-username
 Disallow: /auctions/new
 
 Sitemap: https://www.reptilian.app/sitemap.xml
