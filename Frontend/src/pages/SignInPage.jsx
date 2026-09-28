@@ -1,16 +1,13 @@
 import './SignInPage.css';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { googleSignIn, login, register } from '../api/authApi';
 import PasswordRules from '../components/ui/PasswordRules';
+import { safeNextPath } from '../utils/nextPath';
 import GoogleSignInButton from './SignIn/GoogleSignInButton';
 
-// Only allow same-site relative redirects, so ?next= can't send users off-site.
-function getNextPath() {
-  const next = new URLSearchParams(window.location.search).get('next') || '';
-  return next.startsWith('/') && !next.startsWith('//') ? next : '/marketplace';
-}
+const getNextPath = () => safeNextPath(window.location.search);
 
 const emptyForm = { username: '', email: '', password: '', confirmPassword: '' };
 
@@ -87,8 +84,11 @@ export default function SignInPage() {
     setSubmitting(true);
     setErrors({});
     try {
-      await googleSignIn(credential);
-      window.location.href = getNextPath();
+      const created = await googleSignIn(credential);
+      // A new account's username was made from the email address, so it gets the chance to pick another.
+      window.location.href = created
+        ? `/choose-username?next=${encodeURIComponent(getNextPath())}`
+        : getNextPath();
     } catch (error) {
       setSubmitting(false);
       setErrors({ form: error.message || t('auth.genericError') });
@@ -144,6 +144,10 @@ export default function SignInPage() {
         </form>
 
         <GoogleSignInButton onCredential={handleGoogleCredential} disabled={submitting} />
+
+        <p className="authAgree">
+          <Trans i18nKey="legal.agreeNotice" components={{ terms: <Link to="/terms" />, privacy: <Link to="/privacy" /> }} />
+        </p>
 
         <p className="authSwitch">
           {isRegister ? t('auth.haveAccount') : t('auth.noAccount')}{' '}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authFetch, isLoggedIn, login, logout } from './authApi';
+import { authFetch, googleSignIn, isLoggedIn, login, logout } from './authApi';
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -89,5 +89,24 @@ describe('login / logout', () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
     await logout();
     expect(isLoggedIn()).toBe(false);
+  });
+});
+
+describe('googleSignIn', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('stores the tokens and says whether the account is new', async () => {
+    const fetchMock = vi.fn(async () => json({ access: 'a', refresh: 'r', created: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    expect(await googleSignIn('google-id-token')).toBe(true);
+    expect(isLoggedIn()).toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/auth\/google\/$/);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ credential: 'google-id-token' });
+  });
+
+  it('reports a returning user as not new', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json({ access: 'a', refresh: 'r', created: false })));
+    expect(await googleSignIn('google-id-token')).toBe(false);
   });
 });
