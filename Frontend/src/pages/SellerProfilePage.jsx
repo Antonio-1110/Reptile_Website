@@ -2,6 +2,7 @@ import './SellerProfilePage.css';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import BackLink from '../components/ui/BackLink';
+import usePageMeta from '../hooks/usePageMeta';
 import ListingCard from '../components/listings/ListingCard';
 import ListingGrid from '../components/listings/ListingGrid';
 import { getListingsPage, getSellerProfile } from '../api/listingsApi';
@@ -21,6 +22,7 @@ export default function SellerProfilePage({ sellerId }) {
   // In the URL (?category=equipment) so Back and shared links keep the tab.
   const category = readMarketplaceCategory(location.search);
   const [profile, setProfile] = useState(null); // null loading, false not found
+  usePageMeta(profile?.displayName, profile?.bio);
   const [profileError, setProfileError] = useState(null);
   const [feed, setFeed] = useState({ listings: [], nextPage: 1, loading: true, error: null });
   const [reviewsVersion, setReviewsVersion] = useState(0);

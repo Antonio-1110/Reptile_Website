@@ -22,6 +22,7 @@ from django.urls import path, include
 
 from account.views import SellerProfile, SellerReviews
 from authentication.lockout import LockoutAdminAuthenticationForm, LockoutAuthenticationForm
+from post.sitemap import sitemap
 
 admin.site.login_form = LockoutAdminAuthenticationForm
 
@@ -39,6 +40,8 @@ urlpatterns = [
         template_name='rest_framework/login.html', authentication_form=LockoutAuthenticationForm,
     ), name='api-login'),
     path('api-auth/', include('rest_framework.urls')),
+    # Served at www.reptilian.app/sitemap.xml through a Vercel rewrite (see post/sitemap.py).
+    path('sitemap.xml', sitemap, name='sitemap'),
 ]
 
 # Uploaded listing photos in local development; in production they live on S3 (see STORAGES).

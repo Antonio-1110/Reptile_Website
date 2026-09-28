@@ -1,0 +1,17 @@
+# Account pages are private or empty to a crawler; everything else may be indexed.
+User-agent: *
+Disallow: /postinput
+Disallow: /signin
+Disallow: /settings
+Disallow: /upgrade
+Disallow: /my-listings
+Disallow: /orders
+Disallow: /inquiries
+Disallow: /saved
+Disallow: /saved-searches
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /auctions/new
+
+Sitemap: https://www.reptilian.app/sitemap.xml
