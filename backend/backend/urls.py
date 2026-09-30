@@ -22,6 +22,7 @@ from django.urls import path, include
 
 from account.views import SellerProfile, SellerReviews
 from authentication.lockout import LockoutAdminAuthenticationForm, LockoutAuthenticationForm
+from features.views import FeatureSwitches
 from post.sitemap import sitemap
 
 admin.site.login_form = LockoutAdminAuthenticationForm
@@ -35,6 +36,7 @@ urlpatterns = [
     path('api/v1/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
     path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/v1/auctions/', include('auction.urls')),
+    path('api/v1/features/', FeatureSwitches.as_view(), name='features'),
     # The browsable API's session login, with the same lockout as the admin (listed first so it wins).
     path('api-auth/login/', LoginView.as_view(
         template_name='rest_framework/login.html', authentication_form=LockoutAuthenticationForm,

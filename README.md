@@ -152,7 +152,15 @@ left out are deleted. That endpoint enforces the plan's photo limit and 5 MB per
 
 - `GET /<id>/` — public profile (no contact details); `GET`/`POST`/`DELETE /<id>/reviews/`
 
+### Feature switches (`/api/v1/features/`)
+
+- `GET /` — public: which switchable parts of the site are on, e.g. `{"auctions": false}`. Staff flip
+  them under Feature switches in the admin, or with `manage.py feature auctions on|off`.
+
 ### Auctions (`/api/v1/auctions/`)
+
+Auctions can be switched off (they start off). While off, starting auctions, deposits, bids, buy now
+and the seller bond are refused with a 400/403; auctions and orders already under way still finish.
 
 - `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
   species, genes) for cards, and the anti-sniping rule (`extend_window_minutes`, `extend_by_minutes`):

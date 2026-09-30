@@ -64,6 +64,7 @@ Runs at `http://127.0.0.1:8000/`.
 python3 manage.py seed_demo            # 13 demo accounts, ~60 animal + 12 equipment listings, contacts, reports
 python3 manage.py seed_demo --reset    # wipe previous demo data and recreate it
 python3 manage.py seed_demo --delete   # remove demo data only
+python3 manage.py feature auctions on  # auctions start switched off; turn them on to see the demo auctions
 ```
 
 All demo accounts share the password `DemoPass123!` and use `@demo.morphmarket.test` emails, which is

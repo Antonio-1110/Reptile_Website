@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     'account',
     'authentication',
     'auction',
+    'features',
 ]
 
 MIDDLEWARE = [

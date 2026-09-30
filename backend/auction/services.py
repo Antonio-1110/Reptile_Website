@@ -57,6 +57,7 @@ def request_deposit(auction, account):
     Start (or restart, after a failed payment) the bidder's deposit for this auction.
     Returns (deposit, client_data); client_data tells the frontend how to pay, if payment is needed.
     """
+    orders.check_auctions_enabled()
     if auction.seller_id == account.id:
         raise AuctionError(_("You can't bid on your own auction."))
     if auction.status != Auction.Status.ACTIVE or timezone.now() >= auction.ends_at:
@@ -137,6 +138,7 @@ def capture_deposit(deposit):
 
 
 def place_bid(auction, bidder, amount):
+    orders.check_auctions_enabled()
     amount = Decimal(amount)
     with transaction.atomic():
         # Lock the auction so two simultaneous bids can't both beat the same current price.
@@ -221,6 +223,7 @@ def start_buy_now(auction, buyer):
     and the first payment to arrive wins (confirm_buy_now). Returns (purchase, client_data, competing),
     where competing is how many other buyers are paying right now.
     """
+    orders.check_auctions_enabled()
     with transaction.atomic():
         auction = Auction.objects.select_for_update().get(pk=auction.pk)
         if auction.seller_id == buyer.id:
@@ -319,6 +322,7 @@ def _cancel_pending_purchases(auction):
 
 def check_can_start_auction(account):
     """Commercial accounts only, and (when settings.SELLER_BOND_AMOUNT is set) with a bond held."""
+    orders.check_auctions_enabled()
     if not account.can_start_auction:
         raise AuctionError(_('Auctions are available to commercial accounts. Upgrade your account to start one.'))
     if orders.bond_required() and not orders.has_bond(account):

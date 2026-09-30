@@ -28,6 +28,7 @@ Django apps in `backend/`:
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
 - `common/` — dev-only auth bypass middleware
+- `features/` — feature switches staff flip in the admin (`/api/v1/features/`); `auctions` starts off
 - `backend/` — settings and root URLs
 
 Per-app detail: [README.md](../README.md), [backend/README.md](../backend/README.md),
@@ -58,6 +59,7 @@ cd backend
 ../.venv/bin/python manage.py migrate
 ../.venv/bin/python manage.py seed_demo --reset        # demo accounts + ~70 listings
 ../.venv/bin/python manage.py close_auctions           # settle auctions past their end time
+../.venv/bin/python manage.py feature auctions on       # feature switches (auctions start off; see §8)
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
 ../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
@@ -387,6 +389,11 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - Deleting a listing, an account or an auction is refused (`ProtectedError`, a 400 from the API) while
   an auction on it runs or still holds money (`cascade_unless_money_held` in `auction/models.py`).
   Code that deletes such data on purpose, like `seed_demo --reset`, removes the money records first.
+- Auctions are behind a feature switch (`features/switches.py`) that starts **off**, so locally the
+  auction pages and buttons are hidden until you run `manage.py feature auctions on` (or tick it in the
+  admin). The backend checks it in `auction/orders.check_auctions_enabled`; auction tests turn it on in
+  `setUp` (`set_enabled('auctions', True)`), and the frontend tests start with every switch on
+  (`test/setup.js`, `setFeatures`).
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.
