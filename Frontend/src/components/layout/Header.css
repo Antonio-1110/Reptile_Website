@@ -1,7 +1,10 @@
 /* Three layouts, because the signed-in links need ~770px (more in English than in Chinese):
    - narrow (the default): logo + menu button on top, search below, links in a drop-down menu;
    - from 1180px: logo + links on top, search below;
-   - from 1540px: all on one row, with room left for a usable search bar.
+   - all on one row (.header--oneRow) whenever the logo, the links and a usable search bar fit side by
+     side. Header.jsx measures that, because how wide the links are depends on the language and on
+     being signed in: a fixed breakpoint sized for the longest case pushed the search bar to a second
+     row on ordinary laptops even when signed out.
    Before, the links slid under the search bar on anything narrower than a wide desktop. */
 .header {
   display: grid;
@@ -210,12 +213,14 @@
     align-items: center;
     gap: 15px;
     flex-shrink: 0;
+    /* Keeps the links' box as wide as the links, which is what Header.jsx measures. */
+    justify-self: end;
   }
 }
 
 /* Everything on one row: logo and links take the width they need and the search bar gets the rest. */
-@media (min-width: 1540px) {
-  .header {
+@media (min-width: 1180px) {
+  .header.header--oneRow {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas: "brand search nav";
     gap: 20px;
