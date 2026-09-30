@@ -32,10 +32,21 @@ describe('OrderPanel', () => {
     expect(onToast).toHaveBeenCalledWith('Payment received.');
   });
 
-  it("doesn't offer to pay again while a payment is on its way", () => {
+  it("doesn't offer to pay again while a payment is on its way, only to finish it", () => {
     renderPanel({ balanceStatus: 'pending' });
     expect(screen.queryByRole('button', { name: /^Pay / })).not.toBeInTheDocument();
     expect(screen.getByText(/Waiting for your NT\$7,500 payment/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue to payment' })).toBeInTheDocument();
+  });
+
+  it("sends the buyer to the provider's card page when the payment needs it", async () => {
+    const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+    payOrder.mockResolvedValueOnce({ payment: { redirect_form: { action: 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5', fields: { TotalAmount: '7500' } } } });
+    const { onToast } = renderPanel();
+    fireEvent.click(screen.getByRole('button', { name: 'Pay NT$7,500' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledOnce());
+    expect(onToast).not.toHaveBeenCalled();
+    submit.mockRestore();
   });
 
   it('lets the seller mark a paid order as handed over, with a tracking note', async () => {

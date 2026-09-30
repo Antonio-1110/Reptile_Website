@@ -5,6 +5,7 @@ import { createAuction, getAuctionRules, getSellerBond, paySellerBond } from '..
 import { getCurrentProfile, getRawListing } from '../../api/listingsApi';
 import BackLink from '../../components/ui/BackLink';
 import { formatDate, formatMoney, formatPercent } from '../../utils/auctionFormat';
+import { startCheckout } from '../../utils/checkout';
 import { errorText, toErrorState } from '../../utils/errorState';
 import { Link, useNavigate } from 'react-router';
 
@@ -62,7 +63,6 @@ export default function StartAuctionPage({ listingId, category }) {
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [bondBusy, setBondBusy] = useState(false);
-  const [bondPayment, setBondPayment] = useState({});
 
   useEffect(() => {
     Promise.all([getCurrentProfile(), getAuctionRules(), getSellerBond(), getRawListing(listingId, category)])
@@ -123,7 +123,7 @@ export default function StartAuctionPage({ listingId, category }) {
       setSubmitError('');
       try {
         const result = await paySellerBond();
-        setBondPayment(result.payment);
+        if (startCheckout(result.payment)) return;
         setState((current) => ({ ...current, bond: { ...current.bond, bond: result.bond } }));
       } catch (bondError) {
         setSubmitError(bondError.message);
@@ -142,7 +142,9 @@ export default function StartAuctionPage({ listingId, category }) {
           {bondStatus === 'pending' ? (
             <>
               <p className="start-auction-note" role="status">{t('startAuction.bond.pending')}</p>
-              {bondPayment.checkout_url && <a className="start-auction-primary" href={bondPayment.checkout_url}>{t('startAuction.bond.continuePayment')}</a>}
+              <button type="button" className="start-auction-primary" disabled={bondBusy} onClick={payBond}>
+                {bondBusy ? t('auctions.pleaseWait') : t('startAuction.bond.continuePayment')}
+              </button>
             </>
           ) : (
             <button type="button" className="start-auction-primary" disabled={bondBusy} onClick={payBond}>
