@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -66,20 +67,19 @@ class Account(AbstractUser):
         return self.is_commercial
 
     @property
+    def plan(self):
+        """'hobbyist', 'commercial' or 'pro': which plan's limits (settings.PLAN_*) apply."""
+        if not self.is_commercial:
+            return 'hobbyist'
+        return 'pro' if self.is_paid_account else 'commercial'
+
+    @property
     def max_post_count(self):
-        if self.is_commercial and self.is_paid_account:
-            return 200
-        if self.is_commercial:
-            return 20
-        return 5
+        return getattr(settings, f'PLAN_{self.plan.upper()}_MAX_LISTINGS')
 
     @property
     def max_images_per_post(self):
-        if self.is_commercial and self.is_paid_account:
-            return 12
-        if self.is_commercial:
-            return 6
-        return 3
+        return getattr(settings, f'PLAN_{self.plan.upper()}_MAX_PHOTOS')
 
     @property
     def can_start_auction(self):

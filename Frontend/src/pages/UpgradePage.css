@@ -139,6 +139,16 @@
   margin: 0;
 }
 
+.upgrade-checkout-placeholder .upgrade-checkout-email {
+  margin-top: 10px;
+}
+
+.upgrade-checkout-placeholder a {
+  color: #93c5fd;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
 .upgrade-checkout-placeholder .upgrade-checkout-title {
   margin-bottom: 6px;
   color: #f9fafb;

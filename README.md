@@ -191,7 +191,9 @@ and must stay consistent between model, serializer, and frontend copy.
 
 Post and image constraints are enforced in backend serializer logic (`PostLimitSerializerMixin`), not
 only on the frontend, so the rules remain consistent across all clients. The frontend mirrors these
-limits for immediate user feedback but is never the enforcement authority.
+limits for immediate user feedback but is never the enforcement authority. The numbers per plan are
+settings (`PLAN_*_MAX_LISTINGS`, `PLAN_*_MAX_PHOTOS`; see `backend/.env.example`). Until plans can be
+paid for online, staff switch a seller to Commercial (or Pro, with "paid account") in the admin.
 
 ## Deployment
 

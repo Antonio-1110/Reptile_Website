@@ -89,7 +89,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 - Validation, limits, ownership and permissions are enforced server-side. Frontend checks are only for
   fast feedback and must mirror (never replace) the backend.
 - Account limits live on the `Account` model (`max_post_count`, `max_images_per_post`,
-  `can_start_auction`, …). Read them from there; never hard-code 5/20/200 or 3/6/12 elsewhere.
+  `can_start_auction`, …), which reads the numbers from the `PLAN_*_MAX_LISTINGS` / `PLAN_*_MAX_PHOTOS`
+  settings. Read them from the model; never hard-code them elsewhere.
 - Post and image limits are enforced by `PostLimitSerializerMixin` (`post/serializer.py`) and the
   `photos` action (`ListingPhotoUploadSerializer`).
 - Auction rules belong in `auction/services.py`, and post-sale order rules in `auction/orders.py`, not in
@@ -97,8 +98,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
   limits) are settings read from environment variables; never hard-code them.
 - Users can never grant themselves a plan or reputation. `account_type`, `is_paid_account`,
   `verified_seller`, `seller_rating` and `total_reviews` are read-only on the profile and registration
-  endpoints. Commercial is a paid upgrade that only a payment-confirmed upgrade flow may set; the rating
-  and review count are only ever recomputed from `Review` rows (`account/reviews.py`).
+  endpoints. Commercial (and Pro) is set only by staff in the admin, granted on request by email until
+  plans can be paid for online, or later by a payment-confirmed upgrade flow; the rating and review count are only ever recomputed from `Review` rows (`account/reviews.py`).
 
 **Privacy.**
 - Public listing responses must not contain `contact_info`, the seller's `email`, `phone_number`,

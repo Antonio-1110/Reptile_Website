@@ -258,6 +258,15 @@ LAUNCH_OFFER_JOINED_BEFORE = env_date('LAUNCH_OFFER_JOINED_BEFORE')
 # waits on a payment processor.
 PLAN_PRICE_COMMERCIAL = env_decimal('PLAN_PRICE_COMMERCIAL', '299')
 PLAN_PRICE_PRO = env_decimal('PLAN_PRICE_PRO', '499')
+# What each plan allows (read through Account.max_post_count and max_images_per_post): listings an
+# account may have, and photos per listing. Lowering a limit doesn't remove anything already posted; it
+# only stops new listings or photos beyond it.
+PLAN_HOBBYIST_MAX_LISTINGS = env_int('PLAN_HOBBYIST_MAX_LISTINGS', 5)
+PLAN_HOBBYIST_MAX_PHOTOS = env_int('PLAN_HOBBYIST_MAX_PHOTOS', 3)
+PLAN_COMMERCIAL_MAX_LISTINGS = env_int('PLAN_COMMERCIAL_MAX_LISTINGS', 20)
+PLAN_COMMERCIAL_MAX_PHOTOS = env_int('PLAN_COMMERCIAL_MAX_PHOTOS', 6)
+PLAN_PRO_MAX_LISTINGS = env_int('PLAN_PRO_MAX_LISTINGS', 200)
+PLAN_PRO_MAX_PHOTOS = env_int('PLAN_PRO_MAX_PHOTOS', 12)
 # Bond a seller leaves with us before starting auctions, forfeited if they take a buyer's money and
 # never hand over. 0 turns the requirement off.
 SELLER_BOND_AMOUNT = env_decimal('SELLER_BOND_AMOUNT', '0')

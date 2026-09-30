@@ -1,6 +1,7 @@
 export default {
   title: "Upgrade your seller account",
   subtitle: "Commercial accounts can list more animals, show more photos and run auctions.",
+  subtitleNoAuctions: "Commercial accounts can list more animals and show more photos.",
   back: "Back to settings",
   loading: "Loading plans…",
   loadError: "Unable to load the available plans.",
@@ -9,7 +10,11 @@ export default {
   plans: {
     hobbyist: { name: "Hobbyist", description: "For keepers rehoming or selling the occasional animal." },
     commercial: { name: "Commercial", description: "For breeders and shops with a regular stock of animals." },
-    commercial_paid: { name: "Commercial Pro", description: "For high-volume sellers: the largest limits and a lower auction fee." },
+    commercial_paid: {
+      name: "Commercial Pro",
+      description: "For high-volume sellers: the largest limits and a lower auction fee.",
+      descriptionNoAuctions: "For high-volume sellers: the largest limits.",
+    },
   },
   launchOffer: "Early seller offer: auctions you start before {{date}} have no fee.",
   price: {
@@ -25,7 +30,9 @@ export default {
     auctionFee: "{{percent}} fee on auction sales",
   },
   checkout: {
-    title: "Upgrading to {{plan}} is coming soon",
-    body: "Online checkout isn't available yet. Your account hasn't been changed and you haven't been charged.",
+    title: "Switching to {{plan}}",
+    body: "Online payment isn't available yet, so we change plans by hand. Email us from the address on your account and include your username ({{username}}). We'll reply once your plan has changed.",
+    email: "Email <email>{{email}}</email>",
+    subject: "Switch {{username}} to {{plan}}",
   },
 };
