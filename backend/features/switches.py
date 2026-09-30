@@ -5,6 +5,7 @@ Each switch is declared here with the state it starts in. The backend enforces a
 check `is_enabled('auctions')`); the frontend reads them all from /api/v1/features/ only to hide what
 is switched off.
 """
+from django.apps import apps as global_apps
 from django.utils.translation import gettext_lazy as _
 
 SWITCHES = {
@@ -40,8 +41,9 @@ def set_enabled(name, enabled):
     FeatureSwitch.objects.update_or_create(name=name, defaults={'enabled': enabled})
 
 
-def create_missing_switches(apps=None, using='default', **kwargs):
-    """After `migrate`: a row for every declared switch, at its default, so staff can find it in the admin."""
+def create_missing_switches(apps=global_apps, using='default', **kwargs):
+    """After `migrate` (and `flush`, which passes no `apps`): a row for every declared switch, at its
+    default, so staff can find it in the admin."""
     try:
         FeatureSwitch = apps.get_model('features', 'FeatureSwitch')
     except LookupError:

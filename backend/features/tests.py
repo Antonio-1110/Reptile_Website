@@ -2,6 +2,7 @@ from io import StringIO
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.test import TransactionTestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -50,3 +51,12 @@ class FeatureSwitchTests(APITestCase):
         self.assertIn('auctions: on', out.getvalue())
         call_command('feature', 'auctions', 'off', stdout=StringIO())
         self.assertFalse(is_enabled('auctions'))
+
+
+class FeatureSwitchFlushTests(TransactionTestCase):
+    """TransactionTestCase empties the database with `flush`, which sends post_migrate without `apps`."""
+
+    def test_switches_come_back_after_a_flush(self):
+        FeatureSwitch.objects.all().delete()
+        call_command('flush', interactive=False, verbosity=0)
+        self.assertFalse(FeatureSwitch.objects.get(name='auctions').enabled)
