@@ -7,6 +7,9 @@ import { isLoggedIn, logout } from '../../api/authApi';
 import { getSpeciesLabel } from '../../constants/species';
 import { Link, useLocation } from 'react-router';
 
+// The narrowest search bar worth putting beside the logo and links; below this it gets its own row.
+const MIN_ONE_ROW_SEARCH_WIDTH = 360;
+
 const SEARCH_OPTIONS = [
   { type: 'species', value: 'Ball Pythons' },
   { type: 'species', value: 'Crested Geckos' },
@@ -29,6 +32,9 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const headerRef = useRef(null);
+  const brandRef = useRef(null);
+  const [oneRow, setOneRow] = useState(false);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -47,6 +53,30 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
       document.removeEventListener('pointerdown', closeOnOutsideClick);
     };
   }, [menuOpen]);
+  // One row when the logo, the links and a usable search bar fit side by side (see Header.css). The
+  // logo's and the links' boxes are as wide as their content in every wide layout, so switching
+  // layouts doesn't change what is measured here.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === 'undefined') return undefined;
+    const update = () => {
+      const nav = menuRef.current;
+      const navWidth = nav?.getBoundingClientRect().width ?? 0;
+      if (!navWidth) {
+        setOneRow(false); // links are in the drop-down menu
+        return;
+      }
+      const style = getComputedStyle(header);
+      const available = header.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const brandWidth = brandRef.current.getBoundingClientRect().width;
+      const gap = parseFloat(style.columnGap) || 0;
+      setOneRow(brandWidth + navWidth + MIN_ONE_ROW_SEARCH_WIDTH + 2 * gap <= available);
+    };
+    const observer = new ResizeObserver(update);
+    [header, brandRef.current, menuRef.current].forEach((element) => element && observer.observe(element));
+    update();
+    return () => observer.disconnect();
+  }, []);
   // Species tags keep the backend name as their value but are shown (and matched) in the UI language.
   const tagLabel = (tag) => (tag.type === 'species' ? getSpeciesLabel(t, tag.value) : tag.value);
   const query = draftTerm.trim().toLowerCase();
@@ -74,8 +104,8 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
   };
 
   return (
-    <header className="header">
-      <div className="leftSection">
+    <header ref={headerRef} className={`header${oneRow ? ' header--oneRow' : ''}`}>
+      <div ref={brandRef} className="leftSection">
         <Link to="/" className="logo">
           <img src="/logo.svg" alt="Reptilian" width="153" height="44" />
         </Link>
