@@ -219,7 +219,9 @@ AUCTION_CURRENCY = 'TWD'
 AUCTION_DEPOSIT_RATE = Decimal('0.10')
 AUCTION_MIN_DEPOSIT = Decimal('100.00')
 AUCTION_MIN_DURATION_HOURS = 1
-AUCTION_MAX_DURATION_DAYS = 30
+# Kept well under the 21 days a card processor lets a held deposit wait before it must be charged or
+# released (ECPay), so every bidder's deposit can be a card hold.
+AUCTION_MAX_DURATION_DAYS = env_int('AUCTION_MAX_DURATION_DAYS', 14)
 # Anti-sniping: a bid in the last AUCTION_EXTEND_WINDOW_MINUTES pushes the end time to at least
 # AUCTION_EXTEND_BY_MINUTES from that bid, so others get a chance to answer it. 0 turns it off.
 AUCTION_EXTEND_WINDOW_MINUTES = env_int('AUCTION_EXTEND_WINDOW_MINUTES', 5)
