@@ -90,6 +90,8 @@
   color: #f8fafc;
   font-size: 22px;
   font-weight: 700;
+  /* Usernames have no spaces, so a long one would otherwise widen the page on a phone. */
+  overflow-wrap: anywhere;
 }
 
 .account-settings-identity-note {
@@ -135,7 +137,8 @@
   font-weight: 400;
 }
 
-.account-settings-input:disabled {
+.account-settings-input:disabled,
+.account-settings-input:read-only {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -152,14 +155,16 @@
   font-weight: 600;
 }
 
-.account-settings-plan-limits {
+.account-settings-plan-limits,
+.account-settings-hint {
   margin: 0;
   color: #94a3b8;
   font-size: 13px;
   font-weight: 400;
 }
 
-.account-settings-upgrade-link {
+.account-settings-upgrade-link,
+.account-settings-security-link {
   justify-self: start;
   margin-top: 4px;
   color: #93c5fd;
@@ -169,6 +174,7 @@
   text-underline-offset: 3px;
 }
 
-.account-settings-upgrade-link:hover {
+.account-settings-upgrade-link:hover,
+.account-settings-security-link:hover {
   color: #bfdbfe;
 }

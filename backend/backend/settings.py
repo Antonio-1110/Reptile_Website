@@ -413,6 +413,10 @@ ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/') + '/'
 # many failures in a row, per username and per client address (authentication/lockout.py).
 LOGIN_LOCKOUT_FAILURES = env_int('LOGIN_LOCKOUT_FAILURES', 5)
 LOGIN_LOCKOUT_MINUTES = env_int('LOGIN_LOCKOUT_MINUTES', 15)
+# A changed username can't be changed again for this many days, and nobody else can take the old one
+# for as long, so a name buyers know isn't quickly handed to someone else (account/usernames.py). 0 turns
+# both off.
+USERNAME_CHANGE_DAYS = env_int('USERNAME_CHANGE_DAYS', 30)
 
 # The OAuth client ID from Google Cloud Console (not a secret: the browser sees it too). Empty turns
 # Google sign-in off. The frontend needs the same value as VITE_GOOGLE_CLIENT_ID.

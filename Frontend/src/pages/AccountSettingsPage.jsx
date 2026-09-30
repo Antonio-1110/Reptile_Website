@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { getCurrentProfile, updateCurrentProfile } from "../api/listingsApi";
 import BackLink from "../components/ui/BackLink";
 import EmptyState from "../components/ui/EmptyState";
+import { formatDate } from "../utils/auctionFormat";
 import { errorText, toErrorState } from "../utils/errorState";
 import { Link } from "react-router";
 
@@ -33,7 +34,7 @@ function toForm(profile) {
 }
 
 function AccountSettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -130,6 +131,16 @@ function AccountSettingsPage() {
   }
 
   const isCommercial = profile.account_type === "commercial";
+  // The server refuses a new username until then (account/usernames.py); saving the same one is fine.
+  const usernameLocked = Boolean(profile.username_change_available_at);
+  let usernameHint = null;
+  if (usernameLocked) {
+    usernameHint = t("accountSecurity.usernameLocked", {
+      date: formatDate(new Date(profile.username_change_available_at), i18n.language),
+    });
+  } else if (profile.username_change_days > 0) {
+    usernameHint = t("accountSecurity.usernameRule", { count: profile.username_change_days });
+  }
 
   return (
     <div className="account-settings-page">
@@ -142,7 +153,8 @@ function AccountSettingsPage() {
           <div className="account-settings-row">
             <label className="account-settings-field">
               {t("accountSettings.username")}
-              <input value={form.username} onChange={(event) => updateField("username", event.target.value)} className="account-settings-input" required maxLength={150} autoComplete="username" />
+              <input value={form.username} onChange={(event) => updateField("username", event.target.value)} className="account-settings-input" required maxLength={150} autoComplete="username" readOnly={usernameLocked} />
+              {usernameHint && <span className="account-settings-hint">{usernameHint}</span>}
               {fieldError("username")}
             </label>
 
@@ -219,6 +231,18 @@ function AccountSettingsPage() {
               <input value={form.facebook} onChange={(event) => updateField("facebook", event.target.value)} className="account-settings-input" placeholder={t("accountSettings.facebookPlaceholder")} maxLength={200} />
               {fieldError("facebook")}
             </label>
+          </div>
+        </section>
+
+        <section className="account-settings-section">
+          <h2 className="account-settings-section-title">{t("accountSecurity.sectionTitle")}</h2>
+
+          <div className="account-settings-field">
+            {t("accountSecurity.passwordLabel")}
+            {!profile.has_password && <p className="account-settings-plan-limits">{t("accountSecurity.googleOnlyNote")}</p>}
+            <Link to="/settings/password" className="account-settings-security-link">
+              {profile.has_password ? t("accountSecurity.changePasswordLink") : t("accountSecurity.setPasswordLink")}
+            </Link>
           </div>
         </section>
 

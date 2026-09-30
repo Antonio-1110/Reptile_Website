@@ -138,7 +138,7 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 
 | Base path | What | Auth |
 | --- | --- | --- |
-| `/api/v1/auth/` | `register/`, `login/` (JWT pair; username or email), `google/`, `refresh/`, `logout/`, `me/`, `verify-email/`, `password-reset/` | JWT |
+| `/api/v1/auth/` | `register/`, `login/` (JWT pair; username or email), `google/`, `refresh/`, `logout/`, `me/`, `verify-email/`, `password-reset/`, `password-change/` | JWT |
 | `/api/v1/account/` | `profile/` (quota info used by the listing editor), `plans/` | profile: JWT; plans: public |
 | `/api/v1/posts/live-animals/`, `/api/v1/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
 | `/api/v1/posts/species/` | species lookup | public |

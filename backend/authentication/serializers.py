@@ -5,6 +5,8 @@ from django.utils.translation import gettext as _
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from account.usernames import username_taken
+
 from .emails import email_verification_token, password_reset_token, user_from_uid
 
 Account = get_user_model()
@@ -20,7 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'email': {'required': True}}
 
     def validate_username(self, value):
-        if Account.objects.filter(username=value).exists():
+        if username_taken(value):
             raise serializers.ValidationError(_('Username already exists.'))
         return value
 
@@ -103,6 +105,32 @@ class PasswordResetConfirmSerializer(EmailLinkSerializer):
         attrs = super().validate(attrs)
         try:
             password_validation.validate_password(attrs['password'], attrs['user'])
+        except DjangoValidationError as error:
+            raise serializers.ValidationError({'password': list(error.messages)})
+        return attrs
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """A signed-in user's current password, which proves it's them and not someone at an unlocked
+    device, and the new one."""
+    current_password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.has_usable_password():
+            # Accounts made with Google sign-in; the emailed link proves it's the owner instead.
+            raise serializers.ValidationError(_("Your account doesn't have a password yet. Ask for a link by email to set one."))
+        if not user.check_password(value):
+            raise serializers.ValidationError(_('Your current password is incorrect.'))
+        return value
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        if attrs['password'] == attrs['current_password']:
+            raise serializers.ValidationError({'password': [_('Choose a password different from your current one.')]})
+        try:
+            password_validation.validate_password(attrs['password'], user)
         except DjangoValidationError as error:
             raise serializers.ValidationError({'password': list(error.messages)})
         return attrs

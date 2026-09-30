@@ -142,3 +142,21 @@ class Review(models.Model):
 
     def __str__(self):
         return f'{self.reviewer} → {self.seller}: {self.rating}★'
+
+
+class UsernameChange(models.Model):
+    """
+    A username an account gave up, kept so staff can see who someone used to be (e.g. when a buyer
+    reports a seller by an old name) and so the name isn't handed to someone else straight away
+    (account/usernames.py). Changes on the day an account was made aren't recorded.
+    """
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='username_changes')
+    old_username = models.CharField(max_length=150)
+    new_username = models.CharField(max_length=150)
+    changed_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-changed_at', '-id']
+
+    def __str__(self):
+        return f'{self.old_username} → {self.new_username}'

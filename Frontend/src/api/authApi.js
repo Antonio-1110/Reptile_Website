@@ -177,3 +177,14 @@ export async function requestPasswordReset(email) {
 export async function resetPassword({ uid, token, password }) {
   return postJson("/password-reset/confirm/", { uid, token, password });
 }
+
+// Answers with a new token pair: the server signs every other device out, this one included, so the
+// pair is what keeps this device signed in.
+export async function changePassword({ currentPassword, password }) {
+  const response = await authFetch("/auth/password-change/", {
+    method: "POST",
+    body: JSON.stringify({ current_password: currentPassword, password }),
+  });
+  writeTokens(response);
+  return response.detail;
+}
