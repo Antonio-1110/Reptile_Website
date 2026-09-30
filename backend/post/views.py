@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, F, OuterRef
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -22,6 +22,7 @@ from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
 from . import photos as listing_photos
+from . import ranking
 from . import species as species_catalog
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
@@ -255,6 +256,37 @@ class HideSoldListingsMixin:
         return queryset
 
 
+class ListingOrderingFilter(filters.OrderingFilter):
+    """
+    `?ordering=recommended` ranks by listing quality as well as age (post/ranking.py). Other orderings
+    put empty values last: Postgres sorts NULL first when descending, which would open "price, high to
+    low" with listings that have no price.
+    """
+    RECOMMENDED = 'recommended'
+
+    def filter_queryset(self, request, queryset, view):
+        if request.query_params.get(self.ordering_param) == self.RECOMMENDED:
+            return ranking.recommended(queryset)
+        ordering = self.get_ordering(request, queryset, view)
+        if not ordering:
+            return queryset
+        return queryset.order_by(*(
+            F(field[1:]).desc(nulls_last=True) if field.startswith('-') else F(field).asc(nulls_last=True)
+            for field in ordering
+        ))
+
+
+class SimilarListingsMixin:
+    """Adds a public `/similar/` action: a few published listings like this one (post/ranking.py)."""
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def similar(self, request, pk=None):
+        post = self.get_object()
+        # get_queryset also shows staff and owners their unpublished listings; suggestions never do.
+        listings = ranking.similar_listings(post, self.get_queryset().filter(self.published))
+        return Response(self.get_serializer(listings, many=True).data)
+
+
 class OwnListingsMixin:
     """Adds a `/mine/` action so sellers can list and manage their own listings."""
 
@@ -274,15 +306,15 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species', 'species_request').all()
     serializer_class = LiveAnimalPostSerializer
     published = LiveAnimalPost.PUBLISHED
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, ListingOrderingFilter]
     filterset_class = LiveAnimalPostFilter
     search_fields = LIVE_ANIMAL_SEARCH_FIELDS
-    ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm']
+    ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm', 'id']
     ordering = ['-created_at', '-id']
     contact_request_field = 'live_animal_post'
     favorite_field = 'live_animal_post'
@@ -297,14 +329,14 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
         species_catalog.release(species_request)
 
 
-class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, ListingOrderingFilter]
     filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
-    ordering_fields = ['price', 'created_at']
+    ordering_fields = ['price', 'created_at', 'id']
     ordering = ['-created_at', '-id']
     contact_request_field = 'equipment_post'
     favorite_field = 'equipment_post'

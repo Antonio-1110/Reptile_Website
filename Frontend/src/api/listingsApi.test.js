@@ -49,6 +49,13 @@ describe('getListingsPage: marketplace filters → API query', () => {
     expect(Object.fromEntries(requestedParams(fetchMock))).toEqual({ page: '1' });
   });
 
+  it('sends the sort order, but leaves it out of a saved search', async () => {
+    const fetchMock = mockFetch();
+    await getListingsPage({ ordering: 'recommended', search: 'pied' });
+    expect(requestedParams(fetchMock).get('ordering')).toBe('recommended');
+    expect(listingQueryString({ ordering: 'recommended', search: 'pied' })).toBe('search=pied');
+  });
+
   it('asks the versioned API for the chosen listing type', async () => {
     const fetchMock = mockFetch();
     await getListingsPage({ category: 'equipment' });
