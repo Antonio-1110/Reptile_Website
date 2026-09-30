@@ -59,6 +59,23 @@ class CheckMacValueTests(AuctionTestCase):
         with self.assertRaises(ImproperlyConfigured):
             ecpay.ECPayGateway()
 
+    @override_settings(
+        AUCTION_PAYMENT_GATEWAY='auction.payments.ManualPaymentGateway', ECPAY_MERCHANT_ID='', ECPAY_HASH_KEY='',
+        ECPAY_HASH_IV='',
+    )
+    def test_results_are_refused_while_ecpay_is_switched_off(self):
+        # With no keys, a forged result signed with empty ones must not touch a manual payment.
+        auction = self.create_auction()
+        services.request_deposit(auction, self.buyer)
+        deposit = Deposit.objects.get(account=self.buyer)
+        params = {
+            'MerchantTradeNo': deposit.provider_reference, 'RtnCode': '0', 'CustomField1': f'deposit:{deposit.pk}',
+        }
+        params['CheckMacValue'] = ecpay.check_mac_value(params, '', '')
+        for name in ('ecpay-notify', 'ecpay-result'):
+            self.assertEqual(self.client.post(reverse(name), params).status_code, 404)
+        self.assertEqual(Deposit.objects.get(pk=deposit.pk).status, Deposit.Status.PENDING)
+
 
 @ECPAY
 class ECPayCheckoutTests(AuctionTestCase):
@@ -140,6 +157,17 @@ class ECPayCheckoutTests(AuctionTestCase):
         self.assertEqual(self.notify(params).status_code, 400)
         self.assertEqual(self.client.post(reverse('ecpay-result'), params).status_code, 400)
         self.assertEqual(Deposit.objects.get(account=self.buyer).status, Deposit.Status.PENDING)
+
+    def test_results_for_payments_not_started_through_ecpay_are_ignored(self):
+        with override_settings(AUCTION_PAYMENT_GATEWAY='auction.payments.ManualPaymentGateway'):
+            services.request_deposit(self.auction, self.buyer)
+        deposit = Deposit.objects.get(account=self.buyer)
+        form = {'fields': {
+            'MerchantID': '3002607', 'MerchantTradeNo': deposit.provider_reference, 'TotalAmount': '500',
+            'MerchantTradeDate': '2026/09/30 12:00:00', 'CustomField1': f'deposit:{deposit.pk}',
+        }}
+        self.assertEqual(self.notify(self.ecpay_reply(form, rtn_code='10100058')).content, b'1|OK')
+        self.assertEqual(Deposit.objects.get(pk=deposit.pk).status, Deposit.Status.PENDING)
 
     def test_a_failed_card_lets_the_bidder_try_again(self):
         form = self.start_deposit()['payment']['redirect_form']

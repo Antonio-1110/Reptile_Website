@@ -21,7 +21,7 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils import timezone, translation
 from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
@@ -53,6 +53,10 @@ def check_mac_value(params, hash_key=None, hash_iv=None):
         encoded = encoded.replace(escaped, char)
     encoded = encoded.replace('~', '%7e')
     return hashlib.sha256(encoded.encode()).hexdigest().upper()
+
+
+def is_configured():
+    return bool(settings.ECPAY_MERCHANT_ID and settings.ECPAY_HASH_KEY and settings.ECPAY_HASH_IV)
 
 
 def is_signed(params):
@@ -105,7 +109,7 @@ class ECPayGateway(PaymentGateway):
     name = 'ecpay'
 
     def __init__(self):
-        if not (settings.ECPAY_MERCHANT_ID and settings.ECPAY_HASH_KEY and settings.ECPAY_HASH_IV):
+        if not is_configured():
             raise ImproperlyConfigured('Set ECPAY_MERCHANT_ID, ECPAY_HASH_KEY and ECPAY_HASH_IV to use ECPay.')
         self.host = LIVE_HOST if settings.ECPAY_LIVE else TEST_HOST
 
@@ -225,7 +229,8 @@ def handle_result(params):
     kind, _sep, pk = params.get('CustomField1', '').partition(':')
     model = MODELS.get(kind)
     payment = model.objects.filter(pk=pk).first() if model and pk.isdigit() else None
-    if payment is None:
+    if payment is None or payment.provider != ECPayGateway.name:
+        # Only payments started through ECPay can be settled by it, whichever gateway the site uses now.
         logger.error('ECPay result for an unknown payment: %s', params.get('MerchantTradeNo'))
         return None
 
@@ -261,6 +266,9 @@ def handle_result(params):
 
 
 def _signed_params(request):
+    if not is_configured():
+        # Without credentials the "signature" would use an empty key, which anyone can compute.
+        raise Http404
     params = request.POST.dict()
     return params if params and is_signed(params) else None
 
