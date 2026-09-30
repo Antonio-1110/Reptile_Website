@@ -71,7 +71,7 @@ test('a wrong password is refused and the right one signs in, with the username 
   await page.getByLabel('Username or email').fill('buyer_hsu');
   await page.getByLabel('Password').fill('not-the-password');
   await submitSignIn(page);
-  await expect(page.getByRole('alert')).toHaveText('Incorrect username, email or password.');
+  await expect(page.locator('form').getByRole('alert')).toHaveText('Incorrect username, email or password.');
 
   // The seeded address, typed in another case.
   await page.getByLabel('Username or email').fill('BUYER_HSU@demo.morphmarket.test');

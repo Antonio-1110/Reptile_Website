@@ -16,7 +16,7 @@ export default function FavoriteButton({ listingId, category = 'live_animal', in
 
   const toggle = async () => {
     if (!isLoggedIn()) {
-      navigate(`/signin?next=${encodeURIComponent(location.pathname + location.search)}`);
+      navigate(`/signin?next=${encodeURIComponent(location.pathname + location.search)}`, { state: { signInRequired: true } });
       return;
     }
     const want = !saved;

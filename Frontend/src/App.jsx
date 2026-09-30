@@ -33,7 +33,7 @@ function RequireSignIn({ children }) {
   const location = useLocation();
   if (isLoggedIn()) return children;
   const next = location.pathname + location.search;
-  return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} replace />;
+  return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} state={{ signInRequired: true }} replace />;
 }
 
 // Pages that read their query string only when they mount (the editor, the auction form, sign-in)
