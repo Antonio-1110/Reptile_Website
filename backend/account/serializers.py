@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 from . import reviews
@@ -121,13 +122,19 @@ class ProfileAccountSerializer(AccountSerializer):
     never on a serializer anyone else can read."""
     post_count = serializers.SerializerMethodField()
     remaining_post_count = serializers.SerializerMethodField()
+    # The fee an auction started now would keep (null if this account can't start auctions), and when
+    # the account's launch offer of no auction fee ends (null if it has none).
+    auction_fee_rate = serializers.SerializerMethodField()
+    launch_offer_ends_at = serializers.SerializerMethodField()
 
     class Meta(AccountSerializer.Meta):
         fields = AccountSerializer.Meta.fields + [
             'first_name', 'last_name', 'phone_number', 'line_id', 'contact_email', 'instagram', 'facebook',
-            'post_count', 'remaining_post_count',
+            'post_count', 'remaining_post_count', 'auction_fee_rate', 'launch_offer_ends_at',
         ]
-        read_only_fields = AccountSerializer.Meta.read_only_fields + ['post_count', 'remaining_post_count']
+        read_only_fields = AccountSerializer.Meta.read_only_fields + [
+            'post_count', 'remaining_post_count', 'auction_fee_rate', 'launch_offer_ends_at',
+        ]
 
     def validate_email(self, value):
         # Email addresses sign people in (authentication.serializers.LoginSerializer), so two accounts
@@ -156,3 +163,15 @@ class ProfileAccountSerializer(AccountSerializer):
 
     def get_remaining_post_count(self, account):
         return max(0, account.max_post_count - self.get_post_count(account))
+
+    def get_auction_fee_rate(self, account):
+        from auction.services import fee_rate_for
+
+        rate = fee_rate_for(account) if account.can_start_auction else None
+        return str(rate) if rate is not None else None
+
+    def get_launch_offer_ends_at(self, account):
+        from auction.services import launch_offer_ends
+
+        ends = launch_offer_ends(account)
+        return serializers.DateTimeField().to_representation(ends) if ends and ends > timezone.now() else None

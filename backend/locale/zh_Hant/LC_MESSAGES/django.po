@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-29 00:12+0800\n"
+"POT-Creation-Date: 2026-09-29 01:15+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: account/serializers.py:136 authentication/serializers.py:29
+#: account/serializers.py:143 authentication/serializers.py:29
 msgid "Email already registered."
 msgstr "此電子郵件已經註冊過。"
 
-#: account/views.py:109
+#: account/views.py:118
 msgid ""
 "You can review a seller after contacting them about a listing or buying from "
 "them."
@@ -584,11 +584,11 @@ msgstr "沒有可以婉拒的邀請。"
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:403 auction/services.py:299 auction/views.py:23
+#: auction/orders.py:403 auction/services.py:323 auction/views.py:23
 msgid ""
-"Auctions are available to paid commercial accounts. Upgrade your account to "
-"start one."
-msgstr "競標功能僅限付費商業帳號使用，請升級帳號以發起競標。"
+"Auctions are available to commercial accounts. Upgrade your account to start "
+"one."
+msgstr "競標功能僅限商業帳號使用，請升級帳號以發起競標。"
 
 #: auction/serializers.py:184
 msgid "Choose exactly one listing to auction."
@@ -630,52 +630,52 @@ msgstr "競標時間至少需要 %(hours)s 小時。"
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
 
-#: auction/services.py:37 auction/services.py:122
+#: auction/services.py:61 auction/services.py:146
 msgid "You can't bid on your own auction."
 msgstr "你不能對自己的競標出價。"
 
-#: auction/services.py:39
+#: auction/services.py:63
 msgid "This auction is no longer accepting bids."
 msgstr "此競標已停止接受出價。"
 
-#: auction/services.py:124
+#: auction/services.py:148
 msgid "This auction is not accepting bids right now."
 msgstr "此競標目前不接受出價。"
 
-#: auction/services.py:128
+#: auction/services.py:152
 msgid "Pay the deposit for this auction before bidding."
 msgstr "出價前請先支付此競標的保證金。"
 
-#: auction/services.py:132
+#: auction/services.py:156
 #, python-format
 msgid "Your bid must be at least %(amount)s."
 msgstr "你的出價至少須為 %(amount)s。"
 
-#: auction/services.py:157
+#: auction/services.py:181
 msgid "This auction has already closed."
 msgstr "此競標已結束。"
 
-#: auction/services.py:159
+#: auction/services.py:183
 msgid "An auction can't be cancelled once someone has bid."
 msgstr "已有人出價的競標無法取消。"
 
-#: auction/services.py:204
+#: auction/services.py:228
 msgid "You can't buy your own item."
 msgstr "你不能購買自己刊登的物品。"
 
-#: auction/services.py:204
+#: auction/services.py:228
 msgid "You can't buy your own animal."
 msgstr "你不能購買自己的個體。"
 
-#: auction/services.py:207
+#: auction/services.py:231
 msgid "The seller hasn't offered a buy-now price for this auction."
 msgstr "賣家沒有為這場競標提供直接購買價。"
 
-#: auction/services.py:209
+#: auction/services.py:233
 msgid "Buy now is no longer available for this auction."
 msgstr "這場競標已無法直接購買。"
 
-#: auction/services.py:301
+#: auction/services.py:325
 #, python-format
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
@@ -781,7 +781,9 @@ msgid ""
 "This listing can't be deleted while its auction is running or someone's "
 "money for it is still held. Try again once the auction has ended and its "
 "sale is settled."
-msgstr "這則刊登的拍賣仍在進行中，或仍有相關款項由平台保管，因此暫時無法刪除。請等拍賣結束、交易完成後再試一次。"
+msgstr ""
+"這則刊登的拍賣仍在進行中，或仍有相關款項由平台保管，因此暫時無法刪除。請等拍"
+"賣結束、交易完成後再試一次。"
 
 #: common/exceptions.py:34
 msgid "This can't be deleted because other records still depend on it."
@@ -998,6 +1000,11 @@ msgstr "無法讀取「%(name)s」這張圖片。"
 #: post/views.py:359
 msgid "Only the seller can mark an inquiry as replied."
 msgstr "只有賣家可以將詢問標記為已回覆。"
+
+#~ msgid ""
+#~ "Auctions are available to paid commercial accounts. Upgrade your account "
+#~ "to start one."
+#~ msgstr "競標功能僅限付費商業帳號使用，請升級帳號以發起競標。"
 
 #, python-format
 #~ msgid "New inquiry about your listing: %(title)s"

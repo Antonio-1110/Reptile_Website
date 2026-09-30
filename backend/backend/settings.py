@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 
 import dj_database_url
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ImproperlyConfigured
@@ -51,6 +51,11 @@ def env_int(name, default):
 
 def env_decimal(name, default):
     return Decimal(os.environ.get(name, default))
+
+
+def env_date(name):
+    value = os.environ.get(name)
+    return date.fromisoformat(value) if value else None
 
 
 load_env_file(BASE_DIR / '.env')
@@ -236,8 +241,20 @@ ORDER_RUNNER_UP_OFFER_HOURS = env_int('ORDER_RUNNER_UP_OFFER_HOURS', 48)
 ORDER_HANDOVER_DAYS = env_int('ORDER_HANDOVER_DAYS', 5)
 # Days the buyer then has to confirm it arrived intact (or report a problem) before the sale completes.
 ORDER_CONFIRM_DAYS = env_int('ORDER_CONFIRM_DAYS', 3)
-# Marketplace fee taken from the seller's payout, as a share of the price (0 = no fee yet).
-ORDER_FEE_RATE = env_decimal('ORDER_FEE_RATE', '0')
+# Marketplace fee taken from the seller's payout on an auction sale, as a share of the price, by plan
+# (Commercial or Commercial Pro). No cap: card processing costs grow with the price too. Each auction
+# keeps the rate it started with (Auction.fee_rate), so a change only affects new auctions.
+AUCTION_FEE_RATE_COMMERCIAL = env_decimal('AUCTION_FEE_RATE_COMMERCIAL', '0.05')
+AUCTION_FEE_RATE_PRO = env_decimal('AUCTION_FEE_RATE_PRO', '0.03')
+# Launch offer: no auction fee for a seller's first LAUNCH_OFFER_DAYS after joining, for accounts that
+# joined before LAUNCH_OFFER_JOINED_BEFORE (YYYY-MM-DD). Unset means the offer is still open to
+# everyone who joins; LAUNCH_OFFER_DAYS=0 ends it.
+LAUNCH_OFFER_DAYS = env_int('LAUNCH_OFFER_DAYS', 182)
+LAUNCH_OFFER_JOINED_BEFORE = env_date('LAUNCH_OFFER_JOINED_BEFORE')
+# Monthly price of each paid plan in AUCTION_CURRENCY, shown on the upgrade page. Checkout itself
+# waits on a payment processor.
+PLAN_PRICE_COMMERCIAL = env_decimal('PLAN_PRICE_COMMERCIAL', '299')
+PLAN_PRICE_PRO = env_decimal('PLAN_PRICE_PRO', '499')
 # Bond a seller leaves with us before starting auctions, forfeited if they take a buyer's money and
 # never hand over. 0 turns the requirement off.
 SELLER_BOND_AMOUNT = env_decimal('SELLER_BOND_AMOUNT', '0')

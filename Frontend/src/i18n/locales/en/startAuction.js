@@ -4,8 +4,11 @@ export default {
   loadError: "Unable to load this listing. Check that it's yours and try again.",
   backToListings: "Back to my listings",
   intro: "Buyers pay a refundable deposit before they bid. The highest bid when time runs out wins; the winner then pays the rest through us.",
-  paidOnly: "Auctions are available to paid commercial accounts.",
+  paidOnly: "Auctions are available to commercial accounts.",
   seePlans: "See plans",
+  feeHint: "Our fee on this auction is {{percent}} of the sale price, taken from your payout.",
+  feeLaunchOffer: "No fee on this auction: your early seller offer covers auctions you start before {{date}}.",
+  feeFree: "No fee on this auction.",
   fields: {
     startingPrice: "Starting price",
     minIncrement: "Minimum bid increment",

@@ -11,7 +11,7 @@ from post.models import EquipmentPost, LiveAnimalPost
 from post.serializer import LiveAnimalPostSerializer
 from . import orders
 from .models import Auction, Bid, BuyNowPurchase, Deposit, Order, SellerBond
-from .services import deposit_amount_for
+from .services import deposit_amount_for, fee_rate_for
 
 
 def money(value):
@@ -224,6 +224,7 @@ class AuctionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['seller'] = self.context['request'].user
         validated_data['deposit_amount'] = deposit_amount_for(validated_data['starting_price'])
+        validated_data['fee_rate'] = fee_rate_for(validated_data['seller'])
         validated_data['currency'] = settings.AUCTION_CURRENCY
         return super().create(validated_data)
 

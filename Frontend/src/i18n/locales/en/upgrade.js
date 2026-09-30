@@ -9,7 +9,12 @@ export default {
   plans: {
     hobbyist: { name: "Hobbyist", description: "For keepers rehoming or selling the occasional animal." },
     commercial: { name: "Commercial", description: "For breeders and shops with a regular stock of animals." },
-    commercial_paid: { name: "Commercial Pro", description: "For established sellers who want the largest limits and auctions." },
+    commercial_paid: { name: "Commercial Pro", description: "For high-volume sellers: the largest limits and a lower auction fee." },
+  },
+  launchOffer: "Early seller offer: auctions you start before {{date}} have no fee.",
+  price: {
+    free: "Free",
+    monthly: "{{price}} a month",
   },
   features: {
     listings: "Up to {{count}} listings",

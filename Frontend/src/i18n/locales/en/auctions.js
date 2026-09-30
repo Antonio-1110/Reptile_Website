@@ -1,7 +1,7 @@
 export default {
   kicker: "Live auctions",
   title: "Auctions",
-  intro: "Bid on animals from paid commercial breeders. Every auction shows its current price, how many bids it has and exactly how long is left — open one to bid or see the full details.",
+  intro: "Bid on animals from commercial breeders and shops. Every auction shows its current price, how many bids it has and exactly how long is left — open one to bid or see the full details.",
   steps: {
     deposit: { title: "Pay a refundable deposit", body: "Each auction asks for a small deposit before your first bid on it." },
     bid: { title: "Place your bids", body: "Each bid must beat the current price by at least the auction's increment." },

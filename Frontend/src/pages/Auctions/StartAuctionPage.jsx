@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { createAuction, getAuctionRules, getSellerBond, paySellerBond } from '../../api/auctionsApi';
 import { getCurrentProfile, getRawListing } from '../../api/listingsApi';
 import BackLink from '../../components/ui/BackLink';
-import { formatMoney } from '../../utils/auctionFormat';
+import { formatDate, formatMoney, formatPercent } from '../../utils/auctionFormat';
 import { errorText, toErrorState } from '../../utils/errorState';
 import { Link, useNavigate } from 'react-router';
 
@@ -39,7 +39,18 @@ function validate(form, rules, t) {
   return errors;
 }
 
-// Puts one of the seller's listings up for auction (paid commercial accounts), after the seller bond
+// The fee this auction would keep: the server fixes it when the auction starts (0 during a launch offer).
+function feeHint(t, profile, language) {
+  if (Number(profile.auction_fee_rate)) {
+    return t('startAuction.feeHint', { percent: formatPercent(profile.auction_fee_rate, language) });
+  }
+  if (profile.launch_offer_ends_at) {
+    return t('startAuction.feeLaunchOffer', { date: formatDate(new Date(profile.launch_offer_ends_at), language) });
+  }
+  return t('startAuction.feeFree');
+}
+
+// Puts one of the seller's listings up for auction (commercial accounts), after the seller bond
 // when one is required. Reached from My Listings: /auctions/new?listing=<id>&category=<category>.
 export default function StartAuctionPage({ listingId, category }) {
   const { t, i18n } = useTranslation();
@@ -194,6 +205,7 @@ export default function StartAuctionPage({ listingId, category }) {
       <form className="start-auction-card" onSubmit={submit} noValidate>
         {header}
         <p className="start-auction-intro">{t('startAuction.intro')}</p>
+        <p className="start-auction-fee">{feeHint(t, profile, language)}</p>
 
         <div className="start-auction-grid">
           {field('startingPrice', 'starting_price',

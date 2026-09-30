@@ -7,6 +7,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from django.utils.translation import gettext as _
+from auction.services import plan_fee_rate
 from . import reviews
 from .serializers import AccountSerializer, ProfileAccountSerializer, ReviewSerializer, SellerProfileSerializer
 from .models import Account, Review
@@ -37,16 +38,18 @@ class AccountPlans(APIView):
     Account model so this never drifts from what the API actually enforces."""
     permission_classes = [permissions.AllowAny]
 
+    # (id, account type, paid tier, name of the monthly price setting; None = free)
     PLANS = [
-        ('hobbyist', Account.AccountType.HOBBYIST, False),
-        ('commercial', Account.AccountType.COMMERCIAL, False),
-        ('commercial_paid', Account.AccountType.COMMERCIAL, True),
+        ('hobbyist', Account.AccountType.HOBBYIST, False, None),
+        ('commercial', Account.AccountType.COMMERCIAL, False, 'PLAN_PRICE_COMMERCIAL'),
+        ('commercial_paid', Account.AccountType.COMMERCIAL, True, 'PLAN_PRICE_PRO'),
     ]
 
     def get(self, request):
         plans = []
-        for plan_id, account_type, is_paid in self.PLANS:
+        for plan_id, account_type, is_paid, price_setting in self.PLANS:
             account = Account(account_type=account_type, is_paid_account=is_paid)
+            fee_rate = plan_fee_rate(account)
             plans.append({
                 'id': plan_id,
                 'account_type': account_type,
@@ -54,9 +57,11 @@ class AccountPlans(APIView):
                 'max_post_count': account.max_post_count,
                 'max_images_per_post': account.max_images_per_post,
                 'can_start_auction': account.can_start_auction,
-                # Share of an auction sale kept as the marketplace fee (0 while it's free), or None
-                # for plans that can't run auctions.
-                'auction_fee_rate': str(settings.ORDER_FEE_RATE) if account.can_start_auction else None,
+                # Share of an auction sale kept as the marketplace fee on this plan, or None for plans
+                # that can't run auctions. A seller's launch offer is on their profile.
+                'auction_fee_rate': str(fee_rate) if fee_rate is not None else None,
+                'monthly_price': str(getattr(settings, price_setting)) if price_setting else None,
+                'currency': settings.AUCTION_CURRENCY,
             })
         return Response(plans)
 

@@ -74,13 +74,19 @@ class StartAuctionTests(AuctionTestCase):
         response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
         self.assertEqual(response.status_code, 403)
 
-    def test_unpaid_commercial_account_cannot_start_auction(self):
+    def test_hobbyist_is_told_auctions_need_a_commercial_account(self):
+        self.seller.account_type = 'hobbyist'
+        self.seller.save()
+        self.client.force_authenticate(self.seller)
+        response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
+        self.assertIn('commercial accounts', str(response.data))
+
+    def test_commercial_account_can_start_auction(self):
         self.seller.is_paid_account = False
         self.seller.save()
         self.client.force_authenticate(self.seller)
         response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
-        self.assertEqual(response.status_code, 403)
-        self.assertIn('paid commercial', str(response.data))
+        self.assertEqual(response.status_code, 201, response.data)
 
     def test_paid_commercial_account_can_start_auction(self):
         self.client.force_authenticate(self.seller)
@@ -537,6 +543,58 @@ class BuyNowTests(AuctionTestCase):
         self.assertEqual(BuyNowPurchase.objects.count(), 1)
 
 
+@override_settings(AUCTION_FEE_RATE_COMMERCIAL=Decimal('0.05'), AUCTION_FEE_RATE_PRO=Decimal('0.03'), LAUNCH_OFFER_DAYS=0)
+class AuctionFeeTests(AuctionTestCase):
+    """The marketplace fee on an auction sale: set by the seller's plan, 0 during a launch offer (#39)."""
+
+    def start(self):
+        self.client.force_authenticate(self.seller)
+        response = self.client.post(reverse('auction-list'), self.auction_payload(), format='json')
+        self.assertEqual(response.status_code, 201, response.data)
+        return Auction.objects.get(pk=response.data['id'])
+
+    def test_pro_auctions_keep_the_pro_rate(self):
+        self.assertEqual(self.start().fee_rate, Decimal('0.03'))
+
+    def test_commercial_auctions_keep_the_commercial_rate(self):
+        self.seller.is_paid_account = False
+        self.seller.save()
+        self.assertEqual(self.start().fee_rate, Decimal('0.05'))
+
+    def test_changing_the_rate_later_leaves_running_auctions_alone(self):
+        auction = self.start()
+        with override_settings(AUCTION_FEE_RATE_PRO=Decimal('0.10')):
+            auction.refresh_from_db()
+            self.assertEqual(auction.fee_rate, Decimal('0.03'))
+
+    @override_settings(LAUNCH_OFFER_DAYS=182, LAUNCH_OFFER_JOINED_BEFORE=None)
+    def test_new_sellers_pay_no_fee_during_the_launch_offer(self):
+        self.assertEqual(self.start().fee_rate, Decimal('0'))
+        self.assertEqual(services.fee_rate_for(self.seller, at=timezone.now() + timedelta(days=183)), Decimal('0.03'))
+
+    def test_sellers_who_joined_after_the_offer_closed_pay_the_plan_rate(self):
+        with override_settings(LAUNCH_OFFER_DAYS=182, LAUNCH_OFFER_JOINED_BEFORE=(timezone.now() - timedelta(days=1)).date()):
+            self.assertEqual(self.start().fee_rate, Decimal('0.03'))
+
+    def test_sellers_who_joined_before_the_cutoff_keep_their_offer(self):
+        Account.objects.filter(pk=self.seller.pk).update(date_joined=timezone.now() - timedelta(days=30))
+        self.seller.refresh_from_db()
+        with override_settings(LAUNCH_OFFER_DAYS=182, LAUNCH_OFFER_JOINED_BEFORE=(timezone.now() - timedelta(days=1)).date()):
+            self.assertEqual(self.start().fee_rate, Decimal('0'))
+
+    def test_profile_shows_the_fee_a_new_auction_would_keep(self):
+        self.client.force_authenticate(self.seller)
+        profile = self.client.get(reverse('profile')).data
+        self.assertEqual(profile['auction_fee_rate'], '0.03')
+        self.assertIsNone(profile['launch_offer_ends_at'])
+        with override_settings(LAUNCH_OFFER_DAYS=182):
+            profile = self.client.get(reverse('profile')).data
+            self.assertEqual(profile['auction_fee_rate'], '0')
+            self.assertIsNotNone(profile['launch_offer_ends_at'])
+        self.client.force_authenticate(self.buyer)
+        self.assertIsNone(self.client.get(reverse('profile')).data['auction_fee_rate'])
+
+
 @override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)
 class DeletingWhileMoneyIsHeldTests(AuctionTestCase):
     """A listing or account can't be deleted while an auction on it runs or still holds anyone's money (#37)."""
@@ -752,8 +810,8 @@ class OrderTests(AuctionTestCase):
         self.listing.refresh_from_db()
         self.assertEqual(self.listing.status, 'sold')  # a completed sale marks the listing sold
 
-    @override_settings(ORDER_FEE_RATE=Decimal('0.05'))
     def test_seller_payout_is_the_price_minus_the_fee(self):
+        Auction.objects.filter(pk=self.auction.pk).update(fee_rate=Decimal('0.05'))
         self.client.force_authenticate(self.seller)
         self.assertEqual(self.client.get(self.order_url()).data['payout'], '4845.00')
         self.client.force_authenticate(self.buyer)
