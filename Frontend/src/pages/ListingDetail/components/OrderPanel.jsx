@@ -6,6 +6,7 @@ import {
   confirmReceived, decideRunnerUp, declineOffer, markHandedOver, payOrder, reportProblem,
 } from '../../../api/auctionsApi';
 import { formatDateTime, formatMoney } from '../../../utils/auctionFormat';
+import { startCheckout } from '../../../utils/checkout';
 
 // Statuses where the order is over, one way or another; the rest are still in progress.
 const CLOSED = ['completed', 'buyer_defaulted', 'declined', 'seller_defaulted', 'refunded'];
@@ -37,8 +38,9 @@ export default function OrderPanel({ order, onChanged, onToast, category }) {
     setBusy(true);
     setError('');
     try {
-      await action();
-      if (toastKey) onToast(t(toastKey));
+      // An action that sent the browser to a payment page returns true; there's nothing to announce.
+      const redirected = (await action()) === true;
+      if (toastKey && !redirected) onToast(t(toastKey));
       setStep(null);
     } catch (requestError) {
       setError(requestError.message);
@@ -66,13 +68,18 @@ export default function OrderPanel({ order, onChanged, onToast, category }) {
     <button type="button" className="action-panel-secondary" disabled={busy} onClick={onClick}>{label}</button>
   );
 
+  const pay = () => run(async () => startCheckout((await payOrder(order.id)).payment), 'auctions.order.paidToast');
+  const awaitingBuyer = buyer && ['awaiting_payment', 'offered'].includes(order.status);
+
   let actions = null;
-  if (buyer && order.status === 'awaiting_payment' && order.balanceStatus !== 'pending') {
-    actions = primary(t('auctions.order.pay', values), () => run(() => payOrder(order.id), 'auctions.order.paidToast'));
-  } else if (buyer && order.status === 'offered' && order.balanceStatus !== 'pending') {
+  if (awaitingBuyer && order.balanceStatus === 'pending') {
+    actions = primary(t('auctions.deposit.continuePayment'), pay);
+  } else if (buyer && order.status === 'awaiting_payment') {
+    actions = primary(t('auctions.order.pay', values), pay);
+  } else if (buyer && order.status === 'offered') {
     actions = (
       <div className="action-panel-row">
-        {primary(t('auctions.order.acceptOffer', values), () => run(() => payOrder(order.id), 'auctions.order.paidToast'))}
+        {primary(t('auctions.order.acceptOffer', values), pay)}
         {secondary(t('auctions.order.declineOffer'), () => run(() => declineOffer(order.id)))}
       </div>
     );

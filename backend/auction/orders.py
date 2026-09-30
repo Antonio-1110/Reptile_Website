@@ -24,7 +24,7 @@ from features.switches import is_enabled
 from . import notifications
 from .errors import AuctionError
 from .models import BuyNowPurchase, Deposit, Incident, Order, SellerBond
-from .payments import get_payment_gateway
+from .payments import get_payment_gateway, resume_payment
 
 # Once an order reaches these, buyer and seller see each other's contact details to arrange the
 # handover. (A winner who still owes the balance has paid a deposit, so they count.)
@@ -75,7 +75,7 @@ def pay_order(order, account):
         if order.status not in (Order.Status.AWAITING_PAYMENT, Order.Status.OFFERED):
             raise AuctionError(_('This order is not waiting for payment.'))
         if order.balance_status == Order.BalanceStatus.PENDING:
-            return order, {}
+            return order, resume_payment(order)
         gateway = get_payment_gateway()
         payment = gateway.collect(order)
         order.provider = gateway.name
@@ -414,8 +414,10 @@ def request_bond(account):
         raise AuctionError(_('Auctions are available to commercial accounts. Upgrade your account to start one.'))
     with transaction.atomic():
         bond = SellerBond.objects.select_for_update().filter(account=account).first()
-        if bond and bond.status in (SellerBond.Status.PENDING, SellerBond.Status.HELD):
+        if bond and bond.status == SellerBond.Status.HELD:
             return bond, {}
+        if bond and bond.status == SellerBond.Status.PENDING:
+            return bond, resume_payment(bond)
         gateway = get_payment_gateway()
         bond = bond or SellerBond(account=account)
         bond.amount = settings.SELLER_BOND_AMOUNT
@@ -430,9 +432,18 @@ def request_bond(account):
     return bond, payment.client_data
 
 
-def confirm_bond(bond):
+def confirm_bond(bond, provider_reference=None):
+    """The gateway (or staff) reports the bond as paid."""
+    changes = {'status': SellerBond.Status.HELD, 'updated_at': timezone.now()}
+    if provider_reference:
+        changes['provider_reference'] = provider_reference
+    SellerBond.objects.filter(pk=bond.pk, status=SellerBond.Status.PENDING).update(**changes)
+
+
+def fail_bond(bond):
+    """The gateway reports the payment failed; the seller may try again."""
     SellerBond.objects.filter(pk=bond.pk, status=SellerBond.Status.PENDING).update(
-        status=SellerBond.Status.HELD, updated_at=timezone.now(),
+        status=SellerBond.Status.FAILED, updated_at=timezone.now(),
     )
 
 

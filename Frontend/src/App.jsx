@@ -34,7 +34,7 @@ function RequireSignIn({ children }) {
   const location = useLocation();
   if (isLoggedIn()) return children;
   const next = location.pathname + location.search;
-  return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} replace />;
+  return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} state={{ signInRequired: true }} replace />;
 }
 
 // Pages of a feature staff have switched off (features app) go to the home page; nothing shows while

@@ -1,7 +1,7 @@
 import './SignInPage.css';
 import { useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { googleSignIn, login, register } from '../api/authApi';
 import PasswordRules from '../components/ui/PasswordRules';
 import { safeNextPath } from '../utils/nextPath';
@@ -33,7 +33,10 @@ export default function SignInPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const isRegister = mode === 'register';
-  const [hasNext] = useState(() => new URLSearchParams(window.location.search).has('next'));
+  // Only a visitor who was sent here (a page that needs an account, a heart they clicked) is told
+  // they'll go back afterwards; someone who chose "Sign in" themselves already knows why they're here.
+  const { state } = useLocation();
+  const [signInRequired] = useState(() => Boolean(state?.signInRequired));
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
@@ -114,7 +117,7 @@ export default function SignInPage() {
 
   return (
     <div className="authPage">
-      <div className="authCard">
+      <div className="authCard authCardSplit">
         <div className="authTabs" role="tablist">
           <button type="button" role="tab" aria-selected={!isRegister} className={!isRegister ? 'active' : ''} onClick={() => switchMode('signin')}>
             {t('auth.signIn')}
@@ -124,9 +127,11 @@ export default function SignInPage() {
           </button>
         </div>
 
-        <h1 className="authTitle">{isRegister ? t('auth.registerTitle') : t('auth.signInTitle')}</h1>
-        <p className="authSubtitle">{isRegister ? t('auth.registerSubtitle') : t('auth.signInSubtitle')}</p>
-        {hasNext && !isRegister && <p className="authNotice" role="status">{t('auth.signInToContinue')}</p>}
+        <div className="authIntro">
+          <h1 className="authTitle">{isRegister ? t('auth.registerTitle') : t('auth.signInTitle')}</h1>
+          <p className="authSubtitle">{isRegister ? t('auth.registerSubtitle') : t('auth.signInSubtitle')}</p>
+          {signInRequired && !isRegister && <p className="authNotice" role="status">{t('auth.signInToContinue')}</p>}
+        </div>
 
         <form className="authForm" onSubmit={handleSubmit}>
           {field('username', isRegister ? t('auth.username') : t('signInOptions.usernameOrEmail'), 'text', 'username')}

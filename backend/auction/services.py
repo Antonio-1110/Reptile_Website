@@ -16,7 +16,7 @@ from common.money import format_money
 from . import notifications, orders
 from .errors import AuctionError
 from .models import Auction, Bid, BuyNowPurchase, Deposit, Incident
-from .payments import get_payment_gateway
+from .payments import get_payment_gateway, resume_payment
 
 logger = logging.getLogger(__name__)
 
@@ -68,8 +68,10 @@ def request_deposit(auction, account):
         # lock, and a double-click would insert two and hit the one-deposit-per-bidder constraint.
         Auction.objects.select_for_update().get(pk=auction.pk)
         deposit = Deposit.objects.select_for_update().filter(auction=auction, account=account).first()
-        if deposit and deposit.status in (Deposit.Status.PENDING, Deposit.Status.HELD):
+        if deposit and deposit.status == Deposit.Status.HELD:
             return deposit, {}
+        if deposit and deposit.status == Deposit.Status.PENDING:
+            return deposit, resume_payment(deposit)
 
         gateway = get_payment_gateway()
         if deposit is None:
@@ -236,9 +238,9 @@ def start_buy_now(auction, buyer):
             raise AuctionError(_('Buy now is no longer available for this auction.'))
 
         pending = auction.purchases.filter(status=BuyNowPurchase.Status.PENDING).select_related('buyer')
-        existing = pending.filter(buyer=buyer).first()
+        existing = pending.select_for_update().filter(buyer=buyer).first()
         if existing:
-            return existing, {}, pending.exclude(buyer=buyer).count()
+            return existing, resume_payment(existing), pending.exclude(buyer=buyer).count()
         others = list(pending.exclude(buyer=buyer))
 
         gateway = get_payment_gateway()

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 01:24+0800\n"
+"POT-Creation-Date: 2026-10-01 06:02+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,22 @@ msgid ""
 "You can review a seller after contacting them about a listing or buying from "
 "them."
 msgstr "與賣家聯絡過某則刊登或向其購買後，才能評價這位賣家。"
+
+#: auction/ecpay.py:81
+msgid "Auction deposit"
+msgstr "競標保證金"
+
+#: auction/ecpay.py:82
+msgid "Buy-now payment"
+msgstr "直接購買付款"
+
+#: auction/ecpay.py:83
+msgid "Auction payment"
+msgstr "競標得標付款"
+
+#: auction/ecpay.py:84
+msgid "Seller bond"
+msgstr "賣家保證金"
 
 #: auction/notifications.py:16
 msgid ""
@@ -588,7 +604,7 @@ msgstr "競標功能目前暫停開放。"
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:414 auction/services.py:327 auction/views.py:23
+#: auction/orders.py:414 auction/services.py:329 auction/views.py:23
 msgid ""
 "Auctions are available to commercial accounts. Upgrade your account to start "
 "one."
@@ -634,7 +650,7 @@ msgstr "競標時間至少需要 %(hours)s 小時。"
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
 
-#: auction/services.py:62 auction/services.py:148
+#: auction/services.py:62 auction/services.py:150
 msgid "You can't bid on your own auction."
 msgstr "你不能對自己的競標出價。"
 
@@ -642,44 +658,44 @@ msgstr "你不能對自己的競標出價。"
 msgid "This auction is no longer accepting bids."
 msgstr "此競標已停止接受出價。"
 
-#: auction/services.py:150
+#: auction/services.py:152
 msgid "This auction is not accepting bids right now."
 msgstr "此競標目前不接受出價。"
 
-#: auction/services.py:154
+#: auction/services.py:156
 msgid "Pay the deposit for this auction before bidding."
 msgstr "出價前請先支付此競標的保證金。"
 
-#: auction/services.py:158
+#: auction/services.py:160
 #, python-format
 msgid "Your bid must be at least %(amount)s."
 msgstr "你的出價至少須為 %(amount)s。"
 
-#: auction/services.py:183
+#: auction/services.py:185
 msgid "This auction has already closed."
 msgstr "此競標已結束。"
 
-#: auction/services.py:185
+#: auction/services.py:187
 msgid "An auction can't be cancelled once someone has bid."
 msgstr "已有人出價的競標無法取消。"
 
-#: auction/services.py:231
+#: auction/services.py:233
 msgid "You can't buy your own item."
 msgstr "你不能購買自己刊登的物品。"
 
-#: auction/services.py:231
+#: auction/services.py:233
 msgid "You can't buy your own animal."
 msgstr "你不能購買自己的個體。"
 
-#: auction/services.py:234
+#: auction/services.py:236
 msgid "The seller hasn't offered a buy-now price for this auction."
 msgstr "賣家沒有為這場競標提供直接購買價。"
 
-#: auction/services.py:236
+#: auction/services.py:238
 msgid "Buy now is no longer available for this auction."
 msgstr "這場競標已無法直接購買。"
 
-#: auction/services.py:329
+#: auction/services.py:331
 #, python-format
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"

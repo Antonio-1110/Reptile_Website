@@ -227,12 +227,24 @@ AUCTION_MAX_DURATION_DAYS = env_int('AUCTION_MAX_DURATION_DAYS', 14)
 # AUCTION_EXTEND_BY_MINUTES from that bid, so others get a chance to answer it. 0 turns it off.
 AUCTION_EXTEND_WINDOW_MINUTES = env_int('AUCTION_EXTEND_WINDOW_MINUTES', 5)
 AUCTION_EXTEND_BY_MINUTES = env_int('AUCTION_EXTEND_BY_MINUTES', 5)
-# Where deposits and buy-now payments go; see auction/payments.py. In DEBUG payments count as paid
-# instantly so the flows can be tried locally; otherwise staff confirm them in the admin until a
-# processor is wired up.
-AUCTION_PAYMENT_GATEWAY = (
+# Where deposits, buy-now and order payments and seller bonds go; see auction/payments.py. Set
+# AUCTION_PAYMENT_GATEWAY=auction.ecpay.ECPayGateway to take card payments through ECPay. Otherwise, in
+# DEBUG payments count as paid instantly so the flows can be tried locally, and in production staff
+# confirm them in the admin.
+AUCTION_PAYMENT_GATEWAY = os.environ.get('AUCTION_PAYMENT_GATEWAY') or (
     'auction.payments.InstantPaymentGateway' if DEBUG else 'auction.payments.ManualPaymentGateway'
 )
+if AUCTION_PAYMENT_GATEWAY == 'auction.payments.InstantPaymentGateway' and not DEBUG:
+    raise ImproperlyConfigured('InstantPaymentGateway treats every payment as paid; it is for local development only.')
+# ECPay (auction/ecpay.py). The merchant ID, HashKey and HashIV come from ECPay's merchant back office.
+# Payments go to ECPay's test site until ECPAY_LIVE is set, so a missing setting never takes real money.
+ECPAY_MERCHANT_ID = os.environ.get('ECPAY_MERCHANT_ID', '')
+ECPAY_HASH_KEY = os.environ.get('ECPAY_HASH_KEY', '')
+ECPAY_HASH_IV = os.environ.get('ECPAY_HASH_IV', '')
+ECPAY_LIVE = env_bool('ECPAY_LIVE', False)
+# Turn on only after switching off automatic settlement (自動關帳) in ECPay's back office: deposits are
+# then held on the bidder's card and released for free, and every other payment is settled as it arrives.
+ECPAY_MANUAL_SETTLEMENT = env_bool('ECPAY_MANUAL_SETTLEMENT', False)
 
 # After a sale (auction/models.py Order). Placeholder values: all of these are business decisions, so
 # each can be changed with an environment variable without touching code.
@@ -280,6 +292,8 @@ REPORT_AUTO_HIDE_THRESHOLD = env_int('REPORT_AUTO_HIDE_THRESHOLD', 0)
 SAVED_SEARCH_LIMIT = env_int('SAVED_SEARCH_LIMIT', 20)
 # Where the website lives, for links in emails (e.g. https://example.com). No trailing slash.
 FRONTEND_URL = os.environ.get('DJANGO_FRONTEND_URL', 'http://localhost:5173').rstrip('/')
+# This API's own public address (e.g. https://api.example.com), for payment providers to call back.
+BACKEND_URL = os.environ.get('DJANGO_BACKEND_URL', 'http://localhost:8000').rstrip('/')
 # People who saved a listing get at most one price-drop email per listing in this many hours, so a
 # seller can't mass-email them by lowering the price a little at a time.
 PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)

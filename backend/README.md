@@ -23,7 +23,8 @@ backend/
 ├── auction/            # auctions, bids and bidder deposits (/api/v1/auctions/)
 │   ├── models.py       # Auction, Bid, Deposit
 │   ├── services.py     # all auction rules: deposits, bidding, cancelling, settling
-│   ├── payments.py     # DepositGateway interface + manual/instant gateways
+│   ├── payments.py     # PaymentGateway interface + manual/instant gateways
+│   ├── ecpay.py        # ECPay card payments: checkout form, result callbacks, refunds
 │   ├── orders.py       # after a sale: Order (pay the rest, hand over, confirm), seller bond, incidents
 │   ├── notifications.py # every auction/order email
 │   └── management/commands/close_auctions.py, process_orders.py
@@ -235,10 +236,19 @@ if the auction closed first.
 - `ManualPaymentGateway` is used otherwise. Payments stay `pending` until staff use **Mark as paid**
   in the Deposit / Buy-now purchase admin (e.g. after a bank transfer). Refunds are done by hand.
 
-To take real payments, subclass `PaymentGateway` for the processor and point the setting at it. Put
-whatever the frontend needs to send the payer to checkout in `PaymentResult.client_data`. Then add a
-webhook view that calls `services.confirm_deposit()` / `fail_deposit()` and `confirm_buy_now()` /
-`fail_buy_now()`.
+- `ECPayGateway` (`auction/ecpay.py`) takes card payments through ECPay's hosted card page. Set
+  `AUCTION_PAYMENT_GATEWAY=auction.ecpay.ECPayGateway` and the `ECPAY_*` variables (see `.env.example`;
+  it lists ECPay's public test merchant). Paying returns a `redirect_form` that the frontend posts to
+  ECPay. ECPay reports back to `/payments/ecpay/notify/` (server to server) and
+  `/payments/ecpay/result/` (the payer's browser, which then goes back to the site), so
+  `DJANGO_BACKEND_URL` must be the API's public address. A payer who returns to an unfinished payment
+  gets a fresh checkout. Refunds and releases go through ECPay's DoAction API. Deposits can be held on
+  the card and released for free once `ECPAY_MANUAL_SETTLEMENT` is on, which needs automatic settlement
+  switched off in ECPay's back office.
+
+  To try it locally, set the test merchant in `backend/.env` and pay with ECPay's test card
+  (4311-9522-2222-2222, any future expiry date, CVV 222). The browser return confirms the payment
+  even though ECPay can't reach `localhost` for the server-to-server call.
 
 ## API summary
 
