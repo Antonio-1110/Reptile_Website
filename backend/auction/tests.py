@@ -127,9 +127,16 @@ class StartAuctionTests(AuctionTestCase):
 
     def test_auction_duration_is_limited(self):
         self.client.force_authenticate(self.seller)
-        too_long = (timezone.now() + timedelta(days=31)).isoformat()
+        too_long = (timezone.now() + timedelta(days=15)).isoformat()
         response = self.client.post(reverse('auction-list'), self.auction_payload(ends_at=too_long), format='json')
         self.assertEqual(response.status_code, 400)
+        self.assertIn('ends_at', response.data)
+
+    def test_auction_can_run_for_two_weeks(self):
+        self.client.force_authenticate(self.seller)
+        two_weeks = (timezone.now() + timedelta(days=14) - timedelta(minutes=1)).isoformat()
+        response = self.client.post(reverse('auction-list'), self.auction_payload(ends_at=two_weeks), format='json')
+        self.assertEqual(response.status_code, 201, response.data)
 
     def test_anyone_can_browse_auctions(self):
         self.create_auction()
