@@ -102,7 +102,7 @@ export async function getLatestAuctionForListing(listingId, category = "live_ani
 }
 
 // Returns the deposit plus `payment`: whatever the payment gateway needs the frontend to do next
-// (e.g. {checkout_url}); empty when the deposit is already paid.
+// (e.g. {checkout_url} or a {redirect_form} to post); empty when the deposit is already paid.
 export async function payDeposit(id) {
   const result = await post(`/auctions/${id}/deposit/`);
   return { deposit: normalizeDeposit(result), payment: result.payment || {} };
@@ -165,7 +165,12 @@ export async function getMyOrderForAuction(auctionId) {
 }
 
 const orderAction = (name) => async (id, payload) => normalizeOrder(await post(`/auctions/orders/${id}/${name}/`, payload));
-export const payOrder = orderAction("pay");
+// Pays what the buyer owes. Returns the order plus `payment`: what the gateway needs next (e.g. a form to
+// post to the provider's card page), empty when nothing is needed.
+export async function payOrder(id) {
+  const result = await post(`/auctions/orders/${id}/pay/`);
+  return { order: normalizeOrder(result), payment: result.payment || {} };
+}
 export const markHandedOver = (id, note) => orderAction("handed-over")(id, { note });
 export const confirmReceived = orderAction("confirm");
 export const reportProblem = (id, text) => orderAction("report-problem")(id, { text });

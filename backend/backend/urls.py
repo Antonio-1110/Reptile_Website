@@ -21,6 +21,7 @@ from django.contrib.auth.views import LoginView
 from django.urls import path, include
 
 from account.views import SellerProfile, SellerReviews
+from auction import ecpay
 from authentication.lockout import LockoutAdminAuthenticationForm, LockoutAuthenticationForm
 from post.sitemap import sitemap
 
@@ -35,6 +36,9 @@ urlpatterns = [
     path('api/v1/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
     path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/v1/auctions/', include('auction.urls')),
+    # Payment provider callbacks (form posts from ECPay, not part of the JSON API).
+    path('payments/ecpay/notify/', ecpay.notify, name='ecpay-notify'),
+    path('payments/ecpay/result/', ecpay.result, name='ecpay-result'),
     # The browsable API's session login, with the same lockout as the admin (listed first so it wins).
     path('api-auth/login/', LoginView.as_view(
         template_name='rest_framework/login.html', authentication_form=LockoutAuthenticationForm,

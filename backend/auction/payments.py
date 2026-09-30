@@ -3,10 +3,8 @@ Payment gateways. All money goes through the platform first: bidders' deposits a
 are collected and held by us, then refunded or kept depending on how the sale goes.
 
 The rest of the auction app only talks to the `PaymentGateway` interface below; the active gateway is
-chosen by `settings.AUCTION_PAYMENT_GATEWAY`. To take real payments, subclass `PaymentGateway` for the
-processor (e.g. ECPay, NewebPay, Stripe), point the setting at it, and add a webhook view that calls
-`auction.services.confirm_deposit()` / `fail_deposit()` and `confirm_buy_now()` / `fail_buy_now()`
-when the processor reports back.
+chosen by `settings.AUCTION_PAYMENT_GATEWAY`. `auction/ecpay.py` takes card payments through ECPay; its
+callback views confirm or fail payments with `auction.services` / `auction.orders` when ECPay reports back.
 """
 from dataclasses import dataclass, field
 
@@ -25,14 +23,19 @@ class PaymentResult:
 
 class PaymentGateway:
     """
-    `payment` is a Deposit or a BuyNowPurchase: both have `pk`, `amount`, `currency` and the paying
-    account (`payer`).
+    `payment` is a Deposit, BuyNowPurchase, Order (its balance) or SellerBond: each has `pk`, `amount`
+    and `currency`.
     """
     name = None
 
     def collect(self, payment):
         """Start collecting `payment.amount` from the payer. Returns a PaymentResult."""
         raise NotImplementedError
+
+    def resume(self, payment):
+        """The payer came back to a payment they started and didn't finish. Returns a PaymentResult
+        whose client_data lets them carry on, if the gateway can offer that."""
+        return PaymentResult(paid=False, provider_reference=payment.provider_reference)
 
     def refund(self, payment):
         """Give a collected payment back in full. Raise on failure; the caller then leaves it as is."""
@@ -70,3 +73,15 @@ class InstantPaymentGateway(ManualPaymentGateway):
 
 def get_payment_gateway():
     return import_string(settings.AUCTION_PAYMENT_GATEWAY)()
+
+
+def resume_payment(payment):
+    """A fresh way to pay for a payment that's still pending; returns the client_data for it. The caller
+    holds the payment's row lock."""
+    gateway = get_payment_gateway()
+    result = gateway.resume(payment)
+    if (payment.provider, payment.provider_reference) != (gateway.name, result.provider_reference):
+        payment.provider = gateway.name
+        payment.provider_reference = result.provider_reference
+        payment.save(update_fields=['provider', 'provider_reference', 'updated_at'])
+    return result.client_data

@@ -4,6 +4,7 @@ import useListingTranslation from '../useListingTranslation';
 import { isLoggedIn } from '../../../api/authApi';
 import { cancelAuction, payDeposit, placeBid } from '../../../api/auctionsApi';
 import { formatMoney } from '../../../utils/auctionFormat';
+import { startCheckout } from '../../../utils/checkout';
 import { Link } from 'react-router';
 
 // Quick-pick buttons: the minimum bid and a few increments above it.
@@ -21,7 +22,6 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
   const [error, setError] = useState('');
   const [draft, setDraft] = useState('');
   const [confirming, setConfirming] = useState(false);
-  const [payment, setPayment] = useState({});
 
   const minimum = Number(auction.minimumNextBid);
   const increment = Number(auction.minIncrement);
@@ -51,7 +51,7 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
 
   const handleDeposit = () => run(async () => {
     const result = await payDeposit(auction.id);
-    setPayment(result.payment);
+    if (startCheckout(result.payment)) return;
     showToast(t(result.deposit.status === 'held' ? 'auctions.deposit.paidToast' : 'auctions.deposit.pendingToast'));
     onChanged();
   });
@@ -139,9 +139,9 @@ export default function BidPanel({ auction, phase, topBid, hasOwnBid, onChanged,
       <Panel>
         <h2 className="bid-panel-heading">{t('auctions.deposit.pendingHeading')}</h2>
         <p>{t('auctions.deposit.pending', { amount: money(auction.depositAmount) })}</p>
-        {payment.checkout_url && (
-          <a className="bid-panel-primary" href={payment.checkout_url}>{t('auctions.deposit.continuePayment')}</a>
-        )}
+        <button type="button" className="bid-panel-primary" disabled={busy} onClick={handleDeposit}>
+          {busy ? t('auctions.pleaseWait') : t('auctions.deposit.continuePayment')}
+        </button>
         {errorLine}
       </Panel>
     );
