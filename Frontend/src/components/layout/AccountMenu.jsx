@@ -2,10 +2,13 @@ import './AccountMenu.css';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
+import { getUnreadAlertCount } from '../../api/alertsApi';
 import { getWaitingInquiryCount } from '../../api/listingsApi';
 
 // Fired by the Inquiries page after the seller marks one replied, so the count here drops at once.
 export const INQUIRIES_CHANGED = 'reptilian:inquiries-changed';
+// Fired by the Alerts page once it has marked the alerts read.
+export const ALERTS_CHANGED = 'reptilian:alerts-changed';
 
 // Everything that belongs to the signed-in user, behind one "My account" button so the header keeps
 // only a few links. A disclosure (button + list of links) rather than an ARIA menu: the items are
@@ -18,19 +21,26 @@ export default function AccountMenu({ onSignOut }) {
   const listId = useId();
   const { pathname } = useLocation();
   const [waiting, setWaiting] = useState(0);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
 
-  // Inquiries reach sellers only on the site (no email, see #91), so the menu shows how many are
-  // waiting. One small count query per page change; a failure just leaves the badge as it was.
+  // Inquiries (#91) and most alerts (#59) reach users only on the site, so the menu shows how many are
+  // waiting. Small count queries per page change; a failure just leaves a badge as it was.
   useEffect(() => {
     let active = true;
-    const refresh = () => getWaitingInquiryCount()
+    const refreshInquiries = () => getWaitingInquiryCount()
       .then((count) => active && setWaiting(count))
       .catch(() => {});
-    refresh();
-    window.addEventListener(INQUIRIES_CHANGED, refresh);
+    const refreshAlerts = () => getUnreadAlertCount()
+      .then((count) => active && setUnreadAlerts(count))
+      .catch(() => {});
+    refreshInquiries();
+    refreshAlerts();
+    window.addEventListener(INQUIRIES_CHANGED, refreshInquiries);
+    window.addEventListener(ALERTS_CHANGED, refreshAlerts);
     return () => {
       active = false;
-      window.removeEventListener(INQUIRIES_CHANGED, refresh);
+      window.removeEventListener(INQUIRIES_CHANGED, refreshInquiries);
+      window.removeEventListener(ALERTS_CHANGED, refreshAlerts);
     };
   }, [pathname]);
 
@@ -61,6 +71,7 @@ export default function AccountMenu({ onSignOut }) {
   }, [open]);
 
   const links = [
+    ['/alerts', t('alerts.title')],
     ['/my-listings', t('navigation.myListings')],
     ['/orders', t('myOrders.title')],
     ['/inquiries', t('inquiries.title')],
@@ -80,10 +91,15 @@ export default function AccountMenu({ onSignOut }) {
         onClick={() => setOpen((value) => !value)}
       >
         {t('accountMenu.toggle')}
-        {waiting > 0 && (
+        {waiting + unreadAlerts > 0 && (
           <span className="accountMenuBadge">
-            <span aria-hidden="true">{waiting}</span>
-            <span className="accountMenuSr">{t('inquiries.waitingCount', { count: waiting })}</span>
+            <span aria-hidden="true">{waiting + unreadAlerts}</span>
+            <span className="accountMenuSr">
+              {[
+                waiting > 0 && t('inquiries.waitingCount', { count: waiting }),
+                unreadAlerts > 0 && t('alerts.unreadCount', { count: unreadAlerts }),
+              ].filter(Boolean).join(', ')}
+            </span>
           </span>
         )}
         <span aria-hidden="true" className="accountMenuCaret">▾</span>
@@ -97,6 +113,12 @@ export default function AccountMenu({ onSignOut }) {
                 <span className="accountMenuBadge">
                   <span aria-hidden="true">{waiting}</span>
                   <span className="accountMenuSr">{t('inquiries.waitingCount', { count: waiting })}</span>
+                </span>
+              )}
+              {to === '/alerts' && unreadAlerts > 0 && (
+                <span className="accountMenuBadge">
+                  <span aria-hidden="true">{unreadAlerts}</span>
+                  <span className="accountMenuSr">{t('alerts.unreadCount', { count: unreadAlerts })}</span>
                 </span>
               )}
             </Link>

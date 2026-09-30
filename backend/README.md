@@ -345,15 +345,20 @@ real login flows.
   List endpoints leave sold listings out unless `?status=` asks for them (e.g. `?status=sold`); a sold
   listing keeps its page, can't be contacted about or auctioned, and a completed auction sale marks the
   listing sold.
+- `GET /live-animals/?ordering=recommended` (and `equipment/…`) — newest first, with a few bonus days for
+  a photo, a real description, genetics and a verified or well-reviewed seller (`post/ranking.py`);
+  `ordering=price,-id`, `-price,-id` and `-created_at,-id` also work, with unpriced listings last.
+  `GET /live-animals/<id>/similar/` (public) — up to 6 published listings of the same species (or
+  equipment type), preferring shared morphs, the same area and a similar price.
 - `GET`/`POST /saved-searches/`, `PATCH`/`DELETE /saved-searches/<id>/` (signed in) — the user's saved
   marketplace searches: `query` is the live-animals list query (e.g. `search=pied&sex=1.0`), checked
   against the real filters and stored sorted; `name` defaults to the search text. Up to
   `SAVED_SEARCH_LIMIT` per account. `python manage.py send_search_alerts` (schedule it, e.g. every few
-  hours) emails each user the listings posted since their last alert that match, with links built from
-  `DJANGO_FRONTEND_URL`.
+  hours) gives each user a site alert listing what was posted since their last alert that matches, with
+  links built from `DJANGO_FRONTEND_URL`.
 - `POST`/`DELETE /live-animals/<id>/favorite/` (and `equipment/…`) — save or unsave a listing (signed in);
   `GET /live-animals/favorites/` lists the user's saved listings, newest first. Listing responses carry
-  `is_favorite` for the viewer. Lowering a listing's price emails everyone who saved it (one email each).
+  `is_favorite` for the viewer. Lowering a listing's price alerts everyone who saved it on the site.
 
 Filtering, search, and ordering are provided by `django-filter` and DRF's `SearchFilter`/`OrderingFilter`.
 List endpoints are paginated (20 per page: `?page=N`, response has `count`/`next`/`results`).

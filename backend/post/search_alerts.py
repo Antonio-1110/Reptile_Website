@@ -1,6 +1,7 @@
 """
-Saved searches and their email alerts, in one place: what a saved query may contain, which new
-listings match it, and sending the emails (run `manage.py send_search_alerts` every few hours).
+Saved searches and their alerts, in one place: what a saved query may contain, which new listings
+match it, and alerting the owner on the site (run `manage.py send_search_alerts` every few hours).
+Unread alerts reach the inbox only in a summary (alerts/services.py send_digests).
 """
 import operator
 from functools import reduce
@@ -11,8 +12,8 @@ from django.http import QueryDict
 from django.utils import timezone
 from django.utils.translation import gettext as _, ngettext
 
+from alerts.services import notify
 from common.money import format_money
-from common.notifications import send_notification
 
 from .filters import LiveAnimalPostFilter
 from .models import LiveAnimalPost, SavedSearch
@@ -21,7 +22,7 @@ from .models import LiveAnimalPost, SavedSearch
 # exactly what the user would see.
 SEARCH_FIELDS = ['title', 'description', 'genetics', 'species__name', 'species__aliases__name']
 ALLOWED_KEYS = set(LiveAnimalPostFilter.base_filters) | {'search'}
-# How many new listings one email lists (the rest are counted).
+# How many new listings one alert lists (the rest are counted).
 LISTINGS_PER_EMAIL = 10
 
 
@@ -61,7 +62,7 @@ def matching_listings(saved_search, since):
 
 
 def send_alert(saved_search, now=None):
-    """Email the new matches since the last alert, if any. Returns how many listings matched."""
+    """Alert the owner to the new matches since the last alert, if any. Returns how many listings matched."""
     now = now or timezone.now()
     listings = list(matching_listings(saved_search, saved_search.last_alerted_at).filter(created_at__lte=now))
     saved_search.last_alerted_at = now
@@ -86,15 +87,16 @@ def send_alert(saved_search, now=None):
         subject = ngettext('%(count)s new listing for "%(name)s"', '%(count)s new listings for "%(name)s"', len(listings)) % values
         return subject, body
 
-    send_notification([saved_search.account.email], build)
+    notify([saved_search.account], build, link=f'/marketplace?saved={saved_search.pk}')
     return len(listings)
 
 
 def send_all_alerts():
-    """Every saved search, once. Returns (searches checked, emails sent)."""
+    """Every saved search, once. Returns (searches checked, alerts made)."""
     now = timezone.now()
-    emails = 0
-    for saved_search in SavedSearch.objects.select_related('account').filter(account__is_active=True, account__email_verified=True):
+    alerts = 0
+    searches = SavedSearch.objects.select_related('account').filter(account__is_active=True)
+    for saved_search in searches:
         if send_alert(saved_search, now):
-            emails += 1
-    return SavedSearch.objects.filter(account__is_active=True, account__email_verified=True).count(), emails
+            alerts += 1
+    return searches.count(), alerts

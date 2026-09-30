@@ -1,0 +1,15 @@
+export default {
+  title: "Alerts",
+  subtitle: "Price drops on listings you saved, new matches for your saved searches, and updates on your listings and orders.",
+  emailNote: "If alerts pile up unread for a few days, we email you one summary.",
+  loading: "Loading alerts…",
+  loadError: "Couldn't load your alerts.",
+  empty: "No alerts yet. They'll show up here.",
+  browse: "Browse the marketplace",
+  loadMore: "Load more",
+  open: "Open",
+  new: "New",
+  unreadCount_one: "{{count}} unread alert",
+  unreadCount_other: "{{count}} unread alerts",
+  signedOutTitle: "Sign in to see your alerts",
+};

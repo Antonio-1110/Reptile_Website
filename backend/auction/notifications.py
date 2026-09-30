@@ -1,13 +1,22 @@
 """
-Emails about auction sales: buy-now races, auction results and every step of an order.
-services.py and orders.py send these once the database change has committed.
+Alerts (each also emailed right away) about auction sales: buy-now races, auction results and every
+step of an order. services.py and orders.py send these once the database change has committed.
 """
 from django.core.mail import mail_admins
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from alerts.services import listing_path, notify
 from common.money import format_money
-from common.notifications import contact_lines, send_notification
+from common.notifications import contact_lines
+
+
+def _send(accounts, auction, build):
+    """
+    An alert on the site plus an email right away: these carry deadlines and money, so they don't wait
+    for the unread-alerts summary.
+    """
+    notify(accounts, build, link=listing_path(auction.post), email=True)
 
 
 # Added to every email that tells a buyer about money, because "pay me directly instead" is the
@@ -45,12 +54,12 @@ def buy_now_competition(auction, purchases):
     """Several buyers are paying the buy-now price at once: tell each of them and the seller."""
     values = _values(auction)
     for purchase in purchases:
-        send_notification([purchase.buyer.email], lambda: (
+        _send([purchase.buyer], purchase.auction, lambda: (
             _('Another buyer is also buying "%(title)s"') % values,
             _('Another buyer has also started buying "%(title)s" at the buy-now price of %(price)s. Whoever completes payment first gets it. If someone else pays before you, any payment you make is refunded in full.') % values
             + '\n\n' + _pay_through_us_warning(),
         ))
-    send_notification([auction.seller.email], lambda: (
+    _send([auction.seller], auction, lambda: (
         _('Several buyers are buying "%(title)s" at your buy-now price') % values,
         _for_listing(
             auction,
@@ -66,7 +75,7 @@ def bought(order, bidder_deposits, cancelled_purchases):
     values = {**_values(auction, purchase), 'handover_due': _when(order.handover_due_at)}
     buyer, seller = order.buyer, auction.seller
 
-    send_notification([buyer.email], lambda: (
+    _send([buyer], auction, lambda: (
         _('You bought "%(title)s"') % values,
         _for_listing(
             auction,
@@ -77,7 +86,7 @@ def bought(order, bidder_deposits, cancelled_purchases):
         + '\n\n' + _("The seller's contact details, to arrange the handover:") + '\n' + contact_lines(seller.contact_details())
         + '\n\n' + _pay_through_us_warning(),
     ))
-    send_notification([seller.email], lambda: (
+    _send([seller], auction, lambda: (
         _('"%(title)s" was bought at your buy-now price') % values,
         _for_listing(
             auction,
@@ -89,12 +98,12 @@ def bought(order, bidder_deposits, cancelled_purchases):
     ))
     for deposit in bidder_deposits:
         deposit_values = {**values, 'deposit': format_money(deposit.amount, deposit.currency)}
-        send_notification([deposit.account.email], lambda: (
+        _send([deposit.account], auction, lambda: (
             _('The auction for "%(title)s" has closed early') % deposit_values,
             _('Another buyer paid the seller\'s buy-now price for "%(title)s", so the auction closed early and no bids can win it. Your deposit of %(deposit)s is being refunded in full.') % deposit_values,
         ))
     for other in cancelled_purchases:
-        send_notification([other.buyer.email], lambda: (
+        _send([other.buyer], auction, lambda: (
             _('"%(title)s" has been bought by someone else') % values,
             _('Another buyer completed payment for "%(title)s" first, so it is no longer available. If you still complete a payment, it will be refunded to you in full.') % values,
         ))
@@ -103,7 +112,7 @@ def bought(order, bidder_deposits, cancelled_purchases):
 def paid_too_late(purchase):
     """A buy-now payment arrived after the listing was already sold (or the auction had closed)."""
     values = _values(purchase.auction, purchase)
-    send_notification([purchase.buyer.email], lambda: (
+    _send([purchase.buyer], purchase.auction, lambda: (
         _('Your payment for "%(title)s" is being refunded') % values,
         _('Your payment of %(paid)s for "%(title)s" arrived after the auction had closed (another buyer paid first, or it ended). It is being refunded to you in full.') % values,
     ))
@@ -131,13 +140,13 @@ def auction_won(order, losing_deposits):
     """An auction ended with a winner: the winner pays the rest, the seller waits, the others get refunds."""
     values = _order_values(order)
     seller, buyer = order.auction.seller, order.buyer
-    send_notification([buyer.email], lambda: (
+    _send([buyer], order.auction, lambda: (
         _('You won "%(title)s"') % values,
         _('You won "%(title)s" with a bid of %(price)s. Please pay the remaining %(balance)s through Reptilian by %(payment_due)s (your deposit counts toward the price). If you don\'t pay in time, your deposit is kept and the sale is cancelled.') % values
         + '\n\n' + _("The seller's contact details, to arrange the handover:") + '\n' + contact_lines(seller.contact_details())
         + '\n\n' + _pay_through_us_warning(),
     ))
-    send_notification([seller.email], lambda: (
+    _send([seller], order.auction, lambda: (
         _('"%(title)s" sold for %(price)s') % values,
         _for_listing(
             order.auction,
@@ -148,7 +157,7 @@ def auction_won(order, losing_deposits):
     ))
     for deposit in losing_deposits:
         deposit_values = {**values, 'deposit': format_money(deposit.amount, deposit.currency)}
-        send_notification([deposit.account.email], lambda: (
+        _send([deposit.account], order.auction, lambda: (
             _('The auction for "%(title)s" has ended') % deposit_values,
             _('The auction for "%(title)s" has ended and another bidder won. Your deposit of %(deposit)s is being refunded in full.') % deposit_values,
         ))
@@ -156,12 +165,12 @@ def auction_won(order, losing_deposits):
 
 def order_paid(order):
     values = _order_values(order)
-    send_notification([order.auction.seller.email], lambda: (
+    _send([order.auction.seller], order.auction, lambda: (
         _('Payment received for "%(title)s": please hand it over') % values,
         _('The buyer has paid the full price of %(price)s for "%(title)s", and we are holding it.') % values
         + '\n\n' + _handover_instructions(order.auction, values),
     ))
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('Payment received for "%(title)s"') % values,
         _for_listing(
             order.auction,
@@ -173,7 +182,7 @@ def order_paid(order):
 
 def order_paid_too_late(order):
     values = _order_values(order)
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('Your payment for "%(title)s" is being refunded') % values,
         _('Your payment for "%(title)s" arrived after the deadline, when the sale had already been cancelled. It is being refunded to you in full.') % values,
     ))
@@ -181,7 +190,7 @@ def order_paid_too_late(order):
 
 def order_handed_over(order):
     values = {**_order_values(order), 'note': order.handover_note or '-'}
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('"%(title)s" has been handed over: please confirm') % values,
         _('The seller says "%(title)s" has been handed over or shipped. Their note: %(note)s') % values
         + '\n\n' + _for_listing(
@@ -194,11 +203,11 @@ def order_handed_over(order):
 
 def order_completed(order):
     values = _order_values(order)
-    send_notification([order.auction.seller.email], lambda: (
+    _send([order.auction.seller], order.auction, lambda: (
         _('Sale completed: "%(title)s"') % values,
         _('The sale of "%(title)s" is complete. We will pay you %(payout)s.') % values,
     ))
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('Sale completed: "%(title)s"') % values,
         _for_listing(
             order.auction,
@@ -210,7 +219,7 @@ def order_completed(order):
 
 def order_disputed(order):
     values = {**_order_values(order), 'problem': order.problem_report}
-    send_notification([order.auction.seller.email], lambda: (
+    _send([order.auction.seller], order.auction, lambda: (
         _('The buyer reported a problem with "%(title)s"') % values,
         _('The buyer reported a problem with "%(title)s": %(problem)s') % values
         + '\n\n' + _('We are holding the payment while our team looks into it, and may contact you.'),
@@ -220,7 +229,7 @@ def order_disputed(order):
 
 def order_refunded(order):
     values = _order_values(order)
-    send_notification([order.buyer.email, order.auction.seller.email], lambda: (
+    _send([order.buyer, order.auction.seller], order.auction, lambda: (
         _('Order for "%(title)s" refunded') % values,
         _('After reviewing the problem reported with "%(title)s", we have refunded the buyer in full.') % values,
     ))
@@ -228,7 +237,7 @@ def order_refunded(order):
 
 def buyer_defaulted(order, runner_up):
     values = _order_values(order)
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('Your purchase of "%(title)s" was cancelled') % values,
         _('We did not receive the rest of the payment for "%(title)s" by %(payment_due)s, so the sale is cancelled and your deposit of %(deposit)s is kept.') % values,
     ))
@@ -238,7 +247,7 @@ def buyer_defaulted(order, runner_up):
         offer_values = values
     auction = order.auction
 
-    # Built per language inside send_notification, so the choice of message is made there too.
+    # Built per language inside notify, so the choice of message is made there too.
     def build():
         if runner_up is not None:
             message = _for_listing(
@@ -261,12 +270,12 @@ def buyer_defaulted(order, runner_up):
             ) % offer_values
             + '\n\n' + message,
         )
-    send_notification([auction.seller.email], build)
+    _send([auction.seller], auction, build)
 
 
 def runner_up_offered(order):
     values = _order_values(order)
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('"%(title)s" is offered to you') % values,
         _('The winner of "%(title)s" did not pay, and the seller is offering it to you at your bid of %(price)s. To buy it, pay on the listing page by %(payment_due)s. You are not obliged to: you can decline or simply let the offer lapse.') % values
         + '\n\n' + _pay_through_us_warning(),
@@ -275,7 +284,7 @@ def runner_up_offered(order):
 
 def runner_up_declined(order):
     values = _order_values(order)
-    send_notification([order.auction.seller.email], lambda: (
+    _send([order.auction.seller], order.auction, lambda: (
         _('Offer for "%(title)s" not taken up') % values,
         _for_listing(
             order.auction,
@@ -287,7 +296,7 @@ def runner_up_declined(order):
 
 def seller_defaulted(order, bond):
     values = _order_values(order)
-    send_notification([order.buyer.email], lambda: (
+    _send([order.buyer], order.auction, lambda: (
         _('Refund for "%(title)s"') % values,
         _('The seller did not hand over "%(title)s" by %(handover_due)s, so we are refunding everything you paid, in full.') % values,
     ))
@@ -295,7 +304,7 @@ def seller_defaulted(order, bond):
     if bond is not None:
         bond_values = {'bond': format_money(bond.amount, bond.currency)}
         penalty = '\n\n' + _('Your seller bond of %(bond)s has been forfeited; post a new one to keep selling at auction.') % bond_values
-    send_notification([order.auction.seller.email], lambda: (
+    _send([order.auction.seller], order.auction, lambda: (
         _('Sale of "%(title)s" cancelled: not handed over') % values,
         _('You did not mark "%(title)s" as handed over by %(handover_due)s, so the buyer has been refunded in full and this has been recorded on your account.') % values
         + penalty,

@@ -13,6 +13,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from account.models import Account
+from alerts.models import Alert
 from auction import services
 from auction.models import Auction, Order
 from post.models import ContactRequest, EquipmentPost, LiveAnimalPost, SavedSearch, Species
@@ -73,6 +74,11 @@ ACCESS = {
     'order-report-problem': {'POST': 'party'},
     'order-runner-up': {'POST': 'party'},
     'order-decline': {'POST': 'party'},
+
+    'alert-list': {'GET': 'signed_in'},
+    'alert-unread-count': {'GET': 'signed_in'},
+    'alert-read-all': {'POST': 'signed_in'},
+    'alert-read': {'POST': 'owner'},
 }
 
 # Sign-in, registration and token endpoints are public by design; authentication/tests.py covers them.
@@ -148,6 +154,7 @@ class AccessFixtures(APITestCase):
         )
         self.auction = self.make_auction(live_animal_post=self.live_post, buy_now_price=Decimal('9000.00'))
         self.inquiry = ContactRequest.objects.create(requester=self.buyer, live_animal_post=self.live_post)
+        self.alert = Alert.objects.create(account=self.owner, text={'en': {'title': 'Price drop', 'body': 'Cheaper now'}})
 
         # A second auction, won by the buyer, for the order routes.
         sold_listing = LiveAnimalPost.objects.create(
@@ -190,6 +197,8 @@ class AccessFixtures(APITestCase):
             return self.inquiry
         if name.startswith('seller-'):
             return self.owner
+        if name.startswith('alert-'):
+            return self.alert
         return self.auction
 
     def url_for(self, name, path):

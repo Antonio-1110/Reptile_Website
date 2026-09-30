@@ -27,6 +27,7 @@ Django apps in `backend/`:
 - `authentication/` — JWT auth at `/api/v1/auth/` (the only auth); `account/` serves `/api/v1/account/profile/` and `plans/`
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
+- `alerts/` — site alerts (`/api/v1/alerts/`); `alerts.services.notify()` is how the backend tells a user something, emailing only urgent ones right away
 - `common/` — dev-only auth bypass middleware
 - `backend/` — settings and root URLs
 
@@ -59,7 +60,8 @@ cd backend
 ../.venv/bin/python manage.py seed_demo --reset        # demo accounts + ~70 listings
 ../.venv/bin/python manage.py close_auctions           # settle auctions past their end time
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
-../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
+../.venv/bin/python manage.py send_search_alerts       # alert users to new listings matching their saved searches
+../.venv/bin/python manage.py send_alert_digests       # email a summary of unread alerts that have piled up
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
 ../.venv/bin/python manage.py compilemessages         # .mo isn't committed; start-dev.sh and tests run this
 ../.venv/bin/python manage.py check --deploy           # production settings audit
@@ -140,10 +142,11 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 | --- | --- | --- |
 | `/api/v1/auth/` | `register/`, `login/` (JWT pair; username or email), `google/`, `refresh/`, `logout/`, `me/`, `verify-email/`, `password-reset/` | JWT |
 | `/api/v1/account/` | `profile/` (quota info used by the listing editor), `plans/` | profile: JWT; plans: public |
-| `/api/v1/posts/live-animals/`, `/api/v1/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/` | read: public; write: owner |
+| `/api/v1/posts/live-animals/`, `/api/v1/posts/equipment/` | CRUD, `mine/`, `<id>/contact/`, `<id>/report/`, `<id>/photos/`, `<id>/similar/` | read: public; write: owner |
 | `/api/v1/posts/species/` | species lookup | public |
 | `/api/v1/sellers/<id>/` | seller's public profile (no contact details) | public |
 | `/api/v1/auctions/` | auctions, deposits, bids, `orders/` | read: public; write: authenticated |
+| `/api/v1/alerts/` | the user's site alerts, `unread-count/`, `read-all/`, `<id>/read/` | JWT (own alerts only) |
 
 API conventions (keep new endpoints to them): everything under `/api/v1/`, plural kebab-case URL
 segments, `snake_case` fields; errors are `{"detail": "one string"}` and/or `{"field": ["…"]}`
