@@ -19,7 +19,7 @@ export default {
   launchOffer: "Early seller offer: auctions you start before {{date}} have no fee.",
   price: {
     free: "Free",
-    monthly: "{{price}} a month",
+    freeForNow: "Free for now",
   },
   features: {
     listings: "Up to {{count}} listings",

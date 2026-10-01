@@ -4,7 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { getAccountPlans, getCurrentProfile } from "../api/listingsApi";
 import { errorText, toErrorState } from "../utils/errorState";
 import BackLink from "../components/ui/BackLink";
-import { formatDate, formatMoney, formatPercent } from "../utils/auctionFormat";
+import { formatDate, formatPercent } from "../utils/auctionFormat";
 import { SUPPORT_EMAIL } from "../constants/site";
 import useFeature from "../hooks/useFeature";
 
@@ -17,9 +17,10 @@ function auctionFeeText(t, language, rate) {
   return t("upgrade.features.auctionFee", { percent: formatPercent(rate, language) });
 }
 
-function priceText(t, language, plan) {
-  if (!Number(plan.monthly_price)) return t("upgrade.price.free");
-  return t("upgrade.price.monthly", { price: formatMoney(plan.monthly_price, plan.currency, language) });
+// Paid plans are free while staff grant them by email (there's no online checkout yet), so their
+// monthly_price isn't shown until plans can be paid for.
+function priceText(t, plan) {
+  return t(Number(plan.monthly_price) ? "upgrade.price.freeForNow" : "upgrade.price.free");
 }
 
 function currentPlanId(profile) {
@@ -91,7 +92,7 @@ export default function UpgradePage() {
                 <h2 className="upgrade-plan-name">{t(`upgrade.plans.${plan.id}.name`)}</h2>
                 {isCurrent && <span className="upgrade-plan-badge">{t("upgrade.current")}</span>}
               </div>
-              <p className="upgrade-plan-price">{priceText(t, i18n.language, plan)}</p>
+              <p className="upgrade-plan-price">{priceText(t, plan)}</p>
               <p className="upgrade-plan-description">
                 {/* Plans whose description mentions auctions have a version without them. */}
                 {t(auctionsOn ? `upgrade.plans.${plan.id}.description` : [`upgrade.plans.${plan.id}.descriptionNoAuctions`, `upgrade.plans.${plan.id}.description`])}

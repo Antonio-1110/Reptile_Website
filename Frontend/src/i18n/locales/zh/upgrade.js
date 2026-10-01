@@ -19,7 +19,7 @@ export default {
   launchOffer: "早期賣家優惠：{{date}}前發起的拍賣免收手續費。",
   price: {
     free: "免費",
-    monthly: "每月 {{price}}",
+    freeForNow: "目前免費",
   },
   features: {
     listings: "最多 {{count}} 則刊登",

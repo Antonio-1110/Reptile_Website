@@ -266,8 +266,8 @@ AUCTION_FEE_RATE_PRO = env_decimal('AUCTION_FEE_RATE_PRO', '0.03')
 # everyone who joins; LAUNCH_OFFER_DAYS=0 ends it.
 LAUNCH_OFFER_DAYS = env_int('LAUNCH_OFFER_DAYS', 182)
 LAUNCH_OFFER_JOINED_BEFORE = env_date('LAUNCH_OFFER_JOINED_BEFORE')
-# Monthly price of each paid plan in AUCTION_CURRENCY, shown on the upgrade page. Checkout itself
-# waits on a payment processor.
+# Monthly price of each paid plan in AUCTION_CURRENCY (returned by /api/v1/account/plans/). While
+# there's no checkout, staff grant plans free by email and the upgrade page says "Free for now".
 PLAN_PRICE_COMMERCIAL = env_decimal('PLAN_PRICE_COMMERCIAL', '299')
 PLAN_PRICE_PRO = env_decimal('PLAN_PRICE_PRO', '499')
 # What each plan allows (read through Account.max_post_count and max_images_per_post): listings an
