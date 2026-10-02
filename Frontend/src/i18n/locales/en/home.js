@@ -6,7 +6,8 @@ export default {
   loadErrorBody: "Check your connection and try again.",
   kicker: "Taiwan's marketplace for reptile keepers",
   heading: "Find your next reptile from keepers who care.",
-  intro: "Browse ball pythons, geckos and more from breeders and hobbyists across Taiwan, plus the enclosures and gear to keep them well. Filter by morph, age and location, then contact the seller or bid in an auction.",
+  intro: "Browse ball pythons, geckos and more from breeders and hobbyists across Taiwan, plus the enclosures and gear to keep them well. Filter by morph, age and location, then contact the seller.",
+  introWithAuctions: "Browse ball pythons, geckos and more from breeders and hobbyists across Taiwan, plus the enclosures and gear to keep them well. Filter by morph, age and location, then contact the seller or bid in an auction.",
   coverAlt: "A reptile in its habitat",
   browse: "Browse the marketplace",
   sell: "Post a listing",
@@ -14,20 +15,24 @@ export default {
   featuredIntro: "A random handful of the newest listings.",
   refresh: "Shuffle",
   storyKicker: "Why Reptilian",
-  storyHeading: "Built for good keeping, not quick flips.",
-  storyBody: "Reptilian is for people who take reptile keeping seriously: a calmer place to find healthy animals, compare morphs and deal with people who look after their animals properly.",
+  storyHeading: "A proper home for reptile listings.",
+  storyBody: "Most reptiles in Taiwan change hands in LINE groups and Facebook groups. They're great for talking with other keepers, but they weren't built for buying and selling animals.",
   points: {
+    findable: {
+      title: "Listings that don't get buried",
+      body: "In a busy LINE group, a listing scrolls away under everyone's messages within hours, and finding it again means scrolling back through the chat. Here every listing stays put, you can search and filter by species, morph, price and location, and each seller has a page with all their listings.",
+    },
+    allowed: {
+      title: "Made for selling animals",
+      body: "Facebook's commerce rules don't allow selling live animals, so sale posts in groups can be taken down. On Reptilian, animals are what the marketplace is for.",
+    },
     privacy: {
       title: "Your details stay private",
       body: "Sellers never publish phone numbers or LINE IDs. When you ask about a listing, we pass your details to the seller and they get in touch.",
     },
-    payments: {
+    auctions: {
       title: "Auctions you can trust",
       body: "Bidders pay a refundable deposit, and auction payments go through Reptilian, so both sides are covered until the handover.",
-    },
-    reports: {
-      title: "Listings that get checked",
-      body: "Anyone can report a listing that looks wrong, and our team reviews every report.",
     },
   },
 };
