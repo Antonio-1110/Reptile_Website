@@ -13,5 +13,7 @@ psycopg[binary]==3.3.6
 whitenoise==6.12.0
 django-storages[s3]==1.14.6
 boto3==1.43.103
+# Error alerts (Sentry); only active when SENTRY_DSN is set
+sentry-sdk[django]==2.71.0
 # Compiles locale/*.po at build time where GNU gettext (msgfmt) isn't available, e.g. Heroku
 polib==1.2.0
