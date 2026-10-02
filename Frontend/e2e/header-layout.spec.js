@@ -60,7 +60,7 @@ for (const language of ['en', 'zh']) {
 
     // A 1440px laptop is the most common desktop; signed out, everything fits on one row there.
     test('signed out, a laptop-width header is one row', async ({ page }) => {
-      // Off the marketplace the search button reads "Go to marketplace", which is wider.
+      // Off the marketplace the search button reads 前往市集 / "Marketplace", which is wider.
       for (const [width, path] of [[1280, '/marketplace'], [1440, '/marketplace'], [1920, '/marketplace'], [1280, '/'], [1440, '/auctions']]) {
         await openAt(page, width, path);
         const m = await measureHeader(page);

@@ -18,7 +18,7 @@ describe('Header search button', () => {
   it('says where it goes on every other page', () => {
     for (const path of ['/', '/auctions', '/posts/3']) {
       const { unmount } = renderAt(path);
-      expect(screen.getByRole('button', { name: 'Go to marketplace' })).toHaveAttribute('type', 'submit');
+      expect(screen.getByRole('button', { name: 'Marketplace' })).toHaveAttribute('type', 'submit');
       expect(screen.queryByRole('button', { name: 'Search' })).not.toBeInTheDocument();
       unmount();
     }

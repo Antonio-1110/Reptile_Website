@@ -1,1 +1,1 @@
-export default { goToMarketplace: "Go to marketplace" };
+export default { goToMarketplace: "Marketplace" };
