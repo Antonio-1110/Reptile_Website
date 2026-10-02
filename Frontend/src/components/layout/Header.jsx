@@ -93,6 +93,9 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
       setSelectedSearchTags(draftTags);
     }
   };
+  // Off the marketplace a search takes you there (see handleHeaderSearch in App.jsx), so the button
+  // says where it goes rather than just "Search".
+  const submitLabel = location.pathname === '/marketplace' ? t('search.submit') : t('headerSearch.goToMarketplace');
   const currentPath = `${location.pathname}${location.search}`;
   const signInHref = location.pathname === '/signin' ? currentPath : `/signin?next=${encodeURIComponent(currentPath)}`;
   // Signing out reloads the app rather than navigating, so nothing from the old session lingers.
@@ -138,7 +141,7 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
                 </span>
               ))}
               <input type="text" placeholder={t('search.placeholder')} className="searchBar" value={draftTerm} onChange={(event) => setDraftTerm(event.target.value)} autoComplete="off" />
-              <button type="submit" className="searchButton" aria-label={t('search.submit')}>{t('search.submit')}</button>
+              <button type="submit" className="searchButton">{submitLabel}</button>
             </div>
             {suggestions.length > 0 && (
               <div className="searchSuggestions" role="listbox" aria-label={t('search.suggestions')}>
