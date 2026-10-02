@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 import io
 import shutil
@@ -6,10 +7,11 @@ import tempfile
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
 
-from .models import Account
+from .models import Account, UsernameChange
 
 
 class AccountTypeBehaviorTests(TestCase):
@@ -144,6 +146,94 @@ class ProfileUpdateTests(APITestCase):
 
         for field in ('phone_number', 'line_id', 'email', 'contact_email', 'instagram', 'facebook', 'first_name', 'last_name'):
             self.assertNotIn(field, seller)
+
+
+@override_settings(USERNAME_CHANGE_DAYS=30)
+class UsernameChangeTests(APITestCase):
+    def setUp(self):
+        self.account = Account.objects.create_user(username='gecko_shop', email='shop@example.com', password='pass1234')
+        Account.objects.filter(pk=self.account.pk).update(date_joined=timezone.now() - timedelta(days=90))
+        self.account.refresh_from_db()
+        self.client.force_authenticate(self.account)
+
+    def rename(self, username, account=None):
+        if account:
+            self.client.force_authenticate(account)
+        return self.client.patch(reverse('profile'), {'username': username}, format='json')
+
+    def test_a_username_can_change_and_the_old_one_is_recorded(self):
+        response = self.rename('gecko_garden')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['username'], 'gecko_garden')
+        change = UsernameChange.objects.get(account=self.account)
+        self.assertEqual((change.old_username, change.new_username), ('gecko_shop', 'gecko_garden'))
+
+    def test_it_cannot_change_again_until_the_wait_is_over(self):
+        self.rename('gecko_garden')
+
+        response = self.rename('gecko_world')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('username', response.data)
+        profile = self.client.get(reverse('profile')).data
+        self.assertEqual(profile['username'], 'gecko_garden')
+        self.assertEqual(profile['username_change_days'], 30)
+        self.assertIsNotNone(profile['username_change_available_at'])
+
+    def test_it_can_change_again_after_the_wait(self):
+        self.rename('gecko_garden')
+        UsernameChange.objects.update(changed_at=timezone.now() - timedelta(days=31))
+
+        self.assertIsNone(self.client.get(reverse('profile')).data['username_change_available_at'])
+        self.assertEqual(self.rename('gecko_world').status_code, 200)
+
+    def test_saving_other_fields_with_the_same_username_is_always_allowed(self):
+        self.rename('gecko_garden')
+
+        response = self.client.patch(reverse('profile'), {'username': 'gecko_garden', 'bio': 'Hi'}, format='json')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_nobody_else_can_take_a_name_just_given_up(self):
+        self.rename('gecko_garden')
+        other = Account.objects.create_user(username='copycat', email='copycat@example.com', password='pass1234')
+
+        response = self.rename('Gecko_Shop', account=other)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('username', response.data)
+
+    def test_a_given_up_name_frees_up_after_the_wait(self):
+        self.rename('gecko_garden')
+        UsernameChange.objects.update(changed_at=timezone.now() - timedelta(days=31))
+        other = Account.objects.create_user(username='newcomer', email='newcomer@example.com', password='pass1234')
+
+        self.assertEqual(self.rename('gecko_shop', account=other).status_code, 200)
+
+    def test_names_differing_only_in_case_are_taken(self):
+        Account.objects.create_user(username='apex_exotics', email='apex@example.com', password='pass1234')
+
+        self.assertEqual(self.rename('Apex_Exotics').status_code, 400)
+        response = self.client.post(reverse('jwt-register'), {
+            'username': 'APEX_EXOTICS', 'email': 'fake@example.com', 'password': 'S3curePass!23',
+        })
+        self.assertEqual(response.status_code, 400)
+
+    def test_changes_on_the_first_day_are_free_and_not_recorded(self):
+        # e.g. the choose-username step right after Google sign-in, whose first name came from the email address
+        new = Account.objects.create_user(username='mei.lin.1990', email='mei@example.com', password='pass1234')
+
+        self.assertEqual(self.rename('gecko_mei', account=new).status_code, 200)
+        self.assertEqual(self.rename('gecko_mei2', account=new).status_code, 200)
+        self.assertFalse(UsernameChange.objects.filter(account=new).exists())
+
+    @override_settings(USERNAME_CHANGE_DAYS=0)
+    def test_zero_days_turns_the_wait_off(self):
+        self.rename('gecko_garden')
+
+        self.assertEqual(self.rename('gecko_world').status_code, 200)
+        self.assertEqual(self.rename('gecko_shop', account=Account.objects.create_user(username='x1', email='x1@example.com')).status_code, 200)
 
 
 class RegistrationTests(APITestCase):
@@ -405,6 +495,30 @@ class PlanWorkflowTests(APITestCase):
                 self.client.patch(reverse('profile'), {'account_type': 'commercial', 'is_paid_account': True}, format='json')
                 seller.refresh_from_db()
                 self.assertEqual((seller.account_type, seller.is_paid_account), (fields.get('account_type', 'hobbyist'), fields.get('is_paid_account', False)))
+
+
+class PlanLimitSettingsTests(APITestCase):
+    """Plan limits are settings (PLAN_*_MAX_LISTINGS / PLAN_*_MAX_PHOTOS), and staff set plans in the admin."""
+
+    @override_settings(PLAN_HOBBYIST_MAX_LISTINGS=8, PLAN_HOBBYIST_MAX_PHOTOS=5, PLAN_PRO_MAX_PHOTOS=20)
+    def test_limits_follow_the_settings_everywhere(self):
+        hobbyist = Account.objects.create_user(username='keeper', email='keeper@example.com', password='pass1234')
+        self.assertEqual((hobbyist.max_post_count, hobbyist.max_images_per_post), (8, 5))
+        self.assertTrue(hobbyist.can_upload_images(5))
+        self.assertFalse(hobbyist.can_upload_images(6))
+        plans = {plan['id']: plan for plan in self.client.get(reverse('account-plans')).data}
+        self.assertEqual(plans['hobbyist']['max_images_per_post'], 5)
+        self.assertEqual(plans['commercial_paid']['max_images_per_post'], 20)
+        self.client.force_authenticate(hobbyist)
+        self.assertEqual(self.client.get(reverse('profile')).data['max_images_per_post'], 5)
+
+    def test_staff_can_set_the_plan_in_the_admin(self):
+        staff = Account.objects.create_superuser('boss', 'boss@example.com', 'pass1234')
+        seller = Account.objects.create_user(username='breeder', email='breeder@example.com', password='pass1234')
+        self.client.force_login(staff)
+        page = self.client.get(reverse('admin:account_account_change', args=[seller.id]))
+        self.assertContains(page, 'name="account_type"')
+        self.assertContains(page, 'name="is_paid_account"')
 
 
 class LegacyTokenAuthRetiredTests(APITestCase):

@@ -109,6 +109,7 @@ Conventions every endpoint follows:
 
 - `POST /register/`, `POST /login/` (username or email; returns `access` + `refresh`), `POST /google/` (Google's ID token; same answer), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
 - `POST /verify-email/`, `POST /verify-email/resend/`, `POST /password-reset/`, `POST /password-reset/confirm/`: the one-time links emailed after sign-up and for a forgotten password
+- `POST /password-change/` (auth required): `current_password` and `password`; signs other devices out and returns a new pair
 
 ### Account (`/api/v1/account/`)
 
@@ -155,7 +156,15 @@ left out are deleted. That endpoint enforces the plan's photo limit and 5 MB per
 
 - `GET /<id>/` — public profile (no contact details); `GET`/`POST`/`DELETE /<id>/reviews/`
 
+### Feature switches (`/api/v1/features/`)
+
+- `GET /` — public: which switchable parts of the site are on, e.g. `{"auctions": false}`. Staff flip
+  them under Feature switches in the admin, or with `manage.py feature auctions on|off`.
+
 ### Auctions (`/api/v1/auctions/`)
+
+Auctions can be switched off (they start off). While off, starting auctions, deposits, bids, buy now
+and the seller bond are refused with a 400/403; auctions and orders already under way still finish.
 
 - `GET /`, `GET /<id>/` — public; each auction includes a `listing` summary (title, cover photo,
   species, genes) for cards, and the anti-sniping rule (`extend_window_minutes`, `extend_by_minutes`):
@@ -194,7 +203,9 @@ and must stay consistent between model, serializer, and frontend copy.
 
 Post and image constraints are enforced in backend serializer logic (`PostLimitSerializerMixin`), not
 only on the frontend, so the rules remain consistent across all clients. The frontend mirrors these
-limits for immediate user feedback but is never the enforcement authority.
+limits for immediate user feedback but is never the enforcement authority. The numbers per plan are
+settings (`PLAN_*_MAX_LISTINGS`, `PLAN_*_MAX_PHOTOS`; see `backend/.env.example`). Until plans can be
+paid for online, staff switch a seller to Commercial (or Pro, with "paid account") in the admin.
 
 ## Deployment
 

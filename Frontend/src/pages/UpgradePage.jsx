@@ -1,10 +1,12 @@
 import "./UpgradePage.css";
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { getAccountPlans, getCurrentProfile } from "../api/listingsApi";
 import { errorText, toErrorState } from "../utils/errorState";
 import BackLink from "../components/ui/BackLink";
-import { formatDate, formatMoney, formatPercent } from "../utils/auctionFormat";
+import { formatDate, formatPercent } from "../utils/auctionFormat";
+import { SUPPORT_EMAIL } from "../constants/site";
+import useFeature from "../hooks/useFeature";
 
 // Plans in upgrade order, so anything after the current plan counts as an upgrade.
 const PLAN_ORDER = ["hobbyist", "commercial", "commercial_paid"];
@@ -15,9 +17,10 @@ function auctionFeeText(t, language, rate) {
   return t("upgrade.features.auctionFee", { percent: formatPercent(rate, language) });
 }
 
-function priceText(t, language, plan) {
-  if (!Number(plan.monthly_price)) return t("upgrade.price.free");
-  return t("upgrade.price.monthly", { price: formatMoney(plan.monthly_price, plan.currency, language) });
+// Paid plans are free while staff grant them by email (there's no online checkout yet), so their
+// monthly_price isn't shown until plans can be paid for.
+function priceText(t, plan) {
+  return t(Number(plan.monthly_price) ? "upgrade.price.freeForNow" : "upgrade.price.free");
 }
 
 function currentPlanId(profile) {
@@ -25,9 +28,11 @@ function currentPlanId(profile) {
   return profile.is_paid_account ? "commercial_paid" : "commercial";
 }
 
-// Checkout is a placeholder until a payment provider is chosen; choosing a plan only explains that.
+// There's no online checkout yet: staff change plans by hand (in the admin) for sellers who email
+// support, so choosing a plan explains how to ask.
 export default function UpgradePage() {
   const { t, i18n } = useTranslation();
+  const auctionsOn = useFeature("auctions");
   const [profile, setProfile] = useState(null);
   const [plans, setPlans] = useState(null);
   const [loadError, setLoadError] = useState(null);
@@ -47,7 +52,7 @@ export default function UpgradePage() {
       <BackLink to="/settings">{t("upgrade.back")}</BackLink>
       <p className="upgrade-kicker">{t("navigation.account")}</p>
       <h1 className="upgrade-title">{t("upgrade.title")}</h1>
-      <p className="upgrade-subtitle">{t("upgrade.subtitle")}</p>
+      <p className="upgrade-subtitle">{t(auctionsOn ? "upgrade.subtitle" : "upgrade.subtitleNoAuctions")}</p>
     </div>
   );
 
@@ -68,7 +73,7 @@ export default function UpgradePage() {
     <div className="upgrade-page">
       {header}
 
-      {profile.launch_offer_ends_at && (
+      {auctionsOn && profile.launch_offer_ends_at && (
         <p className="upgrade-launch-offer">
           {t("upgrade.launchOffer", {
             date: formatDate(new Date(profile.launch_offer_ends_at), i18n.language),
@@ -87,13 +92,16 @@ export default function UpgradePage() {
                 <h2 className="upgrade-plan-name">{t(`upgrade.plans.${plan.id}.name`)}</h2>
                 {isCurrent && <span className="upgrade-plan-badge">{t("upgrade.current")}</span>}
               </div>
-              <p className="upgrade-plan-price">{priceText(t, i18n.language, plan)}</p>
-              <p className="upgrade-plan-description">{t(`upgrade.plans.${plan.id}.description`)}</p>
+              <p className="upgrade-plan-price">{priceText(t, plan)}</p>
+              <p className="upgrade-plan-description">
+                {/* Plans whose description mentions auctions have a version without them. */}
+                {t(auctionsOn ? `upgrade.plans.${plan.id}.description` : [`upgrade.plans.${plan.id}.descriptionNoAuctions`, `upgrade.plans.${plan.id}.description`])}
+              </p>
               <ul className="upgrade-plan-features">
                 <li>{t("upgrade.features.listings", { count: plan.max_post_count })}</li>
                 <li>{t("upgrade.features.photos", { count: plan.max_images_per_post })}</li>
-                <li>{t(plan.can_start_auction ? "upgrade.features.auctions" : "upgrade.features.noAuctions")}</li>
-                {plan.can_start_auction && <li>{auctionFeeText(t, i18n.language, plan.auction_fee_rate)}</li>}
+                {auctionsOn && <li>{t(plan.can_start_auction ? "upgrade.features.auctions" : "upgrade.features.noAuctions")}</li>}
+                {auctionsOn && plan.can_start_auction && <li>{auctionFeeText(t, i18n.language, plan.auction_fee_rate)}</li>}
               </ul>
               {isUpgrade && (
                 <button type="button" className="upgrade-plan-choose" onClick={() => setChosenPlan(plan.id)}>
@@ -110,7 +118,18 @@ export default function UpgradePage() {
           <p className="upgrade-checkout-title">
             {t("upgrade.checkout.title", { plan: t(`upgrade.plans.${chosenPlan}.name`) })}
           </p>
-          <p>{t("upgrade.checkout.body")}</p>
+          <p>{t("upgrade.checkout.body", { username: profile.username })}</p>
+          <p className="upgrade-checkout-email">
+            <Trans
+              i18nKey="upgrade.checkout.email"
+              values={{ email: SUPPORT_EMAIL }}
+              components={{
+                email: <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+                  t("upgrade.checkout.subject", { plan: t(`upgrade.plans.${chosenPlan}.name`), username: profile.username }),
+                )}`} />,
+              }}
+            />
+          </p>
         </div>
       )}
     </div>

@@ -11,6 +11,8 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
+from account.usernames import username_taken
+
 GOOGLE_CERTS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
 GOOGLE_ISSUERS = ('accounts.google.com', 'https://accounts.google.com')
 
@@ -49,7 +51,7 @@ def verify_id_token(token):
 def _new_username(email):
     base = re.sub(r'[^\w.+-]', '', email.split('@')[0])[:30] or 'keeper'
     username, n = base, 1
-    while Account.objects.filter(username__iexact=username).exists():
+    while username_taken(username):
         n += 1
         username = f'{base}{n}'
     return username

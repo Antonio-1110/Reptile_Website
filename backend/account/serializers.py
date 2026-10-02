@@ -1,7 +1,8 @@
-from django.utils import timezone
+from django.conf import settings
+from django.utils import formats, timezone
 from django.utils.translation import gettext as _
 from rest_framework import serializers
-from . import reviews
+from . import reviews, usernames
 from .models import Account, Review
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -126,15 +127,35 @@ class ProfileAccountSerializer(AccountSerializer):
     # the account's launch offer of no auction fee ends (null if it has none).
     auction_fee_rate = serializers.SerializerMethodField()
     launch_offer_ends_at = serializers.SerializerMethodField()
+    # False for accounts made with Google sign-in that haven't set a password: they set one by email link.
+    has_password = serializers.SerializerMethodField()
+    # How often the username may change (0: any time), and when it next may (null: now).
+    username_change_days = serializers.SerializerMethodField()
+    username_change_available_at = serializers.SerializerMethodField()
 
     class Meta(AccountSerializer.Meta):
         fields = AccountSerializer.Meta.fields + [
             'first_name', 'last_name', 'phone_number', 'line_id', 'contact_email', 'instagram', 'facebook',
             'post_count', 'remaining_post_count', 'auction_fee_rate', 'launch_offer_ends_at',
+            'has_password', 'username_change_days', 'username_change_available_at',
         ]
         read_only_fields = AccountSerializer.Meta.read_only_fields + [
             'post_count', 'remaining_post_count', 'auction_fee_rate', 'launch_offer_ends_at',
+            'has_password', 'username_change_days', 'username_change_available_at',
         ]
+
+    def validate_username(self, value):
+        account = self.instance
+        if account is None or value == account.username:
+            return value
+        available = usernames.next_change_at(account)
+        if available:
+            raise serializers.ValidationError(_('You can change your username again on %(date)s.') % {
+                'date': formats.date_format(timezone.localtime(available), 'DATE_FORMAT'),
+            })
+        if usernames.username_taken(value, account):
+            raise serializers.ValidationError(_('Username already exists.'))
+        return value
 
     def validate_email(self, value):
         # Email addresses sign people in (authentication.serializers.LoginSerializer), so two accounts
@@ -149,7 +170,10 @@ class ProfileAccountSerializer(AccountSerializer):
         email_changed = new_email is not None and new_email.lower() != (instance.email or '').lower()
         if email_changed:
             validated_data['email_verified'] = False
+        old_username = instance.username
         account = super().update(instance, validated_data)
+        if account.username != old_username:
+            usernames.record_change(account, old_username)
         if email_changed:
             from authentication.emails import send_verification_email
 
@@ -169,6 +193,16 @@ class ProfileAccountSerializer(AccountSerializer):
 
         rate = fee_rate_for(account) if account.can_start_auction else None
         return str(rate) if rate is not None else None
+
+    def get_has_password(self, account):
+        return account.has_usable_password()
+
+    def get_username_change_days(self, account):
+        return settings.USERNAME_CHANGE_DAYS
+
+    def get_username_change_available_at(self, account):
+        available = usernames.next_change_at(account)
+        return serializers.DateTimeField().to_representation(available) if available else None
 
     def get_launch_offer_ends_at(self, account):
         from auction.services import launch_offer_ends

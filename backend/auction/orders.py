@@ -19,6 +19,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from features.switches import is_enabled
+
 from . import notifications
 from .errors import AuctionError
 from .models import BuyNowPurchase, Deposit, Incident, Order, SellerBond
@@ -387,6 +389,14 @@ def counterpart_contact(order, account):
 
 # --- Seller bond ----------------------------------------------------------------------------------
 
+def check_auctions_enabled():
+    """Staff can switch auctions off in the admin (features/switches.py). While they are off nothing new
+    starts: no auctions, deposits, bids, buy-now payments or seller bonds. Whatever is already under way
+    still finishes, so money already paid is settled or refunded and won auctions can still be paid for."""
+    if not is_enabled('auctions'):
+        raise AuctionError(_('Auctions are not available right now.'))
+
+
 def bond_required():
     return settings.SELLER_BOND_AMOUNT > 0
 
@@ -397,6 +407,7 @@ def has_bond(account):
 
 def request_bond(account):
     """Start (or restart) paying the seller bond. Returns (bond, client_data)."""
+    check_auctions_enabled()
     if not bond_required():
         raise AuctionError(_('A seller bond is not required right now.'))
     if not account.can_start_auction:

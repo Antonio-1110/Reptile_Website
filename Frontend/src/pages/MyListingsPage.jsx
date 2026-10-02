@@ -8,11 +8,13 @@ import { errorText, toErrorState } from '../utils/errorState';
 import { deleteListing, getCurrentProfile, getMyListings, isLoggedIn, updateListingStatus } from '../api/listingsApi';
 import { getMyAuctions } from '../api/auctionsApi';
 import { Link } from 'react-router';
+import useFeature from '../hooks/useFeature';
 
 const STATUSES = ['available', 'reserved', 'sold'];
 
 export default function MyListingsPage() {
   const { t } = useTranslation();
+  const auctionsOn = useFeature('auctions');
   const [listings, setListings] = useState(null);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -160,7 +162,7 @@ export default function MyListingsPage() {
                   <p className="my-listings-price">${listing.price ?? '—'}</p>
                 </div>
                 <div className="my-listings-actions">
-                  {canAuction && (runningAuctions.has(`${listing.category}-${listing.id}`) ? (
+                  {canAuction && auctionsOn && (runningAuctions.has(`${listing.category}-${listing.id}`) ? (
                     <span className="my-listings-auction-running">{t('myListings.auctionRunning')}</span>
                   ) : (
                     <Link to={`/auctions/new?listing=${listing.id}&category=${listing.category}`} className="my-listings-auction">

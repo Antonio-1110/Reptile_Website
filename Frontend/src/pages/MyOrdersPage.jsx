@@ -6,6 +6,7 @@ import { isLoggedIn } from '../api/authApi';
 import { formatDateTime, formatMoney } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
 import { Link } from 'react-router';
+import useFeature from '../hooks/useFeature';
 
 const TABS = ['', 'buyer', 'seller'];
 
@@ -34,6 +35,7 @@ function orderHref(order) {
 // the listing page and in emails.
 export default function MyOrdersPage() {
   const { t, i18n } = useTranslation();
+  const auctionsOn = useFeature('auctions');
   const language = i18n.resolvedLanguage;
   const [role, setRole] = useState('');
   const [feed, setFeed] = useState({ orders: null, count: 0, nextPage: 1, loading: true, error: null });
@@ -96,7 +98,7 @@ export default function MyOrdersPage() {
         {orders && orders.length === 0 && !feed.loading && (
           <div className="my-orders-empty">
             <p>{t(`myOrders.empty.${role || 'all'}`)}</p>
-            <Link to="/auctions">{t('myOrders.browseAuctions')}</Link>
+            {auctionsOn && <Link to="/auctions">{t('myOrders.browseAuctions')}</Link>}
           </div>
         )}
 

@@ -16,6 +16,7 @@ from account.models import Account
 from alerts.models import Alert
 from auction import services
 from auction.models import Auction, Order
+from features.switches import set_enabled
 from post.models import ContactRequest, EquipmentPost, LiveAnimalPost, SavedSearch, Species
 
 # Who may call a route with a method:
@@ -75,6 +76,7 @@ ACCESS = {
     'order-runner-up': {'POST': 'party'},
     'order-decline': {'POST': 'party'},
 
+    'features': {'GET': 'public'},
     'alert-list': {'GET': 'signed_in'},
     'alert-unread-count': {'GET': 'signed_in'},
     'alert-read-all': {'POST': 'signed_in'},
@@ -134,6 +136,8 @@ def private_keys_in(data, path='$'):
 
 class AccessFixtures(APITestCase):
     def setUp(self):
+        # Auctions start switched off (features app); the sweep checks who may call them when they're on.
+        set_enabled('auctions', True)
         self.owner = self.make_account(
             'owner', account_type='commercial', is_paid_account=True, phone_number='0912345678',
             personal_id='A123456789', line_id='owner-line', contact_email='owner-contact@example.com',
