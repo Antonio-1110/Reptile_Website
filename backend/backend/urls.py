@@ -23,6 +23,7 @@ from django.urls import path, include
 from account.views import SellerProfile, SellerReviews
 from auction import ecpay
 from authentication.lockout import LockoutAdminAuthenticationForm, LockoutAuthenticationForm
+from features.views import FeatureSwitches
 from post.sitemap import sitemap
 
 admin.site.login_form = LockoutAdminAuthenticationForm
@@ -36,6 +37,7 @@ urlpatterns = [
     path('api/v1/sellers/<int:pk>/', SellerProfile.as_view(), name='seller-profile'),
     path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/v1/auctions/', include('auction.urls')),
+    path('api/v1/features/', FeatureSwitches.as_view(), name='features'),
     # Payment provider callbacks (form posts from ECPay, not part of the JSON API).
     path('payments/ecpay/notify/', ecpay.notify, name='ecpay-notify'),
     path('payments/ecpay/result/', ecpay.result, name='ecpay-result'),

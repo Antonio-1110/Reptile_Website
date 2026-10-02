@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 01:37+0800\n"
+"POT-Creation-Date: 2026-10-03 00:04+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -553,63 +553,67 @@ msgstr ""
 "你未在 %(handover_due)s 前將「%(title)s」標記為已交貨，因此買家已獲得全額退"
 "款，此事也已記錄在你的帳號上。"
 
-#: auction/orders.py:72
+#: auction/orders.py:74
 msgid "Only the buyer can pay for this order."
 msgstr "只有買家可以支付這筆訂單。"
 
-#: auction/orders.py:74
+#: auction/orders.py:76
 msgid "This order is not waiting for payment."
 msgstr "這筆訂單目前不需要付款。"
 
-#: auction/orders.py:132
+#: auction/orders.py:134
 msgid "Only the seller can mark this order as handed over."
 msgstr "只有賣家可以將這筆訂單標記為已交貨。"
 
-#: auction/orders.py:134
+#: auction/orders.py:136
 msgid "This order is not waiting for the handover."
 msgstr "這筆訂單目前不在等待交貨。"
 
-#: auction/orders.py:150
+#: auction/orders.py:152
 msgid "Only the buyer can confirm this order."
 msgstr "只有買家可以確認這筆訂單。"
 
-#: auction/orders.py:152
+#: auction/orders.py:154
 msgid "This order is not waiting for your confirmation."
 msgstr "這筆訂單目前不需要你確認。"
 
-#: auction/orders.py:161
+#: auction/orders.py:163
 msgid "Please describe the problem."
 msgstr "請描述問題。"
 
-#: auction/orders.py:165
+#: auction/orders.py:167
 msgid "Only the buyer can report a problem with this order."
 msgstr "只有買家可以回報這筆訂單的問題。"
 
-#: auction/orders.py:167
+#: auction/orders.py:169
 msgid "A problem can only be reported before the sale is complete."
 msgstr "只能在交易完成前回報問題。"
 
-#: auction/orders.py:238
+#: auction/orders.py:240
 msgid "Only the seller can decide this."
 msgstr "只有賣家可以決定。"
 
-#: auction/orders.py:240
+#: auction/orders.py:242
 msgid "There is no runner-up decision to make for this order."
 msgstr "這筆訂單目前不需要決定是否讓給次高出價者。"
 
-#: auction/orders.py:243
+#: auction/orders.py:245
 msgid "Nobody else bid on this auction."
 msgstr "這場競標沒有其他人出價。"
 
-#: auction/orders.py:262
+#: auction/orders.py:264
 msgid "There is no offer to decline."
 msgstr "沒有可以婉拒的邀請。"
 
-#: auction/orders.py:401
+#: auction/orders.py:397
+msgid "Auctions are not available right now."
+msgstr "競標功能目前暫停開放。"
+
+#: auction/orders.py:412
 msgid "A seller bond is not required right now."
 msgstr "目前不需要繳交賣家保證金。"
 
-#: auction/orders.py:403 auction/services.py:325 auction/views.py:23
+#: auction/orders.py:414 auction/services.py:329 auction/views.py:23
 msgid ""
 "Auctions are available to commercial accounts. Upgrade your account to start "
 "one."
@@ -655,52 +659,52 @@ msgstr "競標時間至少需要 %(hours)s 小時。"
 msgid "An auction can run for at most %(days)s days."
 msgstr "競標時間最長為 %(days)s 天。"
 
-#: auction/services.py:61 auction/services.py:148
+#: auction/services.py:62 auction/services.py:150
 msgid "You can't bid on your own auction."
 msgstr "你不能對自己的競標出價。"
 
-#: auction/services.py:63
+#: auction/services.py:64
 msgid "This auction is no longer accepting bids."
 msgstr "此競標已停止接受出價。"
 
-#: auction/services.py:150
+#: auction/services.py:152
 msgid "This auction is not accepting bids right now."
 msgstr "此競標目前不接受出價。"
 
-#: auction/services.py:154
+#: auction/services.py:156
 msgid "Pay the deposit for this auction before bidding."
 msgstr "出價前請先支付此競標的保證金。"
 
-#: auction/services.py:158
+#: auction/services.py:160
 #, python-format
 msgid "Your bid must be at least %(amount)s."
 msgstr "你的出價至少須為 %(amount)s。"
 
-#: auction/services.py:183
+#: auction/services.py:185
 msgid "This auction has already closed."
 msgstr "此競標已結束。"
 
-#: auction/services.py:185
+#: auction/services.py:187
 msgid "An auction can't be cancelled once someone has bid."
 msgstr "已有人出價的競標無法取消。"
 
-#: auction/services.py:230
+#: auction/services.py:233
 msgid "You can't buy your own item."
 msgstr "你不能購買自己刊登的物品。"
 
-#: auction/services.py:230
+#: auction/services.py:233
 msgid "You can't buy your own animal."
 msgstr "你不能購買自己的個體。"
 
-#: auction/services.py:233
+#: auction/services.py:236
 msgid "The seller hasn't offered a buy-now price for this auction."
 msgstr "賣家沒有為這場競標提供直接購買價。"
 
-#: auction/services.py:235
+#: auction/services.py:238
 msgid "Buy now is no longer available for this auction."
 msgstr "這場競標已無法直接購買。"
 
-#: auction/services.py:327
+#: auction/services.py:331
 #, python-format
 msgid "Post the seller bond of %(amount)s before starting an auction."
 msgstr "開始競標前，請先繳交 %(amount)s 的賣家保證金。"
@@ -863,6 +867,11 @@ msgstr "電話"
 #: common/passwords.py:16 common/passwords.py:21
 msgid "Your password must contain both English letters and numbers."
 msgstr "密碼必須同時包含英文字母和數字。"
+
+#: features/switches.py:13
+msgid ""
+"Auctions: starting auctions, deposits, bids, buy now and the seller bond."
+msgstr "競標：發起競標、保證金、出價、直接購買與賣家保證金。"
 
 #: post/search_alerts.py:82
 #, python-format

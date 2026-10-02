@@ -28,6 +28,7 @@ Django apps in `backend/`:
 - `post/` — listings (`LiveAnimalPost`, `EquipmentPost` on an abstract `BasePost`), `Species`, contact requests, reports, photo uploads
 - `auction/` — auctions, bids, deposits; business rules live in `auction/services.py`
 - `common/` — dev-only auth bypass middleware
+- `features/` — feature switches staff flip in the admin (`/api/v1/features/`); `auctions` starts off
 - `backend/` — settings and root URLs
 
 Per-app detail: [README.md](../README.md), [backend/README.md](../backend/README.md),
@@ -58,6 +59,7 @@ cd backend
 ../.venv/bin/python manage.py migrate
 ../.venv/bin/python manage.py seed_demo --reset        # demo accounts + ~70 listings
 ../.venv/bin/python manage.py close_auctions           # settle auctions past their end time
+../.venv/bin/python manage.py feature auctions on       # feature switches (auctions start off; see §8)
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
 ../.venv/bin/python manage.py send_search_alerts       # email users new listings matching their saved searches
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
@@ -87,7 +89,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
 - Validation, limits, ownership and permissions are enforced server-side. Frontend checks are only for
   fast feedback and must mirror (never replace) the backend.
 - Account limits live on the `Account` model (`max_post_count`, `max_images_per_post`,
-  `can_start_auction`, …). Read them from there; never hard-code 5/20/200 or 3/6/12 elsewhere.
+  `can_start_auction`, …), which reads the numbers from the `PLAN_*_MAX_LISTINGS` / `PLAN_*_MAX_PHOTOS`
+  settings. Read them from the model; never hard-code them elsewhere.
 - Post and image limits are enforced by `PostLimitSerializerMixin` (`post/serializer.py`) and the
   `photos` action (`ListingPhotoUploadSerializer`).
 - Auction rules belong in `auction/services.py`, and post-sale order rules in `auction/orders.py`, not in
@@ -95,8 +98,8 @@ These are invariants. If a task seems to require breaking one, stop and ask the 
   limits) are settings read from environment variables; never hard-code them.
 - Users can never grant themselves a plan or reputation. `account_type`, `is_paid_account`,
   `verified_seller`, `seller_rating` and `total_reviews` are read-only on the profile and registration
-  endpoints. Commercial is a paid upgrade that only a payment-confirmed upgrade flow may set; the rating
-  and review count are only ever recomputed from `Review` rows (`account/reviews.py`).
+  endpoints. Commercial (and Pro) is set only by staff in the admin, granted on request by email until
+  plans can be paid for online, or later by a payment-confirmed upgrade flow; the rating and review count are only ever recomputed from `Review` rows (`account/reviews.py`).
 
 **Privacy.**
 - Public listing responses must not contain `contact_info`, the seller's `email`, `phone_number`,
@@ -387,6 +390,11 @@ Apply these whenever you build or review a feature — they're the common gaps i
 - Deleting a listing, an account or an auction is refused (`ProtectedError`, a 400 from the API) while
   an auction on it runs or still holds money (`cascade_unless_money_held` in `auction/models.py`).
   Code that deletes such data on purpose, like `seed_demo --reset`, removes the money records first.
+- Auctions are behind a feature switch (`features/switches.py`) that starts **off**, so locally the
+  auction pages and buttons are hidden until you run `manage.py feature auctions on` (or tick it in the
+  admin). The backend checks it in `auction/orders.check_auctions_enabled`; auction tests turn it on in
+  `setUp` (`set_enabled('auctions', True)`), and the frontend tests start with every switch on
+  (`test/setup.js`, `setFeatures`).
 - Rate limits are off in tests (dummy cache; see `CACHES` in settings); `common/tests.py` shows how to
   test them. Locally, logging in more than 10 times a minute (e.g. a browser-automation script) gets
   `429` responses.

@@ -23,6 +23,7 @@ import { formatMoney, getHeadlinePrice } from '../../utils/auctionFormat';
 import { errorText } from '../../utils/errorState';
 import { buildMarketplaceUrl } from '../../utils/marketplaceSearch';
 import { Link } from 'react-router';
+import useFeature from '../../hooks/useFeature';
 
 // The one page for a listing (an animal at /posts/:id, equipment at /equipment/:id), whether it's for
 // sale at a fixed price or being auctioned. While an auction runs (or has ended in a sale) the summary
@@ -30,6 +31,7 @@ import { Link } from 'react-router';
 // are only ever shown to the two sides of a paid sale.
 export default function ListingDetailPage({ listingId, category = 'live_animal' }) {
   const { t, i18n } = useListingTranslation(category);
+  const auctionsOn = useFeature('auctions');
   const language = i18n.resolvedLanguage;
   const now = useNow();
   const [listing, setListing] = useState(null);
@@ -132,7 +134,8 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
   const soldInAuction = Boolean(auction) && phase === 'ended' && (auction.bidCount > 0 || Boolean(auction.soldVia))
     && !auction.saleFellThrough;
   // An auction that ended without a sale (or whose sale fell through) leaves the listing simply for sale again.
-  const showAuction = Boolean(auction) && (isRunning || soldInAuction);
+  // With auctions switched off, a running one is hidden (nobody can bid); a sale it made still shows.
+  const showAuction = Boolean(auction) && ((isRunning && auctionsOn) || soldInAuction);
   const endedWithoutSale = Boolean(auction) && phase === 'ended' && !soldInAuction;
   const money = (amount) => formatMoney(amount, auction?.currency || 'TWD', language);
   const hasPrice = listing.price != null && listing.price !== '';

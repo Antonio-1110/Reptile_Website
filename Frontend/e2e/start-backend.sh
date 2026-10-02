@@ -13,4 +13,6 @@ rm -rf .e2e && mkdir -p .e2e
 "$PYTHON" manage.py compilemessages -v0 --ignore=".venv/*" --ignore=".e2e/*" || echo "Warning: translations not compiled (install GNU gettext)" >&2
 "$PYTHON" manage.py migrate -v0
 "$PYTHON" manage.py seed_demo >/dev/null
+# Auctions start switched off (features app); the flows test them switched on.
+"$PYTHON" manage.py feature auctions on >/dev/null
 exec "$PYTHON" manage.py runserver 127.0.0.1:8001 --noreload

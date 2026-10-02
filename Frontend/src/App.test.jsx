@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { setFeatures } from './hooks/useFeature';
 
 // The pages fetch their own data; stand-ins that show which page rendered, with what, are enough
 // to test the routing.
@@ -92,5 +93,23 @@ describe('App routing', () => {
     fireEvent.click(screen.getByRole('link', { name: 'Auctions' }));
     expect(screen.getByLabelText('url')).toHaveTextContent('/auctions');
     expect(screen.getByText('auctions page')).toBeInTheDocument();
+  });
+
+  it('hides auctions while they are switched off, and sends their pages home', () => {
+    setFeatures({ auctions: false });
+    renderAt('/auctions');
+    expect(screen.getByText('home page')).toBeInTheDocument();
+    expect(screen.getByLabelText('url')).toHaveTextContent(/^\/$/);
+    expect(screen.queryByRole('link', { name: 'Auctions' })).not.toBeInTheDocument();
+  });
+
+  it('waits for the feature switches before deciding on a switchable page', () => {
+    setFeatures(null);
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+    renderAt('/auctions');
+    expect(screen.queryByText('home page')).not.toBeInTheDocument();
+    expect(screen.queryByText('auctions page')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('url')).toHaveTextContent('/auctions');
+    vi.unstubAllGlobals();
   });
 });

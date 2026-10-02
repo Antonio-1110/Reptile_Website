@@ -497,6 +497,30 @@ class PlanWorkflowTests(APITestCase):
                 self.assertEqual((seller.account_type, seller.is_paid_account), (fields.get('account_type', 'hobbyist'), fields.get('is_paid_account', False)))
 
 
+class PlanLimitSettingsTests(APITestCase):
+    """Plan limits are settings (PLAN_*_MAX_LISTINGS / PLAN_*_MAX_PHOTOS), and staff set plans in the admin."""
+
+    @override_settings(PLAN_HOBBYIST_MAX_LISTINGS=8, PLAN_HOBBYIST_MAX_PHOTOS=5, PLAN_PRO_MAX_PHOTOS=20)
+    def test_limits_follow_the_settings_everywhere(self):
+        hobbyist = Account.objects.create_user(username='keeper', email='keeper@example.com', password='pass1234')
+        self.assertEqual((hobbyist.max_post_count, hobbyist.max_images_per_post), (8, 5))
+        self.assertTrue(hobbyist.can_upload_images(5))
+        self.assertFalse(hobbyist.can_upload_images(6))
+        plans = {plan['id']: plan for plan in self.client.get(reverse('account-plans')).data}
+        self.assertEqual(plans['hobbyist']['max_images_per_post'], 5)
+        self.assertEqual(plans['commercial_paid']['max_images_per_post'], 20)
+        self.client.force_authenticate(hobbyist)
+        self.assertEqual(self.client.get(reverse('profile')).data['max_images_per_post'], 5)
+
+    def test_staff_can_set_the_plan_in_the_admin(self):
+        staff = Account.objects.create_superuser('boss', 'boss@example.com', 'pass1234')
+        seller = Account.objects.create_user(username='breeder', email='breeder@example.com', password='pass1234')
+        self.client.force_login(staff)
+        page = self.client.get(reverse('admin:account_account_change', args=[seller.id]))
+        self.assertContains(page, 'name="account_type"')
+        self.assertContains(page, 'name="is_paid_account"')
+
+
 class LegacyTokenAuthRetiredTests(APITestCase):
     def test_the_old_token_endpoints_are_gone(self):
         for path in ('/api/auth/register/', '/api/auth/login/', '/api/auth/logout/', '/api/auth/profile/'):
