@@ -471,6 +471,73 @@ class PasswordResetTests(APITestCase):
         self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': refresh}).status_code, 401)
         self.user.refresh_from_db()
         self.assertTrue(self.user.email_verified)
+class PasswordChangeTests(APITestCase):
+    def setUp(self):
+        self.user = Account.objects.create_user(username='careful', email='careful@example.com', password='OldPass!234')
+        tokens = self.client.post(reverse('jwt-login'), {'username': 'careful', 'password': 'OldPass!234'}).data
+        self.other_device_refresh = tokens['refresh']
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+
+    def change(self, current='OldPass!234', password='BrandNew!567'):
+        return self.client.post(reverse('password-change'), {'current_password': current, 'password': password})
+
+    def test_the_current_password_changes_it(self):
+        response = self.change()
+
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('BrandNew!567'))
+
+    def test_other_devices_are_signed_out_and_this_one_gets_new_tokens(self):
+        response = self.change()
+
+        self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': self.other_device_refresh}).status_code, 401)
+        self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': response.data['refresh']}).status_code, 200)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
+        self.assertEqual(self.client.get(reverse('jwt-me')).status_code, 200)
+
+    def test_the_owner_is_told_by_email(self):
+        self.change()
+
+        self.assertEqual(mail.outbox[0].to, ['careful@example.com'])
+        self.assertIn('/forgot-password', mail.outbox[0].body)
+
+    def test_a_wrong_current_password_changes_nothing(self):
+        response = self.change(current='Guess!1234')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('current_password', response.data)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('OldPass!234'))
+        self.assertEqual(self.client.post(reverse('jwt-refresh'), {'refresh': self.other_device_refresh}).status_code, 200)
+        self.assertEqual(mail.outbox, [])
+
+    def test_the_new_password_must_follow_the_rules_and_be_new(self):
+        for password in ['short1', 'onlyletters', 'OldPass!234']:
+            with self.subTest(password=password):
+                response = self.change(password=password)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('password', response.data)
+
+    def test_accounts_without_a_password_are_sent_to_the_email_link(self):
+        google_user = Account.objects.create_user(username='googler', email='googler@example.com')
+        google_user.set_unusable_password()
+        google_user.save()
+        self.client.credentials()
+        self.client.force_authenticate(google_user)
+
+        response = self.client.post(reverse('password-change'), {'current_password': '', 'password': 'BrandNew!567'})
+
+        self.assertEqual(response.status_code, 400)
+        google_user.refresh_from_db()
+        self.assertFalse(google_user.has_usable_password())
+
+    def test_signing_in_is_required(self):
+        self.client.credentials()
+
+        self.assertEqual(self.change().status_code, 401)
+
+
 @override_settings(
     CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
     LOGIN_LOCKOUT_FAILURES=3, LOGIN_LOCKOUT_MINUTES=15,

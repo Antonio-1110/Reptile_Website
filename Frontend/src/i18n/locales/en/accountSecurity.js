@@ -1,0 +1,22 @@
+// Changing a password or username from account settings.
+export default {
+  sectionTitle: "Sign-in and security",
+  passwordLabel: "Password",
+  changePasswordLink: "Change password",
+  setPasswordLink: "Set a password",
+  googleOnlyNote: "You sign in with Google. You can also set a password to sign in with your username or email.",
+  title: "Change password",
+  setTitle: "Set a password",
+  subtitle: "For your security, enter your current password first. Changing it signs you out on your other devices.",
+  currentPassword: "Current password",
+  forgotCurrent: "Forgot your current password?",
+  save: "Change password",
+  changed: "Your password has been changed. You're still signed in here, and your other devices have been signed out.",
+  noPasswordYet: "Your account signs in with Google and doesn't have a password yet. To make sure it's you, we'll email a link to {{email}} where you can choose one.",
+  sendLink: "Email me a link",
+  linkSent: "We've sent a link to {{email}}. Open it to choose your password. It may take a minute to arrive.",
+  backToSettings: "Back to account settings",
+  loadError: "Unable to load your account.",
+  usernameRule: "You can change your username once every {{count}} days. During that time, nobody else can take your old username.",
+  usernameLocked: "You changed your username recently. You can change it again on {{date}}.",
+};

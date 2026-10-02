@@ -284,6 +284,9 @@ Each refresh token works once: `refresh/` returns a new pair and retires the old
   also how a Google-only account sets a password
 - `POST /password-reset/confirm/` — `uid`, `token`, `password`; sets it, confirms the email and signs
   the account out everywhere
+- `POST /password-change/` (auth required) — `current_password`, `password`; signs the account out on
+  every other device, emails the owner, and returns a fresh `access` and `refresh` for this one. Accounts
+  with no password (`has_password: false` on the profile) get 400 and set one with `password-reset/`
 
 New accounts start with `email_verified: false` and get 403 on posting, contacting sellers, reporting,
 bidding and paying until they open the emailed link (`authentication/permissions.py`). Changing the email
@@ -312,7 +315,9 @@ curl $B/me/
 ### Account (`/api/v1/account/`)
 
 - `GET`/`PATCH /profile/` (auth required) — the user's own profile, including `post_count` and
-  `remaining_post_count`
+  `remaining_post_count`. A new `username` is refused for `USERNAME_CHANGE_DAYS` (default 30) after the
+  last change, and a name another account gave up in that time is taken; names differing only in case
+  count as the same (`account/usernames.py`). `username_change_available_at` says when it may change next
 - `GET /plans/` — public: the account plans and their limits
 
 ### Dev auth bypass (DEBUG only)

@@ -109,6 +109,7 @@ Conventions every endpoint follows:
 
 - `POST /register/`, `POST /login/` (username or email; returns `access` + `refresh`), `POST /google/` (Google's ID token; same answer), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
 - `POST /verify-email/`, `POST /verify-email/resend/`, `POST /password-reset/`, `POST /password-reset/confirm/`: the one-time links emailed after sign-up and for a forgotten password
+- `POST /password-change/` (auth required): `current_password` and `password`; signs other devices out and returns a new pair
 
 ### Account (`/api/v1/account/`)
 
