@@ -26,17 +26,57 @@
   gap: 20px;
 }
 
-.filter-sidebar-content h2 {
-  margin: 0;
+.filter-sidebar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--color-border-muted);
+}
+
+.filter-sidebar-content h2 {
+  margin: 0;
   font-size: 18px;
 }
 
+.filter-sidebar-body,
 .filter-group { display: flex; flex-direction: column; gap: 20px; }
 
+/* Folding only matters on phones, where the filters sit above the results. */
+.filter-toggle { display: none; }
+
 @media (max-width: 767px) {
-  .filter-sidebar { width: 100%; flex-basis: auto; position: static; max-height: none; overflow: visible; }
+  .filter-sidebar { width: 100%; flex-basis: auto; position: static; max-height: none; overflow: visible; scroll-margin-top: 92px; }
+
+  .filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border-muted);
+    border-radius: 8px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .filter-toggle-count {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: #fff;
+    font-size: 12px;
+  }
+
+  .filter-toggle--bottom { align-self: stretch; justify-content: center; }
+
+  .filter-sidebar:not(.is-open) .filter-sidebar-body { display: none; }
 }
 /* Matches the FilterSection headings. */
 .filter-category-label { margin: 0 0 8px; font-size: 14px; font-weight: 700; }

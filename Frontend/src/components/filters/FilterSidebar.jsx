@@ -1,3 +1,4 @@
+import { useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import IncludeExcludeFilter from "./IncludeExcludeFilter";
 import MultiSelectFilter from "./MultiSelectFilter";
@@ -6,11 +7,24 @@ import CategorySwitch from "../ui/CategorySwitch";
 import { LOCATION_KEYS } from "../../constants/locations";
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_CONDITIONS } from "../../constants/equipment";
 import { MARKETPLACE_CATEGORIES } from "../../utils/marketplaceSearch";
+import { countActiveFilters } from "./activeFilters";
 import "./FilterSidebar.css";
 
 // The switch at the top picks what the marketplace shows; the filters below follow it.
+// On phones the sidebar sits above the results, so the filters start folded away (with a toggle at
+// the top and another at the bottom) instead of making people scroll past them to reach listings.
+// Wider screens keep them open beside the results; the CSS hides the toggles there.
 export default function FilterSidebar({ category, onCategoryChange, filters, setFilters }) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const bodyId = useId();
+  const sidebarRef = useRef(null);
+  const activeCount = countActiveFilters(category, filters);
+  const hideFromBottom = () => {
+    setOpen(false);
+    // The panel shrinks under the button, so bring its top (and the results below it) back into view.
+    sidebarRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  };
   const updateFilter = (key, value) => {
     setFilters((currentFilters) => ({ ...currentFilters, [key]: value }));
   };
@@ -33,9 +47,16 @@ export default function FilterSidebar({ category, onCategoryChange, filters, set
     <RangeFilter title={title} min={filters[minKey]} max={filters[maxKey]} onMinChange={(value) => updateFilter(minKey, value)} onMaxChange={(value) => updateFilter(maxKey, value)} {...props} />
   );
   return (
-    <aside className="filter-sidebar">
+    <aside ref={sidebarRef} className={`filter-sidebar${open ? " is-open" : ""}`}>
       <div className="filter-sidebar-content">
-        <h2>{t("filters.title")}</h2>
+        <div className="filter-sidebar-heading">
+          <h2>{t("filters.title")}</h2>
+          <button type="button" className="filter-toggle" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)}>
+            <span>{t(open ? "filterPanel.hide" : "filterPanel.show")}</span>
+            {!open && activeCount > 0 && <span className="filter-toggle-count">{t("filterPanel.activeCount", { count: activeCount })}</span>}
+            <span className="filter-toggle-icon" aria-hidden="true">{open ? "▴" : "▾"}</span>
+          </button>
+        </div>
       <CategorySwitch
         className="filter-category"
         labelClassName="filter-category-label"
@@ -44,6 +65,7 @@ export default function FilterSidebar({ category, onCategoryChange, filters, set
         value={category}
         onChange={onCategoryChange}
       />
+      <div id={bodyId} className="filter-sidebar-body">
       {isEquipment ? (
         <>
           <div className="filter-group">
@@ -84,6 +106,11 @@ export default function FilterSidebar({ category, onCategoryChange, filters, set
           includeLocations: include,
         }))}
       />
+      <button type="button" className="filter-toggle filter-toggle--bottom" aria-expanded={open} aria-controls={bodyId} onClick={hideFromBottom}>
+        <span>{t("filterPanel.hide")}</span>
+        <span className="filter-toggle-icon" aria-hidden="true">▴</span>
+      </button>
+      </div>
       </div>
     </aside>
   );
