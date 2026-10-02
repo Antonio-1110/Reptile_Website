@@ -25,6 +25,7 @@ import Footer from "./components/layout/Footer";
 import LegalPage from "./pages/Legal/LegalPage";
 import ChooseUsernamePage from "./pages/ChooseUsername/ChooseUsernamePage";
 import { isLoggedIn } from "./api/authApi";
+import useFeature from "./hooks/useFeature";
 import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
 
 // Sends a signed-out visitor to sign in, then back to the page (query included) they asked for.
@@ -34,6 +35,14 @@ function RequireSignIn({ children }) {
   if (isLoggedIn()) return children;
   const next = location.pathname + location.search;
   return <Navigate to={`/signin?next=${encodeURIComponent(next)}`} state={{ signInRequired: true }} replace />;
+}
+
+// Pages of a feature staff have switched off (features app) go to the home page; nothing shows while
+// the switches load, so a switched-on page isn't redirected away by mistake.
+function RequireFeature({ name, children }) {
+  const enabled = useFeature(name);
+  if (enabled === undefined) return null;
+  return enabled ? children : <Navigate to="/" replace />;
 }
 
 // Pages that read their query string only when they mount (the editor, the auction form, sign-in)
@@ -100,8 +109,8 @@ export default function App() {
         <Route path="/posts/:id" element={<WithNumericId render={(id) => <ListingDetailPage listingId={id} />} />} />
         <Route path="/equipment/:id" element={<WithNumericId render={(id) => <ListingDetailPage listingId={id} category="equipment" />} />} />
         <Route path="/sellers/:id" element={<WithNumericId render={(id) => <SellerProfilePage sellerId={id} />} />} />
-        <Route path="/auctions" element={<AuctionsPage />} />
-        <Route path="/auctions/new" element={<RequireSignIn><RemountOnQuery><StartAuctionRoute /></RemountOnQuery></RequireSignIn>} />
+        <Route path="/auctions" element={<RequireFeature name="auctions"><AuctionsPage /></RequireFeature>} />
+        <Route path="/auctions/new" element={<RequireFeature name="auctions"><RequireSignIn><RemountOnQuery><StartAuctionRoute /></RemountOnQuery></RequireSignIn></RequireFeature>} />
         <Route path="/auctions/:id" element={<WithNumericId render={(id) => <AuctionRedirectPage auctionId={id} />} />} />
         <Route path="/postinput" element={<RequireSignIn><RemountOnQuery><ListingEditorRoute /></RemountOnQuery></RequireSignIn>} />
         <Route path="/signin" element={<RemountOnQuery><SignInPage /></RemountOnQuery>} />

@@ -6,6 +6,7 @@ import AccountMenu from './AccountMenu';
 import { isLoggedIn, logout } from '../../api/authApi';
 import { getSpeciesLabel } from '../../constants/species';
 import { Link, useLocation } from 'react-router';
+import useFeature from '../../hooks/useFeature';
 
 // The narrowest search bar worth putting beside the logo and links; below this it gets its own row.
 const MIN_ONE_ROW_SEARCH_WIDTH = 360;
@@ -25,6 +26,7 @@ const SEARCH_OPTIONS = [
 
 function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSelectedSearchTags = () => {}, onSearch = null }) {
   const { t } = useTranslation();
+  const auctionsOn = useFeature('auctions');
   const location = useLocation();
   const [draftTerm, setDraftTerm] = useState(searchTerm);
   const [draftTags, setDraftTags] = useState(selectedSearchTags);
@@ -155,7 +157,7 @@ function Header({ searchTerm = '', setSearchTerm, selectedSearchTags = [], setSe
         // Links navigate without a page load, so the open menu has to be closed by hand.
         onClick={(event) => event.target.closest('a') && setMenuOpen(false)}
       >
-        <Link to="/auctions" className="headerLink">{t('navigation.auctions')}</Link>
+        {auctionsOn && <Link to="/auctions" className="headerLink">{t('navigation.auctions')}</Link>}
         <button type="button" className="headerLink">{t('navigation.community')}</button>
         {isLoggedIn() ? (
           <>
