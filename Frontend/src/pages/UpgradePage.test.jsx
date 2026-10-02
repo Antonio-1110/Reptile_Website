@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UpgradePage from './UpgradePage';
+import { setFeatures } from '../hooks/useFeature';
 
 const json = (body) => new Response(JSON.stringify(body), { status: 200 });
 const plan = (id, overrides = {}) => ({
@@ -15,7 +16,7 @@ function renderWithPlans(feeRate, profile = {}) {
       plan('hobbyist'),
       plan('commercial_paid', { can_start_auction: true, auction_fee_rate: feeRate, monthly_price: '499.00' }),
     ])
-    : json({ account_type: 'hobbyist', is_paid_account: false, launch_offer_ends_at: null, ...profile }))));
+    : json({ username: 'gecko_mei', account_type: 'hobbyist', is_paid_account: false, launch_offer_ends_at: null, ...profile }))));
   render(<UpgradePage />, { wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter> });
 }
 
@@ -37,10 +38,11 @@ describe('UpgradePage', () => {
     expect(await screen.findByText('5% fee on auction sales')).toBeInTheDocument();
   });
 
-  it('shows each plan\'s monthly price, and free plans as free', async () => {
+  it('shows paid plans as free for now, since staff grant them by email', async () => {
     renderWithPlans('0.03');
-    expect(await screen.findByText('NT$499 a month')).toBeInTheDocument();
+    expect(await screen.findByText('Free for now')).toBeInTheDocument();
     expect(screen.getByText('Free')).toBeInTheDocument();
+    expect(screen.queryByText(/NT\$|a month/)).not.toBeInTheDocument();
   });
 
   it('tells early sellers when their launch offer ends', async () => {
@@ -50,7 +52,24 @@ describe('UpgradePage', () => {
 
   it('says nothing about a launch offer to sellers without one', async () => {
     renderWithPlans('0.03');
-    await screen.findByText('NT$499 a month');
+    await screen.findByText('Free for now');
     expect(screen.queryByText(/Early seller offer/)).not.toBeInTheDocument();
+  });
+
+  it('asks sellers to email support to switch plans, with their username', async () => {
+    renderWithPlans('0.03');
+    fireEvent.click(await screen.findByRole('button', { name: 'Choose this plan' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Switching to Commercial Pro');
+    expect(screen.getByRole('status')).toHaveTextContent('include your username (gecko_mei)');
+    const link = screen.getByRole('link', { name: /@/ });
+    expect(link.getAttribute('href')).toMatch(/^mailto:[^?]+@[^?]+\?subject=Switch%20gecko_mei%20to%20Commercial%20Pro$/);
+  });
+
+  it('says nothing about auctions while they are switched off', async () => {
+    setFeatures({ auctions: false });
+    renderWithPlans('0', { launch_offer_ends_at: '2027-03-29T08:00:00Z' });
+    await screen.findByText('Free for now');
+    expect(screen.getByText('Commercial accounts can list more animals and show more photos.')).toBeInTheDocument();
+    expect(screen.queryByText(/auction/i)).not.toBeInTheDocument();
   });
 });

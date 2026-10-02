@@ -13,6 +13,7 @@ from django.test import TransactionTestCase, override_settings
 from django.utils import timezone
 
 from account.models import Account
+from features.switches import set_enabled
 from post.models import LiveAnimalPost, Species
 from . import orders, services
 from .errors import AuctionError
@@ -73,6 +74,7 @@ class RaceTestCase(TransactionTestCase):
         if connection.vendor != 'postgresql':
             self.skipTest('Row locking is only exercised on PostgreSQL.')
         CountingGateway.calls.clear()
+        set_enabled('auctions', True)
         self.seller = self.make_account('seller', account_type='commercial', is_paid_account=True)
         self.buyer = self.make_account('buyer')
         self.other_buyer = self.make_account('other_buyer')

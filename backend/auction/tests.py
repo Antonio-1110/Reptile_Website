@@ -12,6 +12,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from account.models import Account
+from features.switches import set_enabled
 from post.models import EquipmentPost, LiveAnimalPost, Species
 from . import services
 from . import orders
@@ -27,6 +28,8 @@ def make_account(username, **fields):
 
 class AuctionTestCase(APITestCase):
     def setUp(self):
+        # Auctions start switched off (features app); these tests are about how they work when on.
+        set_enabled('auctions', True)
         self.seller = make_account('seller', account_type='commercial', is_paid_account=True)
         self.buyer = make_account('buyer')
         self.other_buyer = make_account('other_buyer')
@@ -1019,3 +1022,54 @@ class ReviewAdminTests(AuctionTestCase):
         self.assertNotContains(response, 'other_buyer@example.com')  # one incident: below the threshold
         for name in ('auction_order_changelist', 'auction_incident_changelist', 'auction_sellerbond_changelist'):
             self.assertEqual(self.client.get(reverse(f'admin:{name}')).status_code, 200, name)
+
+
+@override_settings(AUCTION_PAYMENT_GATEWAY=INSTANT)
+class AuctionsSwitchedOffTests(AuctionTestCase):
+    """Staff can switch auctions off in the admin: nothing new starts, but what's under way finishes."""
+
+    def setUp(self):
+        super().setUp()
+        self.auction = self.create_auction(buy_now_price=Decimal('9000.00'))
+        self.pay_deposit(self.auction, self.other_buyer)
+        self.bid(self.auction, self.other_buyer, '5000.00')
+        set_enabled('auctions', False)
+
+    def assertRefused(self, response, status_code=400):
+        self.assertEqual(response.status_code, status_code, response.data)
+        self.assertEqual(response.data['detail'], 'Auctions are not available right now.')
+
+    def test_sellers_cannot_start_auctions_or_post_a_bond(self):
+        other_listing = LiveAnimalPost.objects.create(
+            account=self.seller, species=self.species, title='Albino', description='-', contact_info='{}',
+        )
+        self.client.force_authenticate(self.seller)
+        payload = self.auction_payload(live_animal_post=other_listing.id)
+        self.assertRefused(self.client.post(reverse('auction-list'), payload, format='json'), 403)
+        with override_settings(SELLER_BOND_AMOUNT=Decimal('3000')):
+            self.assertRefused(self.client.post(reverse('auction-seller-bond')))
+        self.assertFalse(Auction.objects.filter(live_animal_post=other_listing).exists())
+
+    def test_buyers_cannot_pay_deposits_bid_or_buy_now(self):
+        self.assertRefused(self.pay_deposit(self.auction, self.buyer))
+        self.assertRefused(self.bid(self.auction, self.other_buyer, '5100.00'))
+        self.client.force_authenticate(self.buyer)
+        self.assertRefused(self.client.post(reverse('auction-buy-now', args=[self.auction.id])))
+        self.assertFalse(Deposit.objects.filter(account=self.buyer).exists())
+        self.assertFalse(BuyNowPurchase.objects.exists())
+
+    def test_a_running_auction_still_closes_and_the_winner_can_pay(self):
+        Auction.objects.filter(pk=self.auction.pk).update(ends_at=timezone.now() - timedelta(seconds=1))
+        with self.captureOnCommitCallbacks(execute=True):
+            services.settle_due_auctions()
+        order = Order.objects.get(auction=self.auction)
+        self.assertEqual(order.buyer, self.other_buyer)
+        self.client.force_authenticate(self.other_buyer)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse('order-pay', args=[order.id]))
+        self.assertEqual(response.status_code, 200, response.data)
+        order.refresh_from_db()
+        self.assertEqual(order.balance_status, Order.BalanceStatus.PAID)
+
+    def test_auctions_can_still_be_read(self):
+        self.assertEqual(self.client.get(reverse('auction-detail', args=[self.auction.id])).status_code, 200)
