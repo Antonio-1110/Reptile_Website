@@ -4,17 +4,21 @@ import ListingCard from "../components/listings/ListingCard";
 import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
 import EmptyState from "../components/ui/EmptyState";
+import useFeature from "../hooks/useFeature";
 import { getListingsPage } from "../api/listingsApi";
 import coverImage from "../assets/cover.jpg";
 import "./HomePage.css";
 import { Link } from "react-router";
 
-const HOME_POINTS = ["privacy", "payments", "reports"];
+// Keepers in Taiwan mostly trade in LINE and Facebook groups, so the pitch starts with what those can't do.
+const HOME_POINTS = ["lineGroups", "facebook", "privacy"];
 
 const pickFeaturedListings = (listings) => [...listings].sort(() => Math.random() - 0.5).slice(0, 6);
 
 export default function HomePage() {
   const { t } = useTranslation();
+  const auctionsOn = useFeature("auctions");
+  const points = auctionsOn ? [...HOME_POINTS, "payments"] : HOME_POINTS;
   const [listings, setListings] = useState([]);
   const [featuredListings, setFeaturedListings] = useState([]);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -58,7 +62,7 @@ export default function HomePage() {
           <div>
             <p className="home-kicker">{t("home.kicker")}</p>
             <h1>{t("home.heading")}</h1>
-            <p>{t("home.intro")}</p>
+            <p>{t(auctionsOn ? "home.intro" : "home.introNoAuctions")}</p>
             <div className="home-hero-actions">
               <Link to="/marketplace" className="home-primary-action">{t("home.browse")}</Link>
               <Link to="/postinput" className="home-secondary-action">{t("home.sell")}</Link>
@@ -109,7 +113,7 @@ export default function HomePage() {
           <h2>{t("home.storyHeading")}</h2>
           <p>{t("home.storyBody")}</p>
           <ul className="home-points">
-            {HOME_POINTS.map((point) => (
+            {points.map((point) => (
               <li key={point}>
                 <h3>{t(`home.points.${point}.title`)}</h3>
                 <p>{t(`home.points.${point}.body`)}</p>

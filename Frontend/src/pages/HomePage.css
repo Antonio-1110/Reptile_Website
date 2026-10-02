@@ -140,7 +140,8 @@
 
 .home-points {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* A fourth card (auctions) joins when that switch is on. */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1rem;
   margin: 2.5rem 0 0;
   padding: 0;
