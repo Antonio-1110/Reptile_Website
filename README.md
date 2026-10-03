@@ -109,6 +109,7 @@ Conventions every endpoint follows:
 
 - `POST /register/`, `POST /login/` (username or email; returns `access` + `refresh`), `POST /google/` (Google's ID token; same answer), `POST /refresh/` (returns a new pair), `POST /logout/`, `GET /me/`
 - `POST /verify-email/`, `POST /verify-email/resend/`, `POST /password-reset/`, `POST /password-reset/confirm/`: the one-time links emailed after sign-up and for a forgotten password
+- `POST /password-change/` (auth required): `current_password` and `password`; signs other devices out and returns a new pair
 
 ### Account (`/api/v1/account/`)
 
@@ -124,6 +125,9 @@ Conventions every endpoint follows:
 - `GET`/`POST /equipment/`, `GET`/`PATCH`/`DELETE /equipment/<id>/` — equipment has a `category`
   (`enclosure`, `heating`, `lighting`, `climate`, `substrateDecor`, `transport`, `other`) and a
   `condition` (0–2); the list filters by both, plus price, location, shipping and posting date
+- `?ordering=recommended` (newest first, nudged up for complete listings and well-reviewed sellers),
+  `-created_at,-id`, `price,-id` or `-price,-id` on either list; `GET /<id>/similar/` — up to 6
+  published listings like this one (same species or equipment type), public
 - `GET /species/` — each with its `aliases`. A live-animal listing takes `species` (an id) or
   `requested_species` (a typed name): a name that isn't a species or alias is held for staff review,
   and the listing stays unpublished (`species_review`) until staff map or add the species
@@ -170,6 +174,14 @@ and the seller bond are refused with a 400/403; auctions and orders already unde
   `GET`/`POST /seller-bond/` (auth required)
 - `/orders/`: after a sale, the buyer's and seller's view of it (pay, hand over, confirm, report a
   problem, runner-up offers)
+
+### Alerts (`/api/v1/alerts/`, auth required)
+
+- `GET /` — the user's alerts, newest first (`title`, `body` in the request's language, `link`, `is_read`)
+- `GET /unread-count/`, `POST /read-all/`, `POST /<id>/read/`
+- Price drops, saved-search matches and species reviews are only alerts; an account whose unread
+  alerts reach `ALERT_DIGEST_MIN_UNREAD` and have waited `ALERT_DIGEST_MIN_DAYS` gets one summary email
+  (`manage.py send_alert_digests`). Auction and order messages are alerts and are also emailed at once.
 
 Notes:
 

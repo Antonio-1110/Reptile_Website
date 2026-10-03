@@ -11,10 +11,10 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairView
 
-from .emails import send_password_reset_email, send_verification_email, user_from_uid
+from .emails import send_password_changed_email, send_password_reset_email, send_verification_email, user_from_uid
 from .google import GoogleTokenError, account_for_google, verify_id_token
 from .serializers import (
-    GoogleSignInSerializer, LoginSerializer, MeSerializer, PasswordResetConfirmSerializer,
+    GoogleSignInSerializer, LoginSerializer, MeSerializer, PasswordChangeSerializer, PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer, RegisterSerializer, VerifyEmailSerializer,
 )
 
@@ -172,6 +172,38 @@ class PasswordResetConfirmView(APIView):
         user.set_password(serializer.validated_data['password'])
         user.email_verified = True
         user.save(update_fields=['password', 'email_verified'])
-        for token in OutstandingToken.objects.filter(user=user):
-            BlacklistedToken.objects.get_or_create(token=token)
+        sign_out_everywhere(user)
         return Response({'detail': _('Your password has been changed. You can sign in with it now.')})
+
+
+class PasswordChangeView(APIView):
+    """POST /api/v1/auth/password-change/ — the signed-in user's `current_password` and new `password`.
+
+    Signs the account out on every other device and answers with a fresh token pair for this one, like
+    login/. Accounts without a password (made with Google sign-in) set one with password-reset/ instead.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
+
+    def post(self, request):
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        user.set_password(serializer.validated_data['password'])
+        user.save(update_fields=['password'])
+        sign_out_everywhere(user)
+        send_password_changed_email(user)
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'detail': _('Your password has been changed. Other devices have been signed out.'),
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+
+
+def sign_out_everywhere(user):
+    """Retires every refresh token the account holds. Access tokens already handed out still work
+    until they expire (SIMPLE_JWT ACCESS_TOKEN_LIFETIME), as they aren't checked against the blacklist."""
+    for token in OutstandingToken.objects.filter(user=user):
+        BlacklistedToken.objects.get_or_create(token=token)

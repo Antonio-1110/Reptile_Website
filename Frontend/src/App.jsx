@@ -9,6 +9,7 @@ import ListingDetailPage from "./pages/ListingDetail/ListingDetailPage";
 import MyListingsPage from "./pages/MyListingsPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import InquiriesPage from "./pages/Inquiries/InquiriesPage";
+import AlertsPage from "./pages/Alerts/AlertsPage";
 import SellerProfilePage from "./pages/SellerProfilePage";
 import SavedSearchesPage from "./pages/SavedSearchesPage";
 import SavedListingsPage from "./pages/SavedListingsPage";
@@ -24,6 +25,7 @@ import EmailVerificationBanner from "./components/layout/EmailVerificationBanner
 import Footer from "./components/layout/Footer";
 import LegalPage from "./pages/Legal/LegalPage";
 import ChooseUsernamePage from "./pages/ChooseUsername/ChooseUsernamePage";
+import ChangePasswordPage from "./pages/ChangePassword/ChangePasswordPage";
 import { isLoggedIn } from "./api/authApi";
 import useFeature from "./hooks/useFeature";
 import { buildMarketplaceUrl, readMarketplaceCategory, readMarketplaceSearch } from "./utils/marketplaceSearch";
@@ -117,6 +119,7 @@ export default function App() {
         <Route path="/my-listings" element={<MyListingsPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/inquiries" element={<InquiriesPage />} />
+        <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/saved-searches" element={<SavedSearchesPage />} />
         <Route path="/saved" element={<SavedListingsPage />} />
         <Route path="/settings" element={<RequireSignIn><AccountSettingsPage /></RequireSignIn>} />
@@ -125,6 +128,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/choose-username" element={<RequireSignIn><ChooseUsernamePage /></RequireSignIn>} />
+        <Route path="/settings/password" element={<RequireSignIn><ChangePasswordPage /></RequireSignIn>} />
         <Route path="/privacy" element={<LegalPage doc="privacy" />} />
         <Route path="/terms" element={<LegalPage doc="terms" />} />
         <Route path="/marketplace" element={<MarketplacePage searchTerm={search.term} searchTags={search.tags} onClearSearch={() => handleHeaderSearch("", [])} />} />

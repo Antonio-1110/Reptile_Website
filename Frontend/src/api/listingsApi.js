@@ -322,9 +322,11 @@ export async function deleteSavedSearch(id) {
 
 // One page of listings (live animals or equipment, per query.category) matching the query, plus the
 // total match count.
-export async function getListingsPage({ page = 1, ...query } = {}) {
+export async function getListingsPage({ page = 1, ordering = "", ...query } = {}) {
   const isEquipment = query.category === "equipment";
   const params = buildListingParams(query);
+  // The sort order isn't part of a saved search, so it's added here rather than in buildListingParams.
+  if (ordering) params.set("ordering", ordering);
   params.set("page", page);
   const payload = await readListings(`${listingEndpoint(isEquipment ? "equipment" : "live_animal")}?${params}`);
   return {
@@ -406,6 +408,12 @@ export async function getFavoritesPage(page = 1) {
 export async function getListing(id, category = "live_animal") {
   const item = await readListings(listingEndpoint(category, id));
   return category === "equipment" ? normalizeEquipment(item) : normalizeListing(item);
+}
+
+// A few published listings like this one (same species or equipment type), for the listing page.
+export async function getSimilarListings(id, category = "live_animal") {
+  const items = await readListings(`${listingEndpoint(category, id)}similar/`);
+  return items.map(category === "equipment" ? normalizeEquipment : normalizeListing);
 }
 
 // What "Contact seller" would send: the signed-in user's own contact details ({contact, already_sent}).

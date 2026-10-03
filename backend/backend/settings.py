@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'authentication',
     'auction',
     'features',
+    'alerts',
 ]
 
 MIDDLEWARE = [
@@ -297,6 +298,13 @@ BACKEND_URL = os.environ.get('DJANGO_BACKEND_URL', 'http://localhost:8000').rstr
 # People who saved a listing get at most one price-drop email per listing in this many hours, so a
 # seller can't mass-email them by lowering the price a little at a time.
 PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)
+# Most notices (price drops, saved-search matches, species reviews) are alerts on the site, not emails.
+# An account gets one summary email once it has at least ALERT_DIGEST_MIN_UNREAD unread alerts and
+# the oldest has waited ALERT_DIGEST_MIN_DAYS (`manage.py send_alert_digests`). Alerts are deleted
+# after ALERT_RETENTION_DAYS.
+ALERT_DIGEST_MIN_UNREAD = env_int('ALERT_DIGEST_MIN_UNREAD', 5)
+ALERT_DIGEST_MIN_DAYS = env_int('ALERT_DIGEST_MIN_DAYS', 3)
+ALERT_RETENTION_DAYS = env_int('ALERT_RETENTION_DAYS', 90)
 
 
 # Static files (CSS, JavaScript, Images)
@@ -423,6 +431,10 @@ ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'admin').strip('/') + '/'
 # many failures in a row, per username and per client address (authentication/lockout.py).
 LOGIN_LOCKOUT_FAILURES = env_int('LOGIN_LOCKOUT_FAILURES', 5)
 LOGIN_LOCKOUT_MINUTES = env_int('LOGIN_LOCKOUT_MINUTES', 15)
+# A changed username can't be changed again for this many days, and nobody else can take the old one
+# for as long, so a name buyers know isn't quickly handed to someone else (account/usernames.py). 0 turns
+# both off.
+USERNAME_CHANGE_DAYS = env_int('USERNAME_CHANGE_DAYS', 30)
 
 # The OAuth client ID from Google Cloud Console (not a secret: the browser sees it too). Empty turns
 # Google sign-in off. The frontend needs the same value as VITE_GOOGLE_CLIENT_ID.

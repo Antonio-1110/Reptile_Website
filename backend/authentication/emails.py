@@ -58,3 +58,16 @@ def send_password_reset_email(user):
         + f'\n\n{url}\n\n'
         + _("If it wasn't you, ignore this email: your password stays the same."),
     ))
+
+
+def send_password_changed_email(user):
+    # So the owner hears about it if someone who got into their account changed the password.
+    url = f'{settings.FRONTEND_URL}/forgot-password'
+    send_notification([user.email], lambda: (
+        _('Your password was changed'),
+        _('The password for the account %(username)s was just changed, and it was signed out on every other device.')
+        % {'username': user.username}
+        + '\n\n'
+        + _("If it wasn't you, choose a new password now with this link, then check your account settings:")
+        + f'\n\n{url}',
+    ))

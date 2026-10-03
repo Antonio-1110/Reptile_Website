@@ -7,7 +7,7 @@ Sellers may type a species that isn't in the list. The listing is saved but kept
   types it gets the species straight away;
 - add it as a new species;
 - or reject it: the seller is asked to choose a species from the list.
-Either way the sellers waiting on it are emailed.
+Either way the sellers waiting on it get an alert on the site.
 """
 import re
 
@@ -17,7 +17,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from common.notifications import send_notification
+from alerts.services import listing_path, notify
 
 from .models import Species, SpeciesAlias, SpeciesRequest
 
@@ -93,7 +93,7 @@ def approve(species_request, species, staff_user):
     species_request.save()
     listings = list(species_request.listings.select_related('account'))
     species_request.listings.update(species=species, species_request=None)
-    transaction.on_commit(lambda: _email_approved(listings, species_request.name, species.name))
+    transaction.on_commit(lambda: _alert_approved(listings, species_request.name, species.name))
     return len(listings)
 
 
@@ -112,21 +112,21 @@ def reject(species_request, staff_user, note=''):
     species_request.staff_note = note
     species_request.save()
     listings = list(species_request.listings.select_related('account'))
-    transaction.on_commit(lambda: _email_rejected(listings, species_request.name, note))
+    transaction.on_commit(lambda: _alert_rejected(listings, species_request.name, note))
     return len(listings)
 
 
-def _email_approved(listings, requested, species_name):
+def _alert_approved(listings, requested, species_name):
     for post in listings:
         values = {'title': post.title, 'requested': requested, 'species': species_name}
-        send_notification([post.account.email], lambda values=values, post=post: (
+        notify([post.account], lambda values=values, post=post: (
             _('Your listing is live: %(title)s') % values,
             _('We reviewed the species you entered, "%(requested)s", and listed it as "%(species)s". Your listing "%(title)s" is now on the marketplace.') % values
             + f'\n\n{settings.FRONTEND_URL}/posts/{post.id}',
-        ))
+        ), link=listing_path(post))
 
 
-def _email_rejected(listings, requested, note):
+def _alert_rejected(listings, requested, note):
     for post in listings:
         values = {'title': post.title, 'requested': requested, 'note': note}
 
@@ -139,4 +139,4 @@ def _email_rejected(listings, requested, note):
             }
             return _('Choose a different species for your listing: %(title)s') % values, body
 
-        send_notification([post.account.email], build)
+        notify([post.account], build, link=f'/postinput?edit={post.id}&category=live_animal')

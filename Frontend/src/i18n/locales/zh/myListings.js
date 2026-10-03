@@ -11,7 +11,7 @@ export default {
   statusError: "目前無法變更狀態。",
   newListing: "+ 新增刊登",
   loading: "正在載入你的刊登…",
-  empty: "你還沒有發布任何刊登。",
+  empty: "你還沒有發布任何刊登",
   emptyBody: "刊登一隻爬蟲或一件設備，它就會出現在這裡，方便你隨時編輯或移除。",
   emptyAction: "發布第一則刊登",
   browseAction: "逛逛市集",

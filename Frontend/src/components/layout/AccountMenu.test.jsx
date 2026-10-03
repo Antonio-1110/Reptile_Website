@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import AccountMenu, { INQUIRIES_CHANGED } from './AccountMenu';
+import AccountMenu, { ALERTS_CHANGED, INQUIRIES_CHANGED } from './AccountMenu';
 import { getWaitingInquiryCount } from '../../api/listingsApi';
+import { getUnreadAlertCount } from '../../api/alertsApi';
 
 vi.mock('../../api/listingsApi', () => ({ getWaitingInquiryCount: vi.fn(() => Promise.resolve(0)) }));
+vi.mock('../../api/alertsApi', () => ({ getUnreadAlertCount: vi.fn(() => Promise.resolve(0)) }));
 
 const openMenu = () => fireEvent.click(screen.getByRole('button', { name: /My account/ }));
 
@@ -15,7 +17,7 @@ describe('AccountMenu', () => {
     openMenu();
     expect(screen.getByRole('button', { name: /My account/ })).toHaveAttribute('aria-expanded', 'true');
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-    expect(hrefs).toEqual(['/my-listings', '/orders', '/inquiries', '/saved', '/saved-searches', '/settings']);
+    expect(hrefs).toEqual(['/alerts', '/my-listings', '/orders', '/inquiries', '/saved', '/saved-searches', '/settings']);
   });
 
   it('signs out from the menu', () => {
@@ -45,6 +47,20 @@ describe('AccountMenu', () => {
 
     window.dispatchEvent(new Event(INQUIRIES_CHANGED));
     expect(await screen.findByRole('link', { name: /Inquiries.*1 inquiry waiting for your reply/ })).toBeInTheDocument();
+  });
+
+  it('adds unread alerts to the count, and drops them once the Alerts page has read them', async () => {
+    getWaitingInquiryCount.mockResolvedValue(1);
+    getUnreadAlertCount.mockResolvedValueOnce(3).mockResolvedValueOnce(0);
+    render(<AccountMenu onSignOut={() => {}} />, { wrapper: MemoryRouter });
+    const toggle = await screen.findByRole('button', { name: /1 inquiry waiting.*3 unread alerts/ });
+    expect(toggle).toHaveTextContent('4');
+    openMenu();
+    expect(screen.getByRole('link', { name: /Alerts.*3 unread alerts/ })).toHaveAttribute('href', '/alerts');
+
+    window.dispatchEvent(new Event(ALERTS_CHANGED));
+    expect(await screen.findByRole('link', { name: 'Alerts' })).toBeInTheDocument();
+    getWaitingInquiryCount.mockResolvedValue(0);
   });
 
   it('shows no badge when nothing is waiting', async () => {
