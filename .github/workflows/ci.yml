@@ -14,11 +14,53 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    # Which parts of the site a pull request touches, so the jobs below can skip tests it can't affect.
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.areas.outputs.backend }}
+      frontend: ${{ steps.areas.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: areas
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          backend=false
+          frontend=false
+          if [ "$EVENT" != pull_request ]; then
+            # Pushes to master (what Heroku deploys) always test everything.
+            backend=true
+            frontend=true
+          else
+            # A pull request is checked out as its merge into the base branch, so the merge's first parent
+            # is the base and this diff is exactly what merging would change.
+            files=$(git diff --name-only HEAD^1 HEAD)
+            while IFS= read -r file; do
+              case "$file" in
+                '' | *.md) ;;
+                backend/*) backend=true ;;
+                Frontend/*) frontend=true ;;
+                # CI itself, Heroku's build files, the root requirements: anything shared tests everything.
+                *) backend=true; frontend=true ;;
+              esac
+            done <<< "$files"
+          fi
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "Backend changed: $backend. Frontend changed: $frontend."
+
   backend:
     # Twice: on SQLite (local dev) and on PostgreSQL (production). Postgres is where row locks really
     # happen, so the race tests in auction/test_races.py only run there.
     # The SQLite run keeps the plain name "backend": master's ruleset requires a check by that name.
     name: ${{ matrix.database == 'sqlite' && 'backend' || format('backend ({0})', matrix.database) }}
+    needs: changes
+    # Runs on every pull request, skipping its steps when there's nothing to test, so the check named
+    # in master's ruleset always reports. (A failed `changes` job leaves the outputs empty: test everything.)
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -46,21 +88,33 @@ jobs:
       DATABASE_URL: ${{ matrix.database_url }}
       DJANGO_DATABASE_SSL: '0'
     steps:
+      - if: needs.changes.outputs.backend == 'false'
+        working-directory: .
+        run: echo 'This pull request changes nothing under backend/, so the backend tests are skipped.'
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.backend != 'false'
       - uses: actions/setup-python@v5
+        if: needs.changes.outputs.backend != 'false'
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
+        if: needs.changes.outputs.backend != 'false'
       # msgfmt, which the test runner uses to compile the translations (.mo files aren't committed).
       - run: sudo apt-get install -y --no-install-recommends gettext
+        if: needs.changes.outputs.backend != 'false'
       - run: python manage.py check
+        if: needs.changes.outputs.backend != 'false'
       # Fails when a model change ships without its migration.
       - run: python manage.py makemigrations --check --dry-run
+        if: needs.changes.outputs.backend != 'false'
       - run: python manage.py test
+        if: needs.changes.outputs.backend != 'false'
 
   deploy-settings:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.backend != 'false' }}
     # What Heroku runs, with production-shaped config vars (fake values), so a settings change that
     # would break the build, the release phase or the security checks fails here instead of in a deploy.
     runs-on: ubuntu-latest
@@ -112,25 +166,41 @@ jobs:
       - run: gunicorn --check-config --chdir backend backend.wsgi
 
   frontend:
+    needs: changes
+    # Runs on every pull request, skipping its steps when there's nothing to test, so the check named
+    # in master's ruleset always reports. (A failed `changes` job leaves the outputs empty: test everything.)
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Frontend
     steps:
+      - if: needs.changes.outputs.frontend == 'false'
+        working-directory: .
+        run: echo 'This pull request changes nothing under Frontend/, so the frontend tests are skipped.'
       - uses: actions/checkout@v4
+        if: needs.changes.outputs.frontend != 'false'
       - uses: actions/setup-node@v4
+        if: needs.changes.outputs.frontend != 'false'
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
       - run: npm ci
+        if: needs.changes.outputs.frontend != 'false'
       - run: npm run lint
+        if: needs.changes.outputs.frontend != 'false'
       # The unit tests, with a coverage summary in the log.
       - run: npm run test:coverage
+        if: needs.changes.outputs.frontend != 'false'
       - run: npm run build
+        if: needs.changes.outputs.frontend != 'false'
 
   e2e:
-    # Real browser flows (Frontend/e2e/) against a throwaway backend with the demo data.
+    # Real browser flows (Frontend/e2e/) against a throwaway backend with the demo data. They use both
+    # halves of the site, so a change to either runs them.
+    needs: changes
+    if: ${{ !cancelled() && (needs.changes.outputs.backend != 'false' || needs.changes.outputs.frontend != 'false') }}
     runs-on: ubuntu-latest
     defaults:
       run:
