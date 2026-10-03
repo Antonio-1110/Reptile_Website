@@ -21,7 +21,8 @@ export default function ListingCard({ animal }) {
       <div className="card-media">
         {animal.image ? (
           <img
-            src={animal.image}
+            // The card-sized copy when there is one (photos uploaded here); the listing page shows the original.
+            src={animal.thumbnail || animal.image}
             alt={animal.title}
             className="card-image"
             loading="lazy"

@@ -150,6 +150,22 @@ class FavoriteFlagMixin(serializers.Serializer):
         return bool(getattr(obj, 'is_favorite', False))
 
 
+class CompactListMixin:
+    """
+    Lists of listings (the marketplace, a seller's page, saved and similar listings) only feed the
+    cards, so they leave out the long text and the full photo list that only the listing page shows.
+    The viewsets ask for this through the `compact` context flag (CompactListingsMixin).
+    """
+    LIST_OMITTED_FIELDS = ('description', 'guide_notes', 'gallery')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if self.context.get('compact'):
+            for field in self.LIST_OMITTED_FIELDS:
+                data.pop(field, None)
+        return data
+
+
 class PublicListingFieldsMixin(serializers.Serializer):
     """Read-only fields the listing detail page shows for both listing types."""
     seller = PublicSellerSerializer(source='account', read_only=True)
@@ -159,18 +175,19 @@ class PublicListingFieldsMixin(serializers.Serializer):
         return max(0, (timezone.now() - obj.created_at).days)
 
 
-class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class EquipmentPostSerializer(CompactListMixin, FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
 
     class Meta:
         model = EquipmentPost
         fields = [
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
-            'category', 'condition', 'shipping_methods', 'image', 'gallery', 'created_at', 'updated_at',
+            'category', 'condition', 'shipping_methods', 'image', 'gallery', 'thumbnail', 'created_at', 'updated_at',
             'seller', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'posted_days', 'is_hidden', 'is_favorite', 'image', 'gallery',
+            'thumbnail',
         ]
     
     def create(self, validated_data):
@@ -180,7 +197,7 @@ class EquipmentPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Post
         return super().create(validated_data)
 
 
-class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
+class LiveAnimalPostSerializer(CompactListMixin, FavoriteFlagMixin, OwnerOnlyContactInfoMixin, PostLimitSerializerMixin, PublicListingFieldsMixin, serializers.ModelSerializer):
     contact_info = ContactInfoField()
     # Null while the listing's species is under review (see species_review).
     species_name = serializers.CharField(source='species.name', read_only=True, allow_null=True)
@@ -204,12 +221,12 @@ class LiveAnimalPostSerializer(FavoriteFlagMixin, OwnerOnlyContactInfoMixin, Pos
             'id', 'status', 'title', 'description', 'price', 'location', 'contact_info', 'is_hidden',
             'species', 'species_name', 'requested_species', 'species_review', 'sex', 'genetics', 'genes', 'life_stage',
             'age_years', 'weight_grams', 'size_cm', 'diets', 'shipping_methods',
-            'image', 'gallery', 'guide_notes', 'created_at', 'updated_at',
+            'image', 'gallery', 'thumbnail', 'guide_notes', 'created_at', 'updated_at',
             'seller', 'posted_days', 'is_favorite'
         ]
         read_only_fields = [
             'id', 'created_at', 'updated_at', 'seller', 'is_hidden', 'species_name', 'species_review', 'genes',
-            'posted_days', 'is_favorite', 'image', 'gallery',
+            'posted_days', 'is_favorite', 'image', 'gallery', 'thumbnail',
         ]
     
     def get_species_review(self, obj):

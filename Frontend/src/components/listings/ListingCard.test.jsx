@@ -19,4 +19,9 @@ describe('ListingCard', () => {
     expect(screen.getAllByRole('link').some((link) => link.getAttribute('href') === '/posts/12')).toBe(true);
     expect(screen.getByRole('link', { name: 'apex_exotics' })).toBeInTheDocument();
   });
+
+  it('shows the small copy of the cover photo when the listing has one', () => {
+    render(<ListingCard animal={{ ...animal, thumbnail: 'https://example.com/p.thumb.webp' }} />, { wrapper: MemoryRouter });
+    expect(screen.getByRole('img', { name: animal.title })).toHaveAttribute('src', 'https://example.com/p.thumb.webp');
+  });
 });
