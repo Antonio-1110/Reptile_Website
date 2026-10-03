@@ -23,7 +23,7 @@
 }
 
 .marketplace-heading {
-  margin-bottom: 1rem;
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   line-height: calc(1.75 / 1.25);
@@ -71,7 +71,10 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.5rem 1rem;
+  gap: 0.75rem 1rem;
+  /* The sort menu and save buttons wrap under the heading on narrow screens, so the space before the
+     listings belongs to the whole row, not just the heading. */
+  margin-bottom: 1.5rem;
 }
 
 .marketplace-save-search { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 1rem; }
