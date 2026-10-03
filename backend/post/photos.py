@@ -2,6 +2,7 @@
 import io
 
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from PIL import Image, ImageOps
 
 JPEG_QUALITY = 90
@@ -43,3 +44,17 @@ def without_metadata(upload):
     buffer = io.BytesIO()
     image.save(buffer, format=fmt, **options)
     return ContentFile(buffer.getvalue()), EXTENSIONS[fmt]
+
+
+def photo_folder(post):
+    """Where a listing's uploaded photos are stored, so they can all be removed with the listing."""
+    return f'listings/{post._meta.model_name}/{post.pk}'
+
+
+def delete_photo_folder(folder):
+    try:
+        _, files = default_storage.listdir(folder)
+    except FileNotFoundError:
+        return
+    for name in files:
+        default_storage.delete(f'{folder}/{name}')

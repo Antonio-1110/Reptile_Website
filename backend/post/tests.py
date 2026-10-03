@@ -777,6 +777,32 @@ class ListingPhotoUploadTests(APITestCase):
 
 		self.assertEqual(len(self.stored_files()), 1)
 
+	def test_deleting_a_listing_removes_its_uploaded_photos(self):
+		kept = EquipmentPost.objects.create(account=self.seller, title='Tank', description='d', contact_info='')
+		self.client.force_authenticate(self.seller)
+		self.upload([make_image('a.png'), make_image('b.png')])
+		self.client.post(reverse('equipment-photos', args=[kept.id]), {'photos': [make_image()]}, format='multipart')
+
+		with self.captureOnCommitCallbacks(execute=True):
+			self.assertEqual(self.client.delete(reverse('live-animal-detail', args=[self.post.id])).status_code, 204)
+
+		self.assertEqual([path.parent.name for path in self.stored_files()], [str(kept.id)])
+
+	def test_deleting_a_listing_in_the_admin_also_removes_its_photos(self):
+		self.client.force_authenticate(self.seller)
+		self.upload([make_image('a.png')])
+		staff = Account.objects.create_superuser(username='photo-staff', email='photo-staff@example.com', password='pass1234')
+		self.client.force_login(staff)
+
+		with self.captureOnCommitCallbacks(execute=True):
+			response = self.client.post(
+				reverse('admin:post_liveanimalpost_delete', args=[self.post.id]), {'post': 'yes'},
+			)
+
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(LiveAnimalPost.objects.filter(pk=self.post.id).exists())
+		self.assertEqual(self.stored_files(), [])
+
 	def test_equipment_listing_accepts_photos(self):
 		tank = EquipmentPost.objects.create(account=self.seller, title='Tank', description='d', contact_info='')
 		self.client.force_authenticate(self.seller)
@@ -1471,6 +1497,11 @@ class SpeciesReviewTests(APITestCase):
 
 		listing = self.create(requested_species='Mystery Skink').data
 		self.client.delete(reverse('live-animal-detail', args=[listing['id']]))
+		self.assertFalse(SpeciesRequest.objects.exists())
+
+		# Staff deleting it in the admin drops the request too.
+		listing = self.create(requested_species='Mystery Skink').data
+		LiveAnimalPost.objects.filter(pk=listing['id']).delete()
 		self.assertFalse(SpeciesRequest.objects.exists())
 
 	def test_search_alerts_skip_listings_waiting_on_review(self):

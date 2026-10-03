@@ -24,7 +24,6 @@ from django.db.models import Q
 from . import moderation
 from . import photos as listing_photos
 from . import ranking
-from . import species as species_catalog
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
 from rest_framework import viewsets, permissions, filters, status
@@ -216,7 +215,7 @@ class ListingPhotosMixin:
             except (OSError, ValueError):
                 raise ValidationError({'photos': [_('"%(name)s" could not be read as an image.') % {'name': photo.name}]})
 
-        folder = f'listings/{post._meta.model_name}/{post.pk}'
+        folder = listing_photos.photo_folder(post)
         new_urls = []
         for content, extension in cleaned:
             name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', content)
@@ -320,11 +319,6 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
     
     def perform_create(self, serializer):
         serializer.save(account=self.request.user)
-
-    def perform_destroy(self, instance):
-        species_request = instance.species_request
-        super().perform_destroy(instance)
-        species_catalog.release(species_request)
 
 
 class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
