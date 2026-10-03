@@ -451,3 +451,19 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# Error alerts: unhandled exceptions (and logged errors) go to Sentry when SENTRY_DSN is set; unset
+# sends nothing. Errors only, no performance tracing (it eats the free quota). Request bodies and the
+# code's local variables are never attached because they can hold passwords and contact details, and
+# send_default_pii stays off so user ids, IP addresses and cookies aren't sent either.
+SENTRY_DSN = os.environ.get('SENTRY_DSN', '').strip()
+if SENTRY_DSN and not TESTING:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.environ.get('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production'),
+        send_default_pii=False,
+        max_request_body_size='never',
+        include_local_variables=False,
+    )
