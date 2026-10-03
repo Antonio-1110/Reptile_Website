@@ -2,7 +2,6 @@
   min-height: 100vh;
   color: oklch(96.7% 0.003 264.542);
   background-color: oklch(21% 0.034 264.665);
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .marketplace-layout {

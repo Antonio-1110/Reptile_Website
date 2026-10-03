@@ -5,7 +5,7 @@ export default {
   loadErrorTitle: "無法載入精選刊登",
   loadErrorBody: "請檢查網路連線後再試一次。",
   kicker: "台灣爬蟲飼主的交易市集",
-  heading: "向用心的飼主，找到你的下一隻爬蟲。",
+  heading: "從用心的飼主手中 找到下一隻爬蟲",
   intro: "瀏覽全台繁殖者與玩家刊登的球蟒、守宮等爬蟲，以及飼養所需的箱體與器材。可依基因、年齡與所在地篩選，再聯絡賣家。",
   introWithAuctions: "瀏覽全台繁殖者與玩家刊登的球蟒、守宮等爬蟲，以及飼養所需的箱體與器材。可依基因、年齡與所在地篩選，再聯絡賣家或參加競標。",
   coverAlt: "棲息地中的爬蟲",
@@ -15,7 +15,7 @@ export default {
   featuredIntro: "從最新刊登中隨機挑選幾則。",
   refresh: "換一組",
   storyKicker: "為什麼選擇 Reptilian",
-  storyHeading: "爬蟲刊登，終於有個好去處。",
+  storyHeading: "爬蟲刊登 終於有個好去處",
   storyBody: "在台灣，爬蟲大多在 LINE 群組和 Facebook 社團裡交易。這些地方很適合和其他飼主交流，但並不是為了買賣動物而設計的。",
   points: {
     findable: {
