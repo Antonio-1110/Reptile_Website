@@ -2,7 +2,6 @@
   min-height: 100vh;
   color: oklch(96.7% 0.003 264.542);
   background-color: oklch(21% 0.034 264.665);
-  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .marketplace-layout {
@@ -141,4 +140,15 @@
   align-items: center;
   justify-content: flex-end;
   gap: 1rem;
+}
+
+.marketplace-sort { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--color-text-muted); }
+.marketplace-sort select {
+  min-height: 2.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font: inherit;
 }

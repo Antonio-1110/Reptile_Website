@@ -6,13 +6,14 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.db import transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, F, OuterRef
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.parsers import FormParser, MultiPartParser
 from authentication.permissions import HasVerifiedEmail
 from common.money import format_money
-from common.notifications import send_notification
+from account.models import Account
+from alerts.services import listing_path, notify
 from .serializer import (
     InquirySerializer, SavedSearchSerializer,
     LiveAnimalPostSerializer, EquipmentPostSerializer, SpeciesSerializer,
@@ -22,6 +23,7 @@ from .filters import EquipmentPostFilter, LiveAnimalPostFilter
 from django.db.models import Q
 from . import moderation
 from . import photos as listing_photos
+from . import ranking
 from . import species as species_catalog
 from .models import LiveAnimalPost, EquipmentPost, Species, ContactRequest, Favorite, Report, SavedSearch
 from .search_alerts import SEARCH_FIELDS as LIVE_ANIMAL_SEARCH_FIELDS
@@ -42,19 +44,16 @@ class IsPostOwnerOrReadOnly(permissions.BasePermission):
 
 
 def notify_price_drop(post, old_price, favorite_field):
-    """Email everyone who saved the listing (except its owner) that its price went down."""
+    """Alert everyone who saved the listing (except its owner) that its price went down."""
     # The marker lives in the cache: several backend workers need a shared cache for this to be exact.
     if not cache.add(f'price-drop:{favorite_field}:{post.pk}', True, timeout=settings.PRICE_DROP_EMAIL_HOURS * 3600):
         return
     values = {'title': post.title, 'old': format_money(old_price), 'new': format_money(post.price)}
-    # Only confirmed addresses: otherwise an account made with a stranger's address would mail them.
-    savers = Favorite.objects.filter(**{favorite_field: post}, account__email_verified=True).exclude(account=post.account)
-    # One email each: a shared To: line would show every saver's address to the others.
-    for email in savers.values_list('account__email', flat=True).distinct():
-        send_notification([email], lambda: (
-            _('Price drop: %(title)s') % values,
-            _('A listing you saved, "%(title)s", is now %(new)s (it was %(old)s).') % values,
-        ))
+    savers = Account.objects.filter(**{f'favorites__{favorite_field}': post}, is_active=True).exclude(pk=post.account_id).distinct()
+    notify(list(savers), lambda: (
+        _('Price drop: %(title)s') % values,
+        _('A listing you saved, "%(title)s", is now %(new)s (it was %(old)s).') % values,
+    ), link=listing_path(post))
 
 
 class FavoritesMixin:
@@ -255,6 +254,37 @@ class HideSoldListingsMixin:
         return queryset
 
 
+class ListingOrderingFilter(filters.OrderingFilter):
+    """
+    `?ordering=recommended` ranks by listing quality as well as age (post/ranking.py). Other orderings
+    put empty values last: Postgres sorts NULL first when descending, which would open "price, high to
+    low" with listings that have no price.
+    """
+    RECOMMENDED = 'recommended'
+
+    def filter_queryset(self, request, queryset, view):
+        if request.query_params.get(self.ordering_param) == self.RECOMMENDED:
+            return ranking.recommended(queryset)
+        ordering = self.get_ordering(request, queryset, view)
+        if not ordering:
+            return queryset
+        return queryset.order_by(*(
+            F(field[1:]).desc(nulls_last=True) if field.startswith('-') else F(field).asc(nulls_last=True)
+            for field in ordering
+        ))
+
+
+class SimilarListingsMixin:
+    """Adds a public `/similar/` action: a few published listings like this one (post/ranking.py)."""
+
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def similar(self, request, pk=None):
+        post = self.get_object()
+        # get_queryset also shows staff and owners their unpublished listings; suggestions never do.
+        listings = ranking.similar_listings(post, self.get_queryset().filter(self.published))
+        return Response(self.get_serializer(listings, many=True).data)
+
+
 class OwnListingsMixin:
     """Adds a `/mine/` action so sellers can list and manage their own listings."""
 
@@ -274,15 +304,15 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species', 'species_request').all()
     serializer_class = LiveAnimalPostSerializer
     published = LiveAnimalPost.PUBLISHED
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, ListingOrderingFilter]
     filterset_class = LiveAnimalPostFilter
     search_fields = LIVE_ANIMAL_SEARCH_FIELDS
-    ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm']
+    ordering_fields = ['price', 'created_at', 'age_years', 'weight_grams', 'size_cm', 'id']
     ordering = ['-created_at', '-id']
     contact_request_field = 'live_animal_post'
     favorite_field = 'live_animal_post'
@@ -297,14 +327,14 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
         species_catalog.release(species_request)
 
 
-class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, ListingOrderingFilter]
     filterset_class = EquipmentPostFilter
     search_fields = ['title', 'description']
-    ordering_fields = ['price', 'created_at']
+    ordering_fields = ['price', 'created_at', 'id']
     ordering = ['-created_at', '-id']
     contact_request_field = 'equipment_post'
     favorite_field = 'equipment_post'

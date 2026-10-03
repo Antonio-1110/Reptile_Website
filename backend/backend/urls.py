@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/v1/sellers/<int:pk>/reviews/', SellerReviews.as_view(), name='seller-reviews'),
     path('api/v1/auctions/', include('auction.urls')),
     path('api/v1/features/', FeatureSwitches.as_view(), name='features'),
+    path('api/v1/alerts/', include('alerts.urls')),
     # Payment provider callbacks (form posts from ECPay, not part of the JSON API).
     path('payments/ecpay/notify/', ecpay.notify, name='ecpay-notify'),
     path('payments/ecpay/result/', ecpay.result, name='ecpay-result'),

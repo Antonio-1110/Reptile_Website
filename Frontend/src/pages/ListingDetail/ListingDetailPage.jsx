@@ -7,6 +7,7 @@ import BuyNowPanel from './components/BuyNowPanel';
 import ContactSellerPanel from './components/ContactSellerPanel';
 import ImageLightbox from './components/ImageLightbox';
 import OrderPanel from './components/OrderPanel';
+import SimilarListings from './components/SimilarListings';
 import useListingAuction from './useListingAuction';
 import AuctionCountdown from '../../components/auctions/AuctionCountdown';
 import BackLink from '../../components/ui/BackLink';
@@ -362,6 +363,8 @@ export default function ListingDetailPage({ listingId, category = 'live_animal' 
             </section>
           </div>
         </div>
+
+        <SimilarListings listingId={listingId} category={category} />
 
         {expandedImage && (
           <ImageLightbox src={expandedImage} alt={listing.title} onClose={() => setExpandedImage(null)} />

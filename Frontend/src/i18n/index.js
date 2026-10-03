@@ -27,6 +27,9 @@ i18n
 // Keep <html lang> (screen readers, fonts, hyphenation) and the tab title in the UI language.
 const syncDocument = (language) => {
   document.documentElement.lang = language === "zh" ? "zh-Hant" : "en";
+  // The Chinese web font's rules (index.css uses it under :lang(zh-Hant)) are a separate chunk, so
+  // English visitors never load them.
+  if (language === "zh") import("@fontsource-variable/noto-sans-tc");
   document.title = i18n.t("app.title");
 };
 syncDocument(i18n.resolvedLanguage);
