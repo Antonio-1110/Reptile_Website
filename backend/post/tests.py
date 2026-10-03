@@ -13,6 +13,7 @@ from PIL import ExifTags, Image
 from rest_framework.test import APITestCase
 
 from account.models import Account
+from alerts.models import Alert
 from .models import ContactRequest, EquipmentPost, Favorite, LiveAnimalPost, Report, SavedSearch, Species, SpeciesAlias, SpeciesRequest
 
 
@@ -997,20 +998,23 @@ class FavoritesTests(APITestCase):
 		self.assertEqual(self.client.post(reverse('equipment-favorite', args=[tank.id])).status_code, 200)
 		self.assertEqual(self.client.get(reverse('equipment-favorites')).data['count'], 1)
 
-	def test_price_drop_emails_each_saver_separately(self):
-		for user in (self.buyer, self.other, self.seller):  # the owner saving their own listing isn't emailed
+	def test_price_drop_alerts_each_saver_on_the_site_without_email(self):
+		for user in (self.buyer, self.other, self.seller):  # the owner saving their own listing isn't alerted
 			Favorite.objects.create(account=user, live_animal_post=self.post)
 		self.client.force_authenticate(self.seller)
 		with self.captureOnCommitCallbacks(execute=True):
 			response = self.client.patch(reverse('live-animal-detail', args=[self.post.id]), {'price': 8000}, format='json')
 
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual(sorted(message.to[0] for message in mail.outbox), ['buyer@example.com', 'other@example.com'])
-		self.assertTrue(all(len(message.to) == 1 for message in mail.outbox))
-		self.assertIn('8,000', mail.outbox[0].body)
-		self.assertIn('10,000', mail.outbox[0].body)
+		alerts = Alert.objects.order_by('account__username')
+		self.assertEqual([alert.account for alert in alerts], sorted([self.buyer, self.other], key=lambda account: account.username))
+		self.assertIn('8,000', alerts[0].text['en']['body'])
+		self.assertIn('10,000', alerts[0].text['en']['body'])
+		self.assertEqual(alerts[0].link, f'/posts/{self.post.id}')
+		self.assertEqual(mail.outbox, [])  # only a summary of unread alerts is ever emailed
 
-	def test_price_drop_skips_savers_who_have_not_confirmed_their_email(self):
+	def test_price_drop_alerts_savers_who_have_not_confirmed_their_email_too(self):
+		# Alerts stay on the site, so an unconfirmed address can't be used to mail a stranger.
 		Account.objects.filter(pk=self.other.pk).update(email_verified=False)
 		for user in (self.buyer, self.other):
 			Favorite.objects.create(account=user, live_animal_post=self.post)
@@ -1018,17 +1022,17 @@ class FavoritesTests(APITestCase):
 		with self.captureOnCommitCallbacks(execute=True):
 			self.client.patch(reverse('live-animal-detail', args=[self.post.id]), {'price': 8000}, format='json')
 
-		self.assertEqual([message.to[0] for message in mail.outbox], ['buyer@example.com'])
+		self.assertEqual(Alert.objects.count(), 2)
 
 	@override_settings(CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}})
-	def test_repeated_price_drops_email_savers_once_a_day(self):
+	def test_repeated_price_drops_alert_savers_once_a_day(self):
 		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)
 		self.client.force_authenticate(self.seller)
 		url = reverse('live-animal-detail', args=[self.post.id])
 		with self.captureOnCommitCallbacks(execute=True):
 			for price in (9000, 8000, 7000):
 				self.client.patch(url, {'price': price}, format='json')
-		self.assertEqual(len(mail.outbox), 1)
+		self.assertEqual(Alert.objects.count(), 1)
 
 	def test_price_rise_or_other_edits_send_nothing(self):
 		Favorite.objects.create(account=self.buyer, live_animal_post=self.post)
@@ -1037,7 +1041,7 @@ class FavoritesTests(APITestCase):
 		with self.captureOnCommitCallbacks(execute=True):
 			self.client.patch(url, {'price': 12000}, format='json')
 			self.client.patch(url, {'title': 'Banana Ball Python'}, format='json')
-		self.assertEqual(mail.outbox, [])
+		self.assertFalse(Alert.objects.exists())
 
 
 class ListingStatusTests(APITestCase):
@@ -1285,7 +1289,7 @@ class SavedSearchTests(APITestCase):
 		self.assertEqual(response.status_code, 404)
 
 	@override_settings(FRONTEND_URL='https://reptiles.example')
-	def test_alerts_email_only_new_matches_once(self):
+	def test_alerts_cover_only_new_matches_once(self):
 		self.listing('Old Pied Python', self.pythons)  # posted before the search was saved
 		saved = SavedSearch.objects.get(pk=self.save('search=pied&species_name=search pythons').data['id'])
 		SavedSearch.objects.filter(pk=saved.pk).update(last_alerted_at=self.timezone.now() - self.timedelta(seconds=1))
@@ -1298,16 +1302,17 @@ class SavedSearchTests(APITestCase):
 
 		from django.core.management import call_command
 		call_command('send_search_alerts', stdout=io.StringIO())
-		self.assertEqual(len(mail.outbox), 1)
-		body = mail.outbox[0].body
-		self.assertEqual(mail.outbox[0].to, ['searcher@example.com'])
+		self.assertEqual(mail.outbox, [])  # an alert on the site, not an email
+		alert = Alert.objects.get()
+		body = alert.text['en']['body']
+		self.assertEqual((alert.account, alert.link), (self.user, f'/marketplace?saved={saved.pk}'))
 		self.assertIn('New Pied Python', body)
 		self.assertIn(f'https://reptiles.example/posts/{match.id}', body)
 		for other in ('Old Pied Python', 'New Pied Gecko', 'New Normal Python', 'My Own Pied Python'):
 			self.assertNotIn(other, body)
 
 		call_command('send_search_alerts', stdout=io.StringIO())
-		self.assertEqual(len(mail.outbox), 1)  # nothing new since the last alert
+		self.assertEqual(Alert.objects.count(), 1)  # nothing new since the last alert
 
 	def test_alerts_leave_out_hidden_and_sold_listings(self):
 		saved = SavedSearch.objects.get(pk=self.save('search=pied').data['id'])
@@ -1317,7 +1322,7 @@ class SavedSearchTests(APITestCase):
 
 		from django.core.management import call_command
 		call_command('send_search_alerts', stdout=io.StringIO())
-		self.assertEqual(mail.outbox, [])
+		self.assertFalse(Alert.objects.exists())
 
 
 @override_settings(ADMINS=[('Staff', 'staff@example.com')], FRONTEND_URL='https://reptiles.example')
@@ -1397,8 +1402,10 @@ class SpeciesReviewTests(APITestCase):
 		for listing in (first, second):
 			post = LiveAnimalPost.objects.get(pk=listing['id'])
 			self.assertEqual((post.species, post.species_request), (self.pythons, None))
-		self.assertEqual(sorted(message.to[0] for message in mail.outbox), ['seller2@example.com', 'seller@example.com'])
-		self.assertIn(f'https://reptiles.example/posts/{first["id"]}', mail.outbox[0].body + mail.outbox[1].body)
+		self.assertEqual(mail.outbox, [])
+		alerts = {alert.account: alert for alert in Alert.objects.all()}
+		self.assertEqual(set(alerts), {self.seller, self.other_seller})
+		self.assertEqual(alerts[self.seller].link, f'/posts/{first["id"]}')
 
 		# The name is now an alias: the next seller who types it skips the review, and search finds it.
 		self.assertTrue(SpeciesAlias.objects.filter(name='Review Royal', species=self.pythons).exists())
@@ -1436,9 +1443,10 @@ class SpeciesReviewTests(APITestCase):
 		mail.outbox.clear()
 		with self.captureOnCommitCallbacks(execute=True):
 			self.catalog.reject(SpeciesRequest.objects.get(), self.staff, 'Not a real species')
-		self.assertEqual(mail.outbox[0].to, ['seller@example.com'])
-		self.assertIn('Not a real species', mail.outbox[0].body)
-		self.assertIn(f'/postinput?edit={listing["id"]}&category=live_animal', mail.outbox[0].body)
+		alert = Alert.objects.get()
+		self.assertEqual(alert.account, self.seller)
+		self.assertIn('Not a real species', alert.text['en']['body'])
+		self.assertEqual(alert.link, f'/postinput?edit={listing["id"]}&category=live_animal')
 
 		detail_url = reverse('live-animal-detail', args=[listing['id']])
 		self.client.force_authenticate(self.seller)

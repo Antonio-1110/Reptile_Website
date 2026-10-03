@@ -21,6 +21,21 @@
   --color-overlay: rgb(0 0 0 / 30%);
 }
 
+/* Chinese pages use Noto Sans TC (思源黑體), served from the site in small unicode-range slices, so
+   every device draws Taiwan glyph shapes the same way; English pages keep the system font and never
+   download it. */
+html:lang(zh-Hant) {
+  font-family: "Noto Sans TC Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Chinese headings have no punctuation, so a space marks where a line may break (keep-all); a phrase
+   too long for a narrow screen still wraps rather than overflowing. */
+html:lang(zh-Hant) :is(h1, h2, h3) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 body {
   margin: 0;
   background-color: var(--color-page);

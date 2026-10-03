@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'authentication',
     'auction',
     'features',
+    'alerts',
 ]
 
 MIDDLEWARE = [
@@ -297,6 +298,13 @@ BACKEND_URL = os.environ.get('DJANGO_BACKEND_URL', 'http://localhost:8000').rstr
 # People who saved a listing get at most one price-drop email per listing in this many hours, so a
 # seller can't mass-email them by lowering the price a little at a time.
 PRICE_DROP_EMAIL_HOURS = env_int('PRICE_DROP_EMAIL_HOURS', 24)
+# Most notices (price drops, saved-search matches, species reviews) are alerts on the site, not emails.
+# An account gets one summary email once it has at least ALERT_DIGEST_MIN_UNREAD unread alerts and
+# the oldest has waited ALERT_DIGEST_MIN_DAYS (`manage.py send_alert_digests`). Alerts are deleted
+# after ALERT_RETENTION_DAYS.
+ALERT_DIGEST_MIN_UNREAD = env_int('ALERT_DIGEST_MIN_UNREAD', 5)
+ALERT_DIGEST_MIN_DAYS = env_int('ALERT_DIGEST_MIN_DAYS', 3)
+ALERT_RETENTION_DAYS = env_int('ALERT_RETENTION_DAYS', 90)
 
 
 # Static files (CSS, JavaScript, Images)

@@ -95,7 +95,7 @@ smallest Postgres plan). Then, in the Heroku dashboard or with the `heroku` CLI:
    and runs the database migrations before the new version goes live.
 5. **Scheduler** (open it from Resources) → add these jobs, so auctions settle and order deadlines apply:
    - Every 10 minutes: `cd backend && python manage.py close_auctions && python manage.py process_orders`
-   - Every hour: `cd backend && python manage.py send_search_alerts`
+   - Every hour: `cd backend && python manage.py send_search_alerts && python manage.py send_alert_digests`
    - Every day: `cd backend && python manage.py flushexpiredtokens` (clears old sign-in records)
 6. **Create your staff account**:
    `heroku run -a reptilian-api "cd backend && python manage.py createsuperuser"`

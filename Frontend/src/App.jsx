@@ -9,6 +9,7 @@ import ListingDetailPage from "./pages/ListingDetail/ListingDetailPage";
 import MyListingsPage from "./pages/MyListingsPage";
 import MyOrdersPage from "./pages/MyOrdersPage";
 import InquiriesPage from "./pages/Inquiries/InquiriesPage";
+import AlertsPage from "./pages/Alerts/AlertsPage";
 import SellerProfilePage from "./pages/SellerProfilePage";
 import SavedSearchesPage from "./pages/SavedSearchesPage";
 import SavedListingsPage from "./pages/SavedListingsPage";
@@ -118,6 +119,7 @@ export default function App() {
         <Route path="/my-listings" element={<MyListingsPage />} />
         <Route path="/orders" element={<MyOrdersPage />} />
         <Route path="/inquiries" element={<InquiriesPage />} />
+        <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/saved-searches" element={<SavedSearchesPage />} />
         <Route path="/saved" element={<SavedListingsPage />} />
         <Route path="/settings" element={<RequireSignIn><AccountSettingsPage /></RequireSignIn>} />

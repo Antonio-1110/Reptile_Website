@@ -7,6 +7,7 @@ import ListingCard from "../components/listings/ListingCard";
 import ListingCardSkeleton from "../components/listings/ListingCardSkeleton";
 import ListingGrid from "../components/listings/ListingGrid";
 import { createSavedSearch, getListingsPage, getSavedSearches, isLoggedIn, listingQueryString, parseListingQuery, updateSavedSearch } from "../api/listingsApi";
+import { DEFAULT_LISTING_SORT, LISTING_SORTS } from "../constants/listingSort";
 import useDebouncedValue from "../hooks/useDebouncedValue";
 import usePageMeta from "../hooks/usePageMeta";
 import { buildMarketplaceUrl, readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
@@ -37,13 +38,14 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
   const category = readMarketplaceCategory(location.search);
   const [filters, setFilters] = useState(initialFilters);
   const debouncedFilters = useDebouncedValue(filters, 300);
+  const [sort, setSort] = useState(DEFAULT_LISTING_SORT);
   const [feed, setFeed] = useState(emptyFeed);
   const queryIdRef = useRef(0);
   const sentinelRef = useRef(null);
 
   const query = useMemo(
-    () => ({ category, search: searchTerm, tags: searchTags, filters: debouncedFilters }),
-    [category, searchTerm, searchTags, debouncedFilters],
+    () => ({ category, search: searchTerm, tags: searchTags, filters: debouncedFilters, ordering: LISTING_SORTS[sort] }),
+    [category, searchTerm, searchTags, debouncedFilters, sort],
   );
 
   // Loads one page for the current query. Responses for an outdated query are dropped, so changing a
@@ -161,6 +163,12 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
                 {hasListings || reachedEnd ? t("listings.available", { count: feed.count }) : t("listings.heading")}
               </h1>
               <div className="marketplace-heading-actions">
+                <label className="marketplace-sort">
+                  <span>{t("listingSort.label")}</span>
+                  <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                    {Object.keys(LISTING_SORTS).map((key) => <option key={key} value={key}>{t(`listingSort.${key}`)}</option>)}
+                  </select>
+                </label>
                 {isLoggedIn() && <Link to="/saved" className="marketplace-saved-link">♥ {t("favorites.title")}</Link>}
                 {/* Saved searches (and their email alerts) cover live animals only. */}
                 {isLoggedIn() && category === "live_animal" && (
