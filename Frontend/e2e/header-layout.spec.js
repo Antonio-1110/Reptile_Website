@@ -60,12 +60,13 @@ for (const language of ['en', 'zh']) {
 
     // A 1440px laptop is the most common desktop; signed out, everything fits on one row there.
     test('signed out, a laptop-width header is one row', async ({ page }) => {
-      for (const width of [1280, 1440, 1920]) {
-        await openAt(page, width);
+      // Off the marketplace the search button reads 前往市集 / "Marketplace", which is wider.
+      for (const [width, path] of [[1280, '/marketplace'], [1440, '/marketplace'], [1920, '/marketplace'], [1280, '/'], [1440, '/auctions']]) {
+        await openAt(page, width, path);
         const m = await measureHeader(page);
         expectNoCollisions(m);
         expect(m.nav, `links hidden at ${width}px`).not.toBeNull();
-        expect(sameRow(m.search, m.logo), `search bar wrapped under the logo at ${width}px`).toBe(true);
+        expect(sameRow(m.search, m.logo), `search bar wrapped under the logo at ${width}px on ${path}`).toBe(true);
         expect(sameRow(m.nav, m.logo), `links wrapped at ${width}px`).toBe(true);
         expect(m.header.height, `header too tall at ${width}px`).toBeLessThan(100);
       }
