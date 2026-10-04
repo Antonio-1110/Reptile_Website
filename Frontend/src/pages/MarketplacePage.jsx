@@ -12,6 +12,7 @@ import useDebouncedValue from "../hooks/useDebouncedValue";
 import usePageMeta from "../hooks/usePageMeta";
 import { buildMarketplaceUrl, readMarketplaceCategory, withMarketplaceCategory } from "../utils/marketplaceSearch";
 import { Link, useLocation, useNavigate } from "react-router";
+import BookmarkIcon from "../components/ui/BookmarkIcon";
 
 const initialFilters = {
   minPrice: "", maxPrice: "", minSize: "", maxSize: "",
@@ -182,7 +183,8 @@ export default function MarketplacePage({ searchTerm = "", searchTags = [], onCl
                       <>
                         {editingSearch && <Link to="/saved-searches" className="marketplace-save-cancel">{t("savedSearches.cancel")}</Link>}
                         <button type="button" onClick={saveSearch} disabled={saveState === "saving"}>
-                          🔔 {t(editingSearch ? "savedSearches.update" : "savedSearches.save")}
+                          <BookmarkIcon />
+                          {t(editingSearch ? "savedSearches.update" : "savedSearches.save")}
                         </button>
                       </>
                     )}
