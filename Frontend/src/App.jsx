@@ -117,7 +117,7 @@ export default function App() {
         <Route path="/postinput" element={<RequireSignIn><RemountOnQuery><ListingEditorRoute /></RemountOnQuery></RequireSignIn>} />
         <Route path="/signin" element={<RemountOnQuery><SignInPage /></RemountOnQuery>} />
         <Route path="/my-listings" element={<MyListingsPage />} />
-        <Route path="/orders" element={<MyOrdersPage />} />
+        <Route path="/orders" element={<RequireFeature name="auctions"><MyOrdersPage /></RequireFeature>} />
         <Route path="/inquiries" element={<InquiriesPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
         <Route path="/saved-searches" element={<SavedSearchesPage />} />

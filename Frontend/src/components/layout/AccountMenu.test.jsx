@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import AccountMenu, { ALERTS_CHANGED, INQUIRIES_CHANGED } from './AccountMenu';
+import { setFeatures } from '../../hooks/useFeature';
 import { getWaitingInquiryCount } from '../../api/listingsApi';
 import { getUnreadAlertCount } from '../../api/alertsApi';
 
@@ -18,6 +19,14 @@ describe('AccountMenu', () => {
     expect(screen.getByRole('button', { name: /My account/ })).toHaveAttribute('aria-expanded', 'true');
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
     expect(hrefs).toEqual(['/alerts', '/my-listings', '/orders', '/inquiries', '/saved', '/saved-searches', '/settings']);
+  });
+
+  it('leaves out My orders while auctions are switched off', () => {
+    setFeatures({ auctions: false });
+    render(<AccountMenu onSignOut={() => {}} />, { wrapper: MemoryRouter });
+    openMenu();
+    expect(screen.queryByRole('link', { name: 'My orders' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'My listings' })).toBeInTheDocument();
   });
 
   it('signs out from the menu', () => {

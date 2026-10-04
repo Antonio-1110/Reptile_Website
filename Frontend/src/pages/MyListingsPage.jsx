@@ -97,7 +97,7 @@ export default function MyListingsPage() {
             <p>{t('myListings.subtitle')}</p>
           </div>
           <div className="my-listings-header-links">
-            <Link to="/orders" className="my-listings-orders">{t('myListings.orders')}</Link>
+            {auctionsOn && <Link to="/orders" className="my-listings-orders">{t('myListings.orders')}</Link>}
             <Link to="/postinput" className="my-listings-new">
               {t('myListings.newListing')}
             </Link>
