@@ -7,6 +7,7 @@ import BackLink from "../../components/ui/BackLink";
 import CategorySwitch from "../../components/ui/CategorySwitch";
 import LogisticsSection from "./components/LogisticsSection";
 import MediaUploader from "./components/MediaUploader";
+import RequiredMark from "./components/RequiredMark";
 import { createListing, getCurrentProfile, getRawListing, getSexKey, getSpecies, listingPagePath, saveListingPhotos, updateListing } from "../../api/listingsApi";
 import { getLocationKey } from "../../constants/locations";
 import { matchSpecies } from "../../constants/species";
@@ -322,6 +323,7 @@ export default function ListingEditorPage({ editId = null, editCategory = null }
           <p className="listing-editor-loading">{t("createListing.loading")}</p>
         ) : (
         <form onSubmit={handleSubmit} className="listing-editor-form">
+          <p className="listing-form-hint listing-editor-required-note"><RequiredMark /> {t("requiredFields.note")}</p>
           {/* "enclosure" is the equipment category; the editor maps it to the equipment endpoint. A
               listing can't move between the two endpoints, so the switch is locked when editing. */}
           <CategorySwitch

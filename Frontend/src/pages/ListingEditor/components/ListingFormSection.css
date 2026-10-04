@@ -105,3 +105,8 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.listing-form-required {
+  margin-left: 0.25rem;
+  color: oklch(70.4% 0.191 22.216);
+}

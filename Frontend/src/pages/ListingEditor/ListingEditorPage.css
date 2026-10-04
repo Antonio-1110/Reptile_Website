@@ -53,6 +53,14 @@
   margin-bottom: 2rem;
 }
 
+.listing-editor-form > .listing-editor-required-note {
+  margin-bottom: 1rem;
+}
+
+.listing-editor-required-note .listing-form-required {
+  margin-left: 0;
+}
+
 .listing-editor-submit {
   width: 100%;
   padding-block: 0.75rem;
