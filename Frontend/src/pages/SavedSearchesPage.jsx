@@ -5,6 +5,7 @@ import { deleteSavedSearch, getSavedSearches, isLoggedIn, updateSavedSearch } fr
 import { formatDateTime } from '../utils/auctionFormat';
 import { errorText, toErrorState } from '../utils/errorState';
 import { Link } from 'react-router';
+import BookmarkIcon from '../components/ui/BookmarkIcon';
 
 // How many filters a saved query has besides the search text (e.g. "sex=1.0&price_max=9000" → 2).
 function filterCount(query) {
@@ -99,7 +100,7 @@ export default function SavedSearchesPage() {
                         <button type="button" onClick={() => setRenaming(null)}>{t('savedSearches.cancel')}</button>
                       </form>
                     ) : (
-                      <h2>🔔 {search.name}</h2>
+                      <h2><BookmarkIcon className="saved-search-icon" /> {search.name}</h2>
                     )}
                     <p>
                       {filters > 0 ? t('savedSearches.filters', { count: filters }) : t('savedSearches.noFilters')}
