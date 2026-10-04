@@ -103,6 +103,13 @@ describe('App routing', () => {
     expect(screen.queryByRole('link', { name: 'Auctions' })).not.toBeInTheDocument();
   });
 
+  it('sends My orders home while auctions are switched off, since orders only come from auctions', () => {
+    setFeatures({ auctions: false });
+    renderAt('/orders');
+    expect(screen.getByText('home page')).toBeInTheDocument();
+    expect(screen.getByLabelText('url')).toHaveTextContent(/^\/$/);
+  });
+
   it('waits for the feature switches before deciding on a switchable page', () => {
     setFeatures(null);
     vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));

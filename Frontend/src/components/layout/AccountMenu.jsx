@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { getUnreadAlertCount } from '../../api/alertsApi';
 import { getWaitingInquiryCount } from '../../api/listingsApi';
+import useFeature from '../../hooks/useFeature';
 
 // Fired by the Inquiries page after the seller marks one replied, so the count here drops at once.
 export const INQUIRIES_CHANGED = 'reptilian:inquiries-changed';
@@ -15,6 +16,7 @@ export const ALERTS_CHANGED = 'reptilian:alerts-changed';
 // ordinary links, so Tab moves through them and screen readers announce them as links.
 export default function AccountMenu({ onSignOut }) {
   const { t } = useTranslation();
+  const auctionsOn = useFeature('auctions');
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
@@ -70,15 +72,16 @@ export default function AccountMenu({ onSignOut }) {
     };
   }, [open]);
 
+  // Orders only come from auctions and buy now, so the page goes with the auctions switch.
   const links = [
     ['/alerts', t('alerts.title')],
     ['/my-listings', t('navigation.myListings')],
-    ['/orders', t('myOrders.title')],
+    auctionsOn && ['/orders', t('myOrders.title')],
     ['/inquiries', t('inquiries.title')],
     ['/saved', t('accountMenu.savedListings')],
     ['/saved-searches', t('savedSearches.title')],
     ['/settings', t('accountSettings.title')],
-  ];
+  ].filter(Boolean);
 
   return (
     <div ref={containerRef} className={`accountMenu${open ? ' is-open' : ''}`}>
