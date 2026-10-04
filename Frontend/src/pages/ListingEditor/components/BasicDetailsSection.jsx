@@ -5,6 +5,7 @@ import "./BasicDetailsSection.css";
 import { LISTING_LIMITS } from "../../../constants/listingLimits";
 import { EQUIPMENT_CATEGORIES, EQUIPMENT_CONDITIONS } from "../../../constants/equipment";
 import { getSpeciesLabel, matchSpecies } from "../../../constants/species";
+import RequiredMark from "./RequiredMark";
 
 // The category (live animal vs equipment) is chosen by CategorySwitch at the top of the form.
 // `speciesList` is null until the species list loads (or if it can't): typing still works, the server
@@ -71,21 +72,21 @@ export default function BasicDetailsSection({ formData, onChange, onSpeciesChang
     <section className="listing-form-section">
       <h2 className="listing-form-section-title">{t("createListing.basic.title")}</h2>
       <div>
-        <label htmlFor="listing-title" className="listing-form-label">{t("createListing.basic.titleLabel")}</label>
+        <label htmlFor="listing-title" className="listing-form-label">{t("createListing.basic.titleLabel")}<RequiredMark /></label>
         <input id="listing-title" type="text" name="title" value={formData.title} onChange={onChange} maxLength={LISTING_LIMITS.titleLength} className="listing-form-input listing-form-input--fixed" placeholder={t("createListing.basic.titlePlaceholder")} required />
       </div>
       <div>
-        <label htmlFor="listing-description" className="listing-form-label">{t("createListing.basic.description")}</label>
+        <label htmlFor="listing-description" className="listing-form-label">{t("createListing.basic.description")}<RequiredMark /></label>
         <textarea id="listing-description" name="description" value={formData.description} onChange={onChange} maxLength={LISTING_LIMITS.descriptionLength} className="listing-form-input listing-form-input--fixed basic-details-description" placeholder={t("createListing.basic.descriptionPlaceholder")} required />
       </div>
       <div className="listing-form-grid listing-form-grid--2">
         <div>
-          <label htmlFor="listing-price" className="listing-form-label">{t("createListing.basic.price")}</label>
+          <label htmlFor="listing-price" className="listing-form-label">{t("createListing.basic.price")}<RequiredMark /></label>
           <input id="listing-price" type="number" name="price" min="0" max={LISTING_LIMITS.price} value={formData.price} onChange={onChange} className="listing-form-input listing-form-input--fixed" placeholder={t("createListing.basic.pricePlaceholder")} required />
         </div>
         {formData.category === "live_animal" && (
           <div>
-            <label htmlFor="listing-species" className="listing-form-label">{t("createListing.basic.species")}</label>
+            <label htmlFor="listing-species" className="listing-form-label">{t("createListing.basic.species")}<RequiredMark /></label>
             <div
               className="basic-details-species"
               onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) closeSpeciesMenu(); }}

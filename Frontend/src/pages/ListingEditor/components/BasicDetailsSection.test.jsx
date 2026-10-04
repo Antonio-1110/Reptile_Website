@@ -89,3 +89,19 @@ describe('BasicDetailsSection species picker', () => {
     expect(onSpeciesChange).not.toHaveBeenCalled();
   });
 });
+
+describe('BasicDetailsSection required fields', () => {
+  it('marks the fields a listing needs with an asterisk that stays out of their names', () => {
+    render(<Editor />);
+    const fields = [
+      screen.getByRole('textbox', { name: 'Listing Title' }),
+      screen.getByRole('textbox', { name: 'Description' }),
+      screen.getByRole('spinbutton', { name: 'Price' }),
+      input(),
+    ];
+    for (const field of fields) {
+      expect(field).toBeRequired();
+      expect(document.querySelector(`label[for="${field.id}"]`).textContent).toMatch(/\*$/);
+    }
+  });
+});

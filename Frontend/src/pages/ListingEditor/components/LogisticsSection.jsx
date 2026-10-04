@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { LOCATION_KEYS } from "../../../constants/locations";
 import "./ListingFormSection.css";
 import "./LogisticsSection.css";
+import RequiredMark from "./RequiredMark";
 
 const shippingMethods = ["localPickup", "shipping"];
 
@@ -12,7 +13,7 @@ export default function LogisticsSection({ formData, onChange, onShippingChange 
     <section className="listing-form-section listing-form-section--divided">
       <h2 className="listing-form-section-title">{t("createListing.logistics.title")}</h2>
       <div>
-        <label htmlFor="listing-location" className="listing-form-label">{t("createListing.logistics.location")}</label>
+        <label htmlFor="listing-location" className="listing-form-label">{t("createListing.logistics.location")}<RequiredMark /></label>
         <select id="listing-location" name="location" value={formData.location} onChange={onChange} className="listing-form-input" required>
           <option value="">{t("createListing.logistics.locationPlaceholder")}</option>
           {LOCATION_KEYS.map((location) => <option key={location} value={location}>{t(`locations.${location}`)}</option>)}
