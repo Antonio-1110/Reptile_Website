@@ -50,6 +50,8 @@ class BasePost(models.Model):
     shipping_methods = models.JSONField(default=list, help_text="List of shipping methods: ['localPickup', 'shipping']")
     image = models.URLField(blank=True, help_text="Cover photo URL")
     gallery = models.JSONField(default=list, help_text="All photo URLs, cover first")
+    # Set by the photos action (post/photos.py); empty when the cover wasn't uploaded here.
+    thumbnail = models.URLField(max_length=300, blank=True, help_text="Card-sized copy of the cover photo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

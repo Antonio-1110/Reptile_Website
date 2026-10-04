@@ -64,6 +64,7 @@ cd backend
 ../.venv/bin/python manage.py process_orders           # apply order deadlines (payment, handover, confirm)
 ../.venv/bin/python manage.py send_search_alerts       # alert users to new listings matching their saved searches
 ../.venv/bin/python manage.py send_alert_digests       # email a summary of unread alerts that have piled up
+../.venv/bin/python manage.py make_thumbnails          # card-sized copies of cover photos uploaded before they existed
 ../.venv/bin/python manage.py makemessages -l zh_Hant  # after adding translatable strings
 ../.venv/bin/python manage.py compilemessages         # .mo isn't committed; start-dev.sh and tests run this
 ../.venv/bin/python manage.py check --deploy           # production settings audit
@@ -176,7 +177,9 @@ update that file **and** the API overview in the root README.
 - Photos: the editor saves the listing first, then `saveListingPhotos()` posts multipart to
   `<id>/photos/` with the final `order` (kept photo URLs and `new:<n>` for uploads, cover first), so
   sellers can reorder or remove photos without re-uploading; `image` is the cover and `gallery` lists
-  every photo, cover first.
+  every photo, cover first. Cards show `thumbnail` (a small copy of the cover) when there is one;
+  the listing page shows the originals. List responses leave out `description`, `guide_notes` and
+  `gallery` (`CompactListMixin`), so pages that need them load the listing itself.
 
 ### Local dev auth bypass
 

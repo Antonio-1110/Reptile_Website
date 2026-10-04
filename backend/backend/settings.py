@@ -106,6 +106,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # Serves the admin's CSS/JS from STATIC_ROOT in production, where nothing else serves /static/.
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    # Heroku's router doesn't compress responses, and listing JSON shrinks to about a seventh. Django's
+    # GZip adds random padding against BREACH-style attacks on compressed secrets.
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Picks the response language from the frontend's Accept-Language header (see LANGUAGES below).
     'django.middleware.locale.LocaleMiddleware',

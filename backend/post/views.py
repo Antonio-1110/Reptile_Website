@@ -1,3 +1,4 @@
+import io
 import json
 import uuid
 
@@ -217,9 +218,13 @@ class ListingPhotosMixin:
 
         folder = listing_photos.photo_folder(post)
         new_urls = []
+        sources = {}
         for content, extension in cleaned:
+            # A copy for the card thumbnail: S3 uploads close the file they're given.
+            data = io.BytesIO(content.file.getvalue())
             name = default_storage.save(f'{folder}/{uuid.uuid4().hex}{extension}', content)
             new_urls.append(request.build_absolute_uri(default_storage.url(name)))
+            sources[new_urls[-1]] = data
 
         prefix = ListingPhotoUploadSerializer.NEW_PREFIX
         ordered = [
@@ -229,7 +234,12 @@ class ListingPhotosMixin:
         previous_urls = set(post.gallery or []) | ({post.image} if post.image else set())
         post.image = ordered[0] if ordered else ''
         post.gallery = ordered
-        post.save(update_fields=['image', 'gallery', 'updated_at'])
+        stale_thumbnail = listing_photos.refresh_thumbnail(
+            post, lambda name: request.build_absolute_uri(default_storage.url(name)), sources,
+        )
+        post.save(update_fields=['image', 'gallery', 'thumbnail', 'updated_at'])
+        if stale_thumbnail:
+            default_storage.delete(stale_thumbnail)
         self._delete_uploaded_photos(request, previous_urls - set(ordered))
 
         return Response(self.get_serializer(post).data)
@@ -273,6 +283,14 @@ class ListingOrderingFilter(filters.OrderingFilter):
         ))
 
 
+class CompactListingsMixin:
+    """Lists of listings get the card-sized representation (CompactListMixin in post/serializer.py)."""
+    COMPACT_ACTIONS = {'list', 'mine', 'favorites', 'similar'}
+
+    def get_serializer_context(self):
+        return {**super().get_serializer_context(), 'compact': self.action in self.COMPACT_ACTIONS}
+
+
 class SimilarListingsMixin:
     """Adds a public `/similar/` action: a few published listings like this one (post/ranking.py)."""
 
@@ -303,7 +321,7 @@ class SpeciesViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
-class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
+class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, CompactListingsMixin, viewsets.ModelViewSet):
     queryset = LiveAnimalPost.objects.select_related('account', 'species', 'species_request').all()
     serializer_class = LiveAnimalPostSerializer
     published = LiveAnimalPost.PUBLISHED
@@ -321,7 +339,7 @@ class LiveAnimalViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMix
         serializer.save(account=self.request.user)
 
 
-class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, viewsets.ModelViewSet):
+class EquipmentViewSet(HiddenListingsMixin, HideSoldListingsMixin, FavoritesMixin, ContactSellerMixin, ReportListingMixin, OwnListingsMixin, ListingPhotosMixin, SimilarListingsMixin, CompactListingsMixin, viewsets.ModelViewSet):
     queryset = EquipmentPost.objects.select_related('account').all()
     serializer_class = EquipmentPostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, HasVerifiedEmail, IsPostOwnerOrReadOnly]

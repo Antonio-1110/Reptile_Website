@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from django.core import mail
+from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
@@ -743,7 +744,11 @@ class ListingPhotoUploadTests(APITestCase):
 		return self.client.post(self.url, {'photos': photos, 'cover_index': cover_index}, format='multipart')
 
 	def stored_files(self):
-		return [path for path in Path(self.media_root).rglob('*') if path.is_file()]
+		# The photos themselves; each cover also gets a card-sized copy (see thumbnail_files).
+		return [path for path in Path(self.media_root).rglob('*') if path.is_file() and not path.name.endswith('.thumb.webp')]
+
+	def thumbnail_files(self):
+		return [path for path in Path(self.media_root).rglob('*.thumb.webp')]
 
 	def test_owner_uploads_photos_and_chosen_cover_comes_first(self):
 		self.client.force_authenticate(self.seller)
@@ -969,8 +974,9 @@ class ListingPhotoUploadTests(APITestCase):
 
 		self.assertEqual(response.status_code, 200, response.data)
 		self.post.refresh_from_db()
-		self.assertEqual((self.post.image, self.post.gallery), ('', []))
+		self.assertEqual((self.post.image, self.post.gallery, self.post.thumbnail), ('', [], ''))
 		self.assertEqual(self.stored_files(), [])
+		self.assertEqual(self.thumbnail_files(), [])
 
 	def test_order_must_be_a_json_list(self):
 		self.client.force_authenticate(self.seller)
@@ -981,6 +987,110 @@ class ListingPhotoUploadTests(APITestCase):
 		kept = self.upload_three()
 		self.client.force_authenticate(self.other)
 		self.assertEqual(self.set_order(list(reversed(kept))).status_code, 403)
+
+	def test_cover_gets_a_small_copy_for_cards_and_the_original_is_kept(self):
+		self.client.force_authenticate(self.seller)
+		response = self.upload([make_image('big.png', size=(2000, 1000)), make_image('b.png')])
+
+		self.assertEqual(response.status_code, 200)
+		self.post.refresh_from_db()
+		self.assertEqual(response.data['thumbnail'], self.post.thumbnail)
+		self.assertTrue(self.post.thumbnail.startswith('http://testserver/media/listings/liveanimalpost/'))
+		self.assertTrue(self.post.thumbnail.endswith('.thumb.webp'))
+		[thumbnail] = self.thumbnail_files()
+		with Image.open(thumbnail) as small:
+			self.assertEqual((small.format, small.size), ('WEBP', (640, 320)))
+		cover = Path(self.media_root) / self.post.image.split('/media/', 1)[1]
+		with Image.open(cover) as original:
+			self.assertEqual(original.size, (2000, 1000))
+
+	def test_new_cover_replaces_the_cards_copy(self):
+		first, second, third = self.upload_three()
+		old_thumbnail = self.post.thumbnail
+		self.assertEqual(self.set_order([second, first]).status_code, 200)
+
+		self.post.refresh_from_db()
+		self.assertNotEqual(self.post.thumbnail, old_thumbnail)
+		self.assertEqual(self.post.thumbnail, second.rsplit('.', 1)[0] + '.thumb.webp')
+		self.assertEqual(len(self.thumbnail_files()), 1)  # the old cover's copy is deleted
+
+	def test_hot_linked_cover_has_no_copy(self):
+		self.client.force_authenticate(self.seller)
+		self.set_order(['new:0', 'https://example.com/seeded.jpg'], photos=[make_image()])
+		self.post.refresh_from_db()
+		self.assertEqual(len(self.thumbnail_files()), 1)
+		self.assertEqual(self.set_order(list(reversed(self.post.gallery))).status_code, 200)
+
+		self.post.refresh_from_db()
+		self.assertEqual(self.post.thumbnail, '')
+		self.assertEqual(self.thumbnail_files(), [])
+
+	def test_deleting_a_listing_also_removes_the_cards_copy(self):
+		self.upload_three()
+		with self.captureOnCommitCallbacks(execute=True):
+			self.client.delete(reverse('live-animal-detail', args=[self.post.id]))
+		self.assertEqual(self.thumbnail_files(), [])
+
+	def test_make_thumbnails_command_fills_in_listings_from_before_thumbnails(self):
+		self.upload_three()
+		self.post.refresh_from_db()
+		made = self.post.thumbnail
+		for path in self.thumbnail_files():
+			path.unlink()
+		LiveAnimalPost.objects.filter(pk=self.post.pk).update(thumbnail='')
+		hot_linked = EquipmentPost.objects.create(
+			account=self.seller, title='Tank', description='d', contact_info='', image='https://example.com/tank.jpg',
+		)
+
+		out = io.StringIO()
+		call_command('make_thumbnails', stdout=out)
+		call_command('make_thumbnails', stdout=io.StringIO())  # a second run has nothing left to do
+
+		self.post.refresh_from_db()
+		hot_linked.refresh_from_db()
+		self.assertEqual(self.post.thumbnail, made)
+		self.assertEqual(len(self.thumbnail_files()), 1)
+		self.assertEqual(hot_linked.thumbnail, '')
+		self.assertIn('Made 1 thumbnail(s); 0 failed.', out.getvalue())
+
+
+class CompactListTests(APITestCase):
+	"""Lists of listings only feed the cards, so they leave out what only the listing page shows."""
+
+	def setUp(self):
+		self.seller = Account.objects.create_user(username='seller', email='seller@example.com', password='pass1234')
+		self.post = LiveAnimalPost.objects.create(
+			account=self.seller, species=Species.objects.create(name='Ball Pythons'), title='Python',
+			description='A long description', guide_notes='Feeds weekly', contact_info='{}',
+			image='https://example.com/a.jpg', gallery=['https://example.com/a.jpg', 'https://example.com/b.jpg'],
+		)
+
+	def test_lists_leave_out_long_text_and_the_photo_list(self):
+		self.client.force_authenticate(self.seller)
+		urls = [
+			reverse('live-animal-list'),
+			reverse('live-animal-mine'),
+			reverse('equipment-list'),
+		]
+		for url in urls:
+			for item in self.client.get(url).data['results']:
+				with self.subTest(url=url):
+					self.assertNotIn('description', item)
+					self.assertNotIn('gallery', item)
+					self.assertNotIn('guide_notes', item)
+					self.assertIn('thumbnail', item)
+		item = self.client.get(reverse('live-animal-list')).data['results'][0]
+		self.assertEqual((item['title'], item['image']), ('Python', 'https://example.com/a.jpg'))
+
+	def test_listing_page_still_gets_everything(self):
+		data = self.client.get(reverse('live-animal-detail', args=[self.post.id])).data
+		self.assertEqual(data['description'], 'A long description')
+		self.assertEqual(data['guide_notes'], 'Feeds weekly')
+		self.assertEqual(len(data['gallery']), 2)
+
+	def test_responses_are_compressed_for_clients_that_accept_it(self):
+		response = self.client.get(reverse('live-animal-list'), HTTP_ACCEPT_ENCODING='gzip')
+		self.assertEqual(response['Content-Encoding'], 'gzip')
 
 class FavoritesTests(APITestCase):
 	def setUp(self):

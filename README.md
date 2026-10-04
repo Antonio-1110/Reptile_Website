@@ -145,12 +145,16 @@ builds it in `buildListingPayload` (`Frontend/src/api/listingsApi.js`):
 | `status` | both | `available`, `reserved`, `sold`; sent on its own by My listings |
 
 The response is the listing as its owner sees it. `id`, `seller`, `species_name`, `species_review`,
-`genes`, `is_hidden`, `is_favorite`, `posted_days`, `created_at`, `updated_at`, `image` and `gallery`
-are read-only. `contact_info` is a legacy field that clients leave out: buyers and sellers exchange the
+`genes`, `is_hidden`, `is_favorite`, `posted_days`, `created_at`, `updated_at`, `image`, `gallery` and
+`thumbnail` are read-only. `contact_info` is a legacy field that clients leave out: buyers and sellers exchange the
 details on their accounts (see Privacy in `.github/AGENTS.md`). Photos are set afterwards with
 `POST /<id>/photos/` (multipart): `photos` (the new files) and `order`, a JSON list of the final photos,
 cover first, where each entry is a current photo URL to keep or `new:<n>` for the n-th upload. Photos
-left out are deleted. That endpoint enforces the plan's photo limit and 5 MB per file.
+left out are deleted. That endpoint enforces the plan's photo limit and 5 MB per file, and stores a
+card-sized WebP copy of the cover as `thumbnail` (empty for photos not uploaded here).
+
+Lists of listings (the list itself, `mine/`, `favorites/`, `<id>/similar/`) feed the cards, so their
+items leave out `description`, `guide_notes` and `gallery`; `GET /<id>/` has every field.
 
 ### Sellers (`/api/v1/sellers/`)
 
